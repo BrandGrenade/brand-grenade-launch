@@ -1,5 +1,12 @@
 # Roadmap — Partner Hub structured evidence (27 Oct 2026)
 
+## Creative Engine test resumption — 29 Oct 2026
+- [x] Retrieve saved Anthropic credit error; one small call each to the existing Sonnet and Opus models succeeded.
+- [x] Resume only Creative Engine Test (copy of JLR) through its UI; refresh mid-job verified saved channel progress.
+- [ ] Complete remaining fidelity checks; verify noted-issue decisions, Gate Two blocking/confirmation and a whole-set amendment.
+- [ ] Verify JSON parse recovery, single-flight processing and heartbeat continuity; run full tests, publish only if all checks pass, then verify live.
+- [ ] Report failures, remaining work and measured usage; confirm original JLR unchanged.
+
 ## Two repairs — 28 Oct 2026
 - [x] Saved valuation Brief revision 2 at v97 with validated Infiniti Stage 10/11/13 assessments and saved Jaguar comparison; entire sessions row byte-identical, v96 retained.
 - [x] New Synthesiser saves one exact claim with combined headings and idempotent retries. Existing access responses group claims and retain all source/category occurrences; stored 329 rows unchanged.
