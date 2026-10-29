@@ -614,7 +614,7 @@ export function StimulusOrchestration({
               </Btn>
             ))}
             {/* Resume is the ONLY way an existing unfinished run restarts. */}
-            {sessionId === "cb7ac9d6-f70b-4902-beb6-7bd0ff5da85f" && orchId && orch?.status === "complete" && (
+            {import.meta.env.DEV && sessionId === "cb7ac9d6-f70b-4902-beb6-7bd0ff5da85f" && orchId && orch?.test_faults?.unreadable_output && orch?.test_faults?.concurrent_claim && orch?.status === "complete" && (
               <Btn disabled={busy} onClick={() => void act(async () => { const result = await stress({ data: { orchestrationId: orchId } }); setNote(JSON.stringify(result)); }, "Copy stress test failed")}>Run copy stress tests</Btn>
             )}
             {orchId && !busy && orch && orch.status !== "complete" && (
