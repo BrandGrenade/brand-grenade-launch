@@ -243,7 +243,7 @@ export const stressTestCopy = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { COPY_SESSION, retryReadable } = await import("./stimulus/amendment-safeguards");
     const orch = await loadOrchestration(data.orchestrationId, context.userId);
-    if (orch.session_id !== COPY_SESSION || !orch.test_faults) throw new Error("Approved test copy only.");
+    if (orch.session_id !== COPY_SESSION || !orch.test_faults?.unreadable_output || !orch.test_faults?.concurrent_claim) throw new Error("Approved test copy with both failure switches enabled only.");
     if (orch.status !== "complete") throw new Error("Wait for the copy to finish before stress tests.");
     const { data: rows } = await db.from("stimulus_prompts").select("*").eq("orchestration_id",orch.id).order("sort_order").limit(1);
     const p = rows?.[0];
@@ -260,10 +260,18 @@ export const stressTestCopy = createServerFn({ method: "POST" })
       return claimed === true;
     }));
     const winner = claims.findIndex(Boolean);
-    const log = [...(p.revision_log ?? []), { kind:"test_fault_injected",fault:"unreadable_output",attempts,error:namedError,at:new Date().toISOString() }, {kind:"test_concurrent_claim",attempts:2,workers:claims.filter(Boolean).length,at:new Date().toISOString()}];
+    let outputWrites = 0;
+    if (winner >= 0) {
+      // Only the lease holder executes and saves the deterministic test adapter.
+      const output = await retryReadable<{ prompt: string }>(async () => JSON.stringify({ prompt: before }), p.channel_name);
+      const { data: saved, error } = await db.from("stimulus_prompts").update({ final_prompt:output.prompt }).eq("id",p.id).eq("worker_token",tokens[winner]).select("id");
+      if (error) throw new Error(`${p.channel_name}: stress-test output save failed: ${error.message}`);
+      outputWrites = saved?.length ?? 0;
+    }
+    const log = [...(p.revision_log ?? []), { kind:"test_fault_injected",fault:"unreadable_output",attempts,error:namedError,at:new Date().toISOString() }, {kind:"test_concurrent_claim",attempts:2,workers:claims.filter(Boolean).length,outputWrites,at:new Date().toISOString()}];
     if (winner >= 0) await db.from("stimulus_prompts").update({revision_log:log,worker_token:null,worker_lease_until:null,run_state:p.run_state}).eq("id",p.id).eq("worker_token",tokens[winner]);
     const { data: after } = await db.from("stimulus_prompts").select("final_prompt").eq("id",p.id).single();
-    return { channel:p.channel_name,attempts,namedError,claims,workers:claims.filter(Boolean).length,outputUnchanged:after?.final_prompt===before };
+    return { channel:p.channel_name,attempts,namedError,claims,workers:claims.filter(Boolean).length,outputWrites,outputUnchanged:after?.final_prompt===before };
   });
 
 
