@@ -3,9 +3,13 @@
 ## Creative Engine test resumption — 29 Oct 2026
 - [x] Retrieve saved Anthropic credit error; one small call each to the existing Sonnet and Opus models succeeded.
 - [x] Resume only Creative Engine Test (copy of JLR) through its UI; refresh mid-job verified saved channel progress.
-- [ ] Complete remaining fidelity checks; verify noted-issue decisions, Gate Two blocking/confirmation and a whole-set amendment.
-- [ ] Verify JSON parse recovery, single-flight processing and heartbeat continuity; run full tests, publish only if all checks pass, then verify live.
-- [ ] Report failures, remaining work and measured usage; confirm original JLR unchanged.
+- [x] Completed fidelity checks, recorded two noted-issue decisions with user/time/reason, ran a nine-channel amendment and rebuilt registry v2 (24 active, 20 retired retained); refreshed both jobs.
+- [x] Ran full suite: 471 tests passed, build OK. Withheld publication: end-to-end requirements did not all pass.
+- [ ] Repair and reverify stale noted-issue approvals: Podcast's new below-6 cycle reused its earlier approval and Gate Two confirmed without a fresh note. Blocker: implementation repair and new verification required.
+- [ ] Repair and reverify amendment preservation: all nine marked applied, but eight final prompts lost the required exact production sentence; Owner CRM also lost its Field 2 placement record. Blocker: implementation repair and new verification required.
+- [ ] Verify malformed-JSON recovery and single-flight under deliberate concurrent requests; existing code review/normal-job evidence is not a forced-failure proof. Blocker: dedicated checks still required.
+- [x] Original JLR session fingerprint unchanged; JLR orchestration last updated 26 Oct. Test driver idle with no work remaining. Usage recorded: 25 completed Opus fidelity calls plus two probes (29 input / 9 output probe tokens); standard orchestration caller discards usage, so exact account credits/cost unavailable.
+- [ ] Publish and verify live only after failed checks are repaired and all tests pass. Blocker: above end-to-end failures; nothing published.
 
 ## Two repairs — 28 Oct 2026
 - [x] Saved valuation Brief revision 2 at v97 with validated Infiniti Stage 10/11/13 assessments and saved Jaguar comparison; entire sessions row byte-identical, v96 retained.
