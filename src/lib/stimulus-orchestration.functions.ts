@@ -236,6 +236,36 @@ export const driveOrchestration = createServerFn({ method: "POST" })
     driveOrchestrationInBackground(data.orchestrationId, context.userId),
   );
 
+/** Explicit, authenticated fault tests; never available outside the approved copy. */
+export const stressTestCopy = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({ orchestrationId: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    const { COPY_SESSION, retryReadable } = await import("./stimulus/amendment-safeguards");
+    const orch = await loadOrchestration(data.orchestrationId, context.userId);
+    if (orch.session_id !== COPY_SESSION || !orch.test_faults) throw new Error("Approved test copy only.");
+    if (orch.status !== "complete") throw new Error("Wait for the copy to finish before stress tests.");
+    const { data: rows } = await db.from("stimulus_prompts").select("*").eq("orchestration_id",orch.id).order("sort_order").limit(1);
+    const p = rows?.[0];
+    if (!p) throw new Error("No test channel.");
+    const before = p.final_prompt;
+    let attempts = 0; let namedError = "";
+    try {
+      await retryReadable(async () => { attempts++; return "{unreadable test-only model output"; }, p.channel_name);
+    } catch (e) { namedError = e instanceof Error ? e.message : String(e); }
+    const tokens = [crypto.randomUUID(),crypto.randomUUID()];
+    const claims = await Promise.all(tokens.map(async (token) => {
+      const { data: claimed, error } = await supabaseAdmin.rpc("bg_claim_creative_prompt",{ p_id:p.id,p_token:token });
+      if (error) throw new Error(error.message);
+      return claimed === true;
+    }));
+    const winner = claims.findIndex(Boolean);
+    const log = [...(p.revision_log ?? []), { kind:"test_fault_injected",fault:"unreadable_output",attempts,error:namedError,at:new Date().toISOString() }, {kind:"test_concurrent_claim",attempts:2,workers:claims.filter(Boolean).length,at:new Date().toISOString()}];
+    if (winner >= 0) await db.from("stimulus_prompts").update({revision_log:log,worker_token:null,worker_lease_until:null,run_state:p.run_state}).eq("id",p.id).eq("worker_token",tokens[winner]);
+    const { data: after } = await db.from("stimulus_prompts").select("final_prompt").eq("id",p.id).single();
+    return { channel:p.channel_name,attempts,namedError,claims,workers:claims.filter(Boolean).length,outputUnchanged:after?.final_prompt===before };
+  });
+
 
 // ------------------------------------------------------------------ human control
 
