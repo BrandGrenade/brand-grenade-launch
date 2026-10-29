@@ -22,6 +22,7 @@ import {
 } from "./orchestration-prompts";
 
 import { MAX_PLATFORM_RETRIES } from "./platform-retry-rules";
+import { retryReadable } from "./amendment-safeguards";
 
 const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
 const MODEL = "claude-sonnet-4-5-20250929";
@@ -81,17 +82,7 @@ function extractJson<T>(text: string): T {
  * one: retry it up to MAX_PLATFORM_RETRIES times before surfacing the error.
  */
 async function anthropicJson<T>(args: Parameters<typeof anthropic>[0]): Promise<T> {
-  let last: unknown;
-  for (let attempt = 0; attempt <= MAX_PLATFORM_RETRIES; attempt++) {
-    try {
-      return extractJson<T>(await anthropic(args));
-    } catch (e) {
-      last = e;
-      if (!(e instanceof SyntaxError) && !(e instanceof Error && /no JSON object|empty response/.test(e.message))) throw e;
-    }
-  }
-  const msg = last instanceof Error ? last.message : String(last);
-  throw new Error(`Platform error: the model returned unreadable output ${MAX_PLATFORM_RETRIES + 1} times (${msg}).`);
+  return retryReadable<T>(() => anthropic(args), "Model JSON pass");
 }
 
 export type { BrandAssetRules };

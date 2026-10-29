@@ -198,12 +198,12 @@ export const approveWithNotedIssue = createServerFn({ method: "POST" })
     const { prompt, orch } = await promptForUser(data.promptId, context.userId);
     if (orch.gate_two_confirmed) throw new Error("Gate Two is already confirmed.");
     const list = Array.isArray(prompt.issue_resolutions) ? prompt.issue_resolutions : [];
-    const entry = { kind: data.kind, action: "approved_with_issue", note: data.note, by: context.userId, at: new Date().toISOString() };
+    const entry = { kind: data.kind, action: "approved_with_issue", note: data.note, by: context.userId, at: new Date().toISOString(), output_revision: prompt.output_revision };
     const log = Array.isArray(prompt.revision_log) ? prompt.revision_log : [];
     await db
       .from("stimulus_prompts")
       .update({ issue_resolutions: [...list, entry], revision_log: [...log, { ...entry, kind: `noted_issue_${data.kind}` }] })
-      .eq("id", prompt.id);
+      .eq("id", prompt.id).eq("output_revision", prompt.output_revision);
     return { ok: true };
   });
 
