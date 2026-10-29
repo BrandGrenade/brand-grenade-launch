@@ -6,9 +6,9 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { claimPrompt } from "./orchestration-core.server";
 it("two simultaneous copy attempts invoke the exclusive lease RPC and only one claims work", async () => {
   let held = false;
-  vi.mocked(supabaseAdmin.rpc).mockImplementation(async () => {
+  vi.mocked(supabaseAdmin.rpc).mockImplementation(() => {
     const claimed = !held; held = true;
-    return { data: claimed, error: null } as never;
+    return Promise.resolve({ data: claimed, error: null }) as never;
   });
   const claims = await Promise.all([claimPrompt({ id:"p",channel_name:"Podcast",copy_guard:true }),claimPrompt({ id:"p",channel_name:"Podcast",copy_guard:true })]);
   expect(claims.filter(Boolean)).toHaveLength(1);
