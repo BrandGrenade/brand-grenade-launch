@@ -281,6 +281,13 @@
       "when": 1793183842250,
       "tag": "0039_creative_engine_test_faults_enable",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1793245274852,
+      "tag": "0040_creative_copy_output_safeguards",
+      "breakpoints": true
     }
   ]
 }

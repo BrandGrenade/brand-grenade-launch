@@ -1,15 +1,16 @@
 # Roadmap — Partner Hub structured evidence (27 Oct 2026)
 
 ## Creative Engine test resumption — 29 Oct 2026
+- [x] Current repair: copy-only output supersession, literal sentence retries, preserved-field snapshots/comparison and leased claims implemented; stress adapters exercised on copy, amendment/Gate Two rerun completed; 477 tests passed, no publication.
 - [x] Retrieve saved Anthropic credit error; one small call each to the existing Sonnet and Opus models succeeded.
 - [x] Resume only Creative Engine Test (copy of JLR) through its UI; refresh mid-job verified saved channel progress.
 - [x] Completed fidelity checks, recorded two noted-issue decisions with user/time/reason, ran a nine-channel amendment and rebuilt registry v2 (24 active, 20 retired retained); refreshed both jobs.
 - [x] Ran full suite: 471 tests passed, build OK. Withheld publication: end-to-end requirements did not all pass.
-- [ ] Repair and reverify stale noted-issue approvals: Podcast's new below-6 cycle reused its earlier approval and Gate Two confirmed without a fresh note. Blocker: implementation repair and new verification required.
-- [ ] Repair and reverify amendment preservation: all nine marked applied, but eight final prompts lost the required exact production sentence; Owner CRM also lost its Field 2 placement record. Blocker: implementation repair and new verification required.
-- [ ] Verify malformed-JSON recovery and single-flight under deliberate concurrent requests; existing code review/normal-job evidence is not a forced-failure proof. Blocker: dedicated checks still required.
+- [x] Stale approvals repaired: historical Podcast/Outdoor notes superseded; Podcast forced 4/10 with two retries blocked Gate Two until a fresh note at 04:15:59 UTC; confirmed 04:16:11 UTC.
+- [x] All nine final prompts contain the exact required sentence; all nine unmentioned saved-field comparisons show no loss. Owner CRM placement restored from saved prior text and remains unchanged.
+- [x] Explicit copy-only stress adapter: unreadable output attempted three times then named Retail error; two simultaneous database claims yielded one worker and one fenced deterministic output save, unchanged output. No extra paid model call in stress adapter.
 - [x] Original JLR session fingerprint unchanged; JLR orchestration last updated 26 Oct. Test driver idle with no work remaining. Usage recorded: 25 completed Opus fidelity calls plus two probes (29 input / 9 output probe tokens); standard orchestration caller discards usage, so exact account credits/cost unavailable.
-- [ ] Publish and verify live only after failed checks are repaired and all tests pass. Blocker: above end-to-end failures; nothing published.
+- [x] Publish nothing as instructed for repair task; final copy complete/idle, JLR fingerprint unchanged. Stopped.
 
 ## Two repairs — 28 Oct 2026
 - [x] Saved valuation Brief revision 2 at v97 with validated Infiniti Stage 10/11/13 assessments and saved Jaguar comparison; entire sessions row byte-identical, v96 retained.

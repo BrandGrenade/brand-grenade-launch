@@ -2587,10 +2587,14 @@ export type Database = {
           mandate_compliance: string | null
           mandate_retries: number
           orchestration_id: string
+          output_revision: number
+          preserved_fields: Json
           propagated: boolean
           rejected_at: string | null
           rejected_reason: string | null
           repair_kind: string | null
+          repair_snapshot: Json | null
+          required_exact_sentences: Json
           revision_log: Json
           run_id: string
           run_state: string | null
@@ -2603,6 +2607,8 @@ export type Database = {
           wad_reasoning: string | null
           wad_revision_count: number
           wad_status: string
+          worker_lease_until: string | null
+          worker_token: string | null
           working_prompt: string | null
         }
         Insert: {
@@ -2634,10 +2640,14 @@ export type Database = {
           mandate_compliance?: string | null
           mandate_retries?: number
           orchestration_id: string
+          output_revision?: number
+          preserved_fields?: Json
           propagated?: boolean
           rejected_at?: string | null
           rejected_reason?: string | null
           repair_kind?: string | null
+          repair_snapshot?: Json | null
+          required_exact_sentences?: Json
           revision_log?: Json
           run_id: string
           run_state?: string | null
@@ -2650,6 +2660,8 @@ export type Database = {
           wad_reasoning?: string | null
           wad_revision_count?: number
           wad_status?: string
+          worker_lease_until?: string | null
+          worker_token?: string | null
           working_prompt?: string | null
         }
         Update: {
@@ -2681,10 +2693,14 @@ export type Database = {
           mandate_compliance?: string | null
           mandate_retries?: number
           orchestration_id?: string
+          output_revision?: number
+          preserved_fields?: Json
           propagated?: boolean
           rejected_at?: string | null
           rejected_reason?: string | null
           repair_kind?: string | null
+          repair_snapshot?: Json | null
+          required_exact_sentences?: Json
           revision_log?: Json
           run_id?: string
           run_state?: string | null
@@ -2697,6 +2713,8 @@ export type Database = {
           wad_reasoning?: string | null
           wad_revision_count?: number
           wad_status?: string
+          worker_lease_until?: string | null
+          worker_token?: string | null
           working_prompt?: string | null
         }
         Relationships: [
@@ -3417,6 +3435,10 @@ export type Database = {
           hub_client_id: string
           name: string
         }[]
+      }
+      bg_claim_creative_prompt: {
+        Args: { p_id: string; p_token: string }
+        Returns: boolean
       }
       bg_client_holdings: {
         Args: { _client: string }

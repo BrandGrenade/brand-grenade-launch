@@ -13,6 +13,7 @@ import {
   rejectPromptAtCd,
   getBrandAssetRules,
   saveBrandAssetRules,
+  stressTestCopy,
 } from "@/lib/stimulus-orchestration.functions";
 import {
   setGateTwoApproval,
@@ -351,6 +352,7 @@ export function StimulusOrchestration({
   const fullExport = useServerFn(getFullFinishedExport);
   const adapt = useServerFn(adaptPromptIssue);
   const approveIssue = useServerFn(approveWithNotedIssue);
+  const stress = useServerFn(stressTestCopy);
 
   const [open, setOpen] = useState(defaultOpen);
   const [busy, setBusy] = useState(false);
@@ -612,6 +614,9 @@ export function StimulusOrchestration({
               </Btn>
             ))}
             {/* Resume is the ONLY way an existing unfinished run restarts. */}
+            {sessionId === "cb7ac9d6-f70b-4902-beb6-7bd0ff5da85f" && orchId && orch?.status === "complete" && (
+              <Btn disabled={busy} onClick={() => void act(async () => { const result = await stress({ data: { orchestrationId: orchId } }); setNote(JSON.stringify(result)); }, "Copy stress test failed")}>Run copy stress tests</Btn>
+            )}
             {orchId && !busy && orch && orch.status !== "complete" && (
               <Btn onClick={() => void drive(orchId)}>Resume this run (generates)</Btn>
             )}
