@@ -1,6 +1,7 @@
 # Roadmap — Partner Hub structured evidence (27 Oct 2026)
 
 ## Creative Engine test resumption — 29 Oct 2026
+- [ ] Current repair: supersede stale approvals, validate exact final amendment sentences, preserve unmentioned fields; stress-test malformed output/concurrent claims on copy, rerun amendment and Gate Two; all tests, no publication.
 - [x] Retrieve saved Anthropic credit error; one small call each to the existing Sonnet and Opus models succeeded.
 - [x] Resume only Creative Engine Test (copy of JLR) through its UI; refresh mid-job verified saved channel progress.
 - [x] Completed fidelity checks, recorded two noted-issue decisions with user/time/reason, ran a nine-channel amendment and rebuilt registry v2 (24 active, 20 retired retained); refreshed both jobs.
