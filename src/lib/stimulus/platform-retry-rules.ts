@@ -36,7 +36,7 @@ export function fidelityBelow(score: number | null | undefined): boolean {
 }
 
 export function hasResolution(resolutions: unknown, kind: IssueKind): boolean {
-  return Array.isArray(resolutions) && resolutions.some((r) => r?.kind === kind && r?.action === "approved_with_issue");
+  return Array.isArray(resolutions) && resolutions.some((r) => r?.kind === kind && r?.action === "approved_with_issue" && !r?.superseded_at);
 }
 
 /** Locked Field 1 must appear verbatim; Field 2 needs a placement statement. */
