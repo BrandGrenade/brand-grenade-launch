@@ -18,7 +18,7 @@ import {
   linesCheck,
 } from "./platform-retry-rules";
 
-import { COPY_SESSION, exactSentences, missingSentences, preservedFieldLoss, retryReadable } from "./amendment-safeguards";
+import { COPY_SESSION, exactSentences, missingSentences, preservedFieldLoss, retryReadable, unmentionedSavedFields } from "./amendment-safeguards";
 const PROMPT_BATCH = 2;
 
 async function protectedRewrite(p: AnyRow, write: (note: string) => Promise<string>): Promise<string> {
@@ -636,7 +636,7 @@ export async function queueRepair(
       .from("stimulus_prompts")
       .update({
         repair_kind: kind,
-        ...(o?.session_id === COPY_SESSION ? { repair_snapshot: prior, required_exact_sentences: amend ? exactSentences(String(o.pending_amendment ?? "")) : prior.required_exact_sentences, preserved_fields: amend && !/field\s*2/i.test(String(o.pending_amendment ?? "")) ? { field2_placement: prior.field2_placement } : {}, worker_token: null, worker_lease_until: null } : {}),
+        ...(o?.session_id === COPY_SESSION ? { repair_snapshot: prior, required_exact_sentences: amend ? exactSentences(String(o.pending_amendment ?? "")) : prior.required_exact_sentences, preserved_fields: amend && !/field\s*2/i.test(String(o.pending_amendment ?? "")) ? unmentionedSavedFields(prior) : {}, worker_token: null, worker_lease_until: null } : {}),
         run_state: "queued",
         ...(amend ? { amendment_retries: 0, amendment_status: null, amendment_reason: null } : { mandate_retries: 0 }),
         gate_two_approved: false,
