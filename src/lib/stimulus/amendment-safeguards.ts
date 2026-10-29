@@ -8,6 +8,10 @@ export function missingSentences(prompt: string, required: string[]): string[] {
 export function preservedFieldLoss(before: Record<string, unknown>, after: Record<string, unknown>): string[] {
   return Object.keys(before).filter((key) => JSON.stringify(before[key]) !== JSON.stringify(after[key]));
 }
+/** Saved content/identity fields; operational progress and assessment records legitimately change. */
+export function unmentionedSavedFields(row: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(Object.entries(row).filter(([key]) => !/^(working_prompt|final_prompt|updated_at|revision_log|issue_resolutions|output_revision|repair_|required_exact_|preserved_fields|worker_|run_state|error|amendment_|mandate_|fidelity_|gate_two_|signatures_extracted|propagated|wad_|cd_)/.test(key)));
+}
 export function currentResolution(resolutions: unknown, kind: string): boolean {
   return Array.isArray(resolutions) && resolutions.some((r) => r?.kind === kind && r?.action === "approved_with_issue" && !r?.superseded_at);
 }

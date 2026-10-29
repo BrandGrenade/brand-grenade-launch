@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { exactSentences, missingSentences, preservedFieldLoss, retryReadable } from "./amendment-safeguards";
+import { exactSentences, missingSentences, preservedFieldLoss, retryReadable, unmentionedSavedFields } from "./amendment-safeguards";
 import { gateTwoBlockReason } from "./platform-retry-rules";
 describe("copy amendment safeguards", () => {
   it("superseded approvals cannot resolve a new below-6 result", () => {
@@ -17,6 +17,7 @@ describe("copy amendment safeguards", () => {
   it("names any loss or change to a saved unmentioned field", () => {
     expect(preservedFieldLoss({ field2_placement: "At the close" }, { field2_placement: null })).toEqual(["field2_placement"]);
     expect(preservedFieldLoss({ field2_placement: "At the close" }, { field2_placement: "At the close" })).toEqual([]);
+    expect(preservedFieldLoss(unmentionedSavedFields({ initial_prompt:"approved",tool_target:"print",field2_placement:"At the close",run_state:"queued" }),{initial_prompt:"approved",tool_target:null,field2_placement:"At the close"})).toEqual(["tool_target"]);
   });
   it("retries unreadable output then succeeds", async () => {
     let calls = 0;
