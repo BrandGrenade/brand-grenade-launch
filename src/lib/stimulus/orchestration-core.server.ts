@@ -18,7 +18,21 @@ import {
   linesCheck,
 } from "./platform-retry-rules";
 
+import { COPY_SESSION, exactSentences, missingSentences, preservedFieldLoss, retryReadable } from "./amendment-safeguards";
 const PROMPT_BATCH = 2;
+
+async function protectedRewrite(p: AnyRow, write: (note: string) => Promise<string>): Promise<string> {
+  const required = (p.required_exact_sentences ?? []) as string[];
+  let reason = "";
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const text = await write([reason, ...required.map((x) => `REQUIRED EXACT SENTENCE — preserve word for word: ${x}`)].join("\n"));
+    const missing = missingSentences(text, required);
+    if (!missing.length) return text;
+    reason = `${p.channel_name}: required exact sentence missing: ${missing.join("; ")}`;
+  }
+  throw new Error(`${reason}. Platform could not apply the amendment after 2 retries.`);
+}
+
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type AnyRow = Record<string, any>;
@@ -110,6 +124,7 @@ export async function orchestrationStep(orchestrationId: string, userId: string)
 async function orchestrationStepInner(orchestrationId: string, userId: string) {
     const orch = await loadOrchestration(orchestrationId, userId);
     const id = orch.id as string;
+    if (orch.driver_status === "cancelled") return { done: true, phase: orch.status, note: "Stopped." };
     const ctx = await sessionContext(orch.session_id as string);
     const assetRules = await loadAssetRules(userId, ctx.brandName);
     const passes = await import("./orchestrate.server");
@@ -487,7 +502,7 @@ async function orchestrationStepInner(orchestrationId: string, userId: string) {
         let finalCd = cd;
         let revisionCount = (orch.cd_revision_count as number) ?? 0;
 
-        if (cd.cohesion === "fail" && revisionCount === 0) {
+        if (cd.cohesion === "fail" && revisionCount === 0 && !(orch.session_id === COPY_SESSION && orch.pending_amendment)) {
           // Exactly one automatic cohesion revision, then re-judge the whole set.
           for (const n of cd.prompt_notes) {
             const target = prompts.find((p) => p.id === n.prompt_id);
@@ -575,7 +590,14 @@ const CLAIM_STALE_MS = 6 * 60_000;
  * one that moves the row from its observed state to running does the work, so
  * a channel is never checked or rewritten twice at once.
  */
-async function claimPrompt(p: AnyRow): Promise<boolean> {
+export async function claimPrompt(p: AnyRow): Promise<boolean> {
+  if (p.required_exact_sentences?.length || p.copy_guard) {
+    const token = crypto.randomUUID();
+    const { data, error } = await supabaseAdmin.rpc("bg_claim_creative_prompt", { p_id: p.id, p_token: token });
+    if (error) throw new Error(`${p.channel_name}: worker claim failed: ${error.message}`);
+    if (data) p.worker_token = token;
+    return data === true;
+  }
   const fresh = p.run_state === "running" && Date.now() - Date.parse(String(p.updated_at)) < CLAIM_STALE_MS;
   if (fresh) {
     await new Promise((r) => setTimeout(r, 5000));
@@ -607,11 +629,14 @@ export async function queueRepair(
   note: string,
 ) {
   const amend = kind.startsWith("amendment");
+  const { data: o } = await db.from("stimulus_orchestrations").select("session_id,pending_amendment").eq("id", orchestrationId).single();
   for (const pid of promptIds) {
+    const { data: prior } = await db.from("stimulus_prompts").select("*").eq("id",pid).single();
     await db
       .from("stimulus_prompts")
       .update({
         repair_kind: kind,
+        ...(o?.session_id === COPY_SESSION ? { repair_snapshot: prior, required_exact_sentences: amend ? exactSentences(String(o.pending_amendment ?? "")) : prior.required_exact_sentences, preserved_fields: amend && !/field\s*2/i.test(String(o.pending_amendment ?? "")) ? { field2_placement: prior.field2_placement } : {}, worker_token: null, worker_lease_until: null } : {}),
         run_state: "queued",
         ...(amend ? { amendment_retries: 0, amendment_status: null, amendment_reason: null } : { mandate_retries: 0 }),
         gate_two_approved: false,
@@ -728,6 +753,7 @@ async function repairSlice(orch: AnyRow, ctx: Ctx, passes: Passes) {
   if (!instruction.trim()) throw new Error("No saved mandate or amendment to apply.");
   const locked = await lockedFor(p.direction_id);
   const lastReason = amend ? p.amendment_reason : p.mandate_carrier;
+  p.copy_guard = orch.session_id === COPY_SESSION;
   if (!(await claimPrompt(p))) return { done: false, phase: "repair", note: `${p.channel_name}: in progress elsewhere.` };
   await setPhase(id, {
     phase_note: `${amend ? "Amendment" : "Mandate"}${adapt ? " adaptation" : ""}: ${p.channel_name} — attempt ${retries + 1} of 3.`,
@@ -744,12 +770,10 @@ async function repairSlice(orch: AnyRow, ctx: Ctx, passes: Passes) {
     .filter(Boolean)
     .join("\n\n");
   const base = (p.final_prompt as string) ?? (p.working_prompt as string) ?? "";
-  const rewritten = await passes.applyMandateToPrompt({
-    mandate: binding,
-    channelName: p.channel_name,
-    lensName: p.lens_name,
-    prompt: base,
-  });
+  const copy = orch.session_id === COPY_SESSION;
+  const required = copy && amend ? exactSentences(instruction) : (p.required_exact_sentences ?? []);
+  p.required_exact_sentences = required;
+  const rewritten = copy ? await protectedRewrite(p, (extra) => passes.applyMandateToPrompt({ mandate: `${binding}\n${extra}`, channelName: p.channel_name, lensName: p.lens_name, prompt: base })) : await passes.applyMandateToPrompt({ mandate: binding, channelName: p.channel_name, lensName: p.lens_name, prompt: base });
   let check = await passes.checkMandateCompliance({
     mandate: instruction,
     channelName: p.channel_name,
@@ -762,7 +786,10 @@ async function repairSlice(orch: AnyRow, ctx: Ctx, passes: Passes) {
   const fault = testFault(orch, "mandate_channel", p.channel_name) && p.repair_kind === "mandate";
   if (fault) check = { ...check, verdict: "absent", reason: `TEST FAULT (forced mandate failure; real verdict was ${check.verdict}).`, carrier: "" };
 
-  const passed = amend ? check.verdict === "present" : check.verdict !== "absent";
+  const passed = amend ? check.verdict === "present" && !missingSentences(rewritten, required).length : check.verdict !== "absent";
+  const savedPlacement = copy && amend && !/field\s*2/i.test(instruction) ? (p.preserved_fields?.field2_placement ?? p.field2_placement) : field2Placement(rewritten);
+  const losses = copy ? preservedFieldLoss(p.preserved_fields ?? {}, { ...(p.preserved_fields ?? {}), field2_placement: savedPlacement }) : [];
+  if (losses.length) throw new Error(`${p.channel_name}: saved fields lost: ${losses.join(", ")}`);
   const retryAgain = !passed && canRetry(retries);
   const now = new Date().toISOString();
   const log = Array.isArray(p.revision_log) ? p.revision_log : [];
@@ -771,7 +798,9 @@ async function repairSlice(orch: AnyRow, ctx: Ctx, passes: Passes) {
     .update({
       working_prompt: rewritten,
       final_prompt: rewritten,
-      field2_placement: field2Placement(rewritten),
+      field2_placement: savedPlacement,
+      required_exact_sentences: required,
+      worker_token: null, worker_lease_until: null,
       revision_log: [
         ...log,
         { at: now, kind: `gate_two_${p.repair_kind}`, attempt: retries + 1, instruction, before: base, compliance: check },
@@ -809,10 +838,23 @@ async function fidelitySlice(orch: AnyRow, passes: Passes) {
     .limit(1);
   const p = ((rows ?? []) as AnyRow[])[0];
   if (!p) {
+    if (orch.session_id === COPY_SESSION) {
+      const { data: finals } = await db.from("stimulus_prompts").select("*").eq("orchestration_id",id).eq("status","active");
+      for (const row of finals ?? []) {
+        const missing = missingSentences(row.final_prompt ?? "", row.required_exact_sentences ?? []);
+        const losses = preservedFieldLoss(row.preserved_fields ?? {}, row);
+        if (missing.length || losses.length) {
+          const reason = `${row.channel_name}: ${missing.length ? "required exact sentence missing" : "saved fields lost: " + losses.join(", ")}`;
+          await db.from("stimulus_prompts").update({ amendment_status:"platform_failed",error:reason,run_state:"failed" }).eq("id",row.id);
+          throw new Error(reason);
+        }
+      }
+    }
     await setPhase(id, { status: "complete", error: null, phase_note: "Orchestration complete. Ready for Gate Two." });
     return { done: true, phase: "complete", note: "Fidelity checked on every channel." };
   }
   const retries = p.fidelity_retries ?? 0;
+  p.copy_guard = orch.session_id === COPY_SESSION;
   if (!(await claimPrompt(p))) return { done: false, phase: "fidelity", note: `${p.channel_name}: in progress elsewhere.` };
   await setPhase(id, { phase_note: `Fidelity: ${p.channel_name} — check ${retries + 1} of 3.` });
   const prompt = (p.final_prompt as string) ?? (p.working_prompt as string) ?? "";
@@ -842,18 +884,20 @@ async function fidelitySlice(orch: AnyRow, passes: Passes) {
   const below = fidelityBelow(result.score);
   if (below && canRetry(retries)) {
     const locked = await lockedFor(p.direction_id);
-    const rewritten = await passes.reviseForCohesion({
+    const rewrite = (extra: string) => passes.reviseForCohesion({
       channelName: p.channel_name,
       prompt,
-      note: `FIDELITY TO THE LOCKED IDEA scored ${result.score}/10: ${result.reasoning}\nRewrite so this channel adapts the locked idea faithfully.\n\nLOCKED IDEA:\n${locked.idea}\n\n${lockedLinesBlock(locked.field1, locked.field2)}`,
+      note: extra + "\n" + `FIDELITY TO THE LOCKED IDEA scored ${result.score}/10: ${result.reasoning}\nRewrite so this channel adapts the locked idea faithfully.\n\nLOCKED IDEA:\n${locked.idea}\n\n${lockedLinesBlock(locked.field1, locked.field2)}`,
     });
+    const rewritten = orch.session_id === COPY_SESSION ? await protectedRewrite(p, rewrite) : await rewrite("");
     const log = Array.isArray(p.revision_log) ? p.revision_log : [];
     await db
       .from("stimulus_prompts")
       .update({
         working_prompt: rewritten,
         final_prompt: rewritten,
-        field2_placement: field2Placement(rewritten),
+        field2_placement: orch.session_id === COPY_SESSION ? p.field2_placement : field2Placement(rewritten),
+        worker_token: null, worker_lease_until: null,
         fidelity_score: result.score,
         fidelity_reason: result.reasoning,
         fidelity_retries: retries + 1,
@@ -869,6 +913,7 @@ async function fidelitySlice(orch: AnyRow, passes: Passes) {
       fidelity_score: result.score,
       fidelity_reason: result.reasoning,
       fidelity_status: below ? "below" : "pass",
+      worker_token: null, worker_lease_until: null,
       repair_kind: null,
       run_state: below ? "failed" : "done",
     })
