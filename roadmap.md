@@ -7,7 +7,7 @@
 - [x] Shared deterministic verdict and four versioned access contracts/builders; saved-baseline add-on verified in preview, exact-version source checks and append-only revisions.
 - [ ] Full tests, new/add-on parity, Campaign/Deal regression and JLR fingerprints.
 - [ ] Infiniti v97 add-on live verification, publish only after passing tests, report four outputs.
-- [ ] Resolve verdict policy for a healthy existing proposition with no saved alternative comparison, and a floor breach without a fatal crack; user decision required before a complete new-run flow can be verified. No new alternatives may be generated.
+- [ ] Apply clarified verdicts: missing saved alternative comparison → INSUFFICIENT EVIDENCE with named missing comparison; floor breach without fatal T1–T4 crack → REFRESH with floor scores and Stage 11 results; retain named errors/evidence for every other uncovered combination.
 
 ## Creative Engine test resumption — 29 Oct 2026
 - [x] Current repair: copy-only output supersession, literal sentence retries, preserved-field snapshots/comparison and leased claims implemented; stress adapters exercised on copy, amendment/Gate Two rerun completed; 477 tests passed, no publication.
