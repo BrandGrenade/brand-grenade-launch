@@ -221,7 +221,7 @@ async function buildOutput(outputId: string, c: Ctx): Promise<Built> {
     const value = saved?.[outputId];
     if (!value) return {content_status:'not_produced',schema_version:`${outputId}.v1`,content:null,evidence:[],fields:[]};
     const parsed = ValidateOutputSchema.safeParse(value);
-    if(!parsed.success) throw new AccessError('unavailable',`VALIDATE_OUTPUT_CONTRACT_FAILED: ${outputId}`);
+    if(!parsed.success || parsed.data.run_id !== run.id || parsed.data.run_version !== c.v) throw new AccessError('unavailable',`VALIDATE_OUTPUT_CONTRACT_FAILED: ${outputId}`);
     return {content_status:'structured',schema_version:`${outputId}.v1`,content:parsed.data,evidence:[],fields:['validate_assessments.outputs']};
   }
   if (isDiagnostic(run) && NOT_IN_DIAGNOSTIC(outputId)) {

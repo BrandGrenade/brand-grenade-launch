@@ -12,4 +12,5 @@ describe('version-bound Validate access',()=>{
   });
   it('denies cross-client reads before loading Validate outputs',async()=>{const database=db();database.resolveClient=async()=>'22222222-2222-4222-8222-222222222222';database.validateOutputs=async()=>{throw Error('This must not be reached');};await expect(call(database,'validate.verdict')).rejects.toThrow('Not found');});
   it('rejects corrupted stored assessment rather than returning it',async()=>{const database=db();database.validateOutputs=async()=>({'validate.verdict':{mode:'campaign'}});await expect(call(database,'validate.verdict')).rejects.toThrow('VALIDATE_OUTPUT_CONTRACT_FAILED');});
+  it('rejects an otherwise valid output carrying another version',async()=>{const database=db();database.validateOutputs=async()=>({...outputs,'validate.verdict':{...outputs['validate.verdict'],run_version:96}});await expect(call(database,'validate.verdict')).rejects.toThrow('VALIDATE_OUTPUT_CONTRACT_FAILED');});
 });
