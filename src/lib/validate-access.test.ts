@@ -1,0 +1,15 @@
+import { describe,it,expect } from 'vitest';
+import { handleAccess,type Db,type LogEntry } from './access/core';
+import { VALIDATE_OUTPUTS,buildValidateOutputs } from './validate-mode';
+const runId='3470f1ad-b322-4230-8e3d-bf0072e95b7a',clientId='11111111-1111-4111-8111-111111111111';
+const outputs=buildValidateOutputs({runId,version:97,brief:{currentProposition:'Existing promise',source:'Saved research',sourceDate:null,suppliedBy:'BG-derived',currentTerritory:'Territory',strategyOwner:'Not supplied',strategyDate:null,priorDecisions:'',knownThreats:'',decisionQuestions:['Keep?'],evidenceStandard:'Client-supplied evidence'},input:{sourceKind:'BG-derived',baseline:{},bestAlternativeComposite:null},provenance:[{claim_text:'Evidence',source:'Research',source_date:null,label:'unverified'}],checkpoints:{a:{confirmed:true}}});
+function db():Db{return {listClients:async()=>[],ensureClient:async()=>{throw Error('Denied');},attachClient:async()=>{throw Error('Denied');},resolveClient:async()=>clientId,resolveEngagement:async()=>null,listLinkedRuns:async()=>[],actorName:async()=>null,claims:async()=>[],stimulus:async()=>({directions:[],prompts:[],orchestrations:[]}),findRun:async()=>({table:'sessions',id:runId,row:{bg_client_id:clientId,link_status:'linked',brief_type:'campaign',locked_at:'2026-10-26',stage_10_output:'Exact Campaign prose'}}),versions:async()=>Array.from({length:96},(_,i)=>({field:'__boundary',version_no:i+1,content:null,reason:'history',created_at:new Date(Date.UTC(2026,0,1)+i*1000).toISOString()})),validateOutputs:async(_id,version)=>version===97?outputs:null};}
+const call=(database:Db,output_id:string,version=97)=>handleAccess(database,{id:'key',scope:'hub_tools'},{request:'get_output',params:{client_ref:'hub-jlr',run_id:runId,version,output_id}},{scope:null,key_id:null,client_ref:null,run_id:null,request:null,output_id:null} as LogEntry);
+describe('version-bound Validate access',()=>{
+  for(const id of VALIDATE_OUTPUTS)it(`reads ${id} only at its saved version`,async()=>{
+    expect(await call(db(),id)).toMatchObject({schema_version:`${id}.v1`,content_status:'structured',content:{mode:'validate',run_id:runId,run_version:97,provenance:[{claim_text:'Evidence',source_date:null}]}});
+    expect(await call(db(),id,96)).toMatchObject({content_status:'not_produced',content:null});
+  });
+  it('denies cross-client reads before loading Validate outputs',async()=>{const database=db();database.resolveClient=async()=>'22222222-2222-4222-8222-222222222222';database.validateOutputs=async()=>{throw Error('This must not be reached');};await expect(call(database,'validate.verdict')).rejects.toThrow('Not found');});
+  it('rejects corrupted stored assessment rather than returning it',async()=>{const database=db();database.validateOutputs=async()=>({'validate.verdict':{mode:'campaign'}});await expect(call(database,'validate.verdict')).rejects.toThrow('VALIDATE_OUTPUT_CONTRACT_FAILED');});
+});
