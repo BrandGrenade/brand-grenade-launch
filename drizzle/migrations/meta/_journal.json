@@ -288,6 +288,13 @@
       "when": 1793245274852,
       "tag": "0040_creative_copy_output_safeguards",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1793332737261,
+      "tag": "0041_deal_required_enum_null_checks",
+      "breakpoints": true
     }
   ]
 }

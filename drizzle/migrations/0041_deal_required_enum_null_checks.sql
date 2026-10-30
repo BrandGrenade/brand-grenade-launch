@@ -1,0 +1,1 @@
+ALTER TABLE public.sessions ADD CONSTRAINT sessions_deal_required_enum_values CHECK (brief_type <> 'deal' OR (deal_transaction_type IS NOT NULL AND deal_depth IS NOT NULL));
