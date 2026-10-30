@@ -792,12 +792,12 @@ export function StimulusOrchestration({
                                 {p.final_prompt || p.working_prompt || p.initial_prompt || "Not written yet."}
                               </pre>
                               {approvalHistory(p.issue_resolutions).length > 0 && (
-                                <div style={{ marginTop: 8, border: "1px solid #1C1A18", borderRadius: 6, padding: 10 }}>
-                                  <div className="text-mono" style={{ color: MUTED, fontSize: 10 }}>NOTED-ISSUE APPROVALS — {p.channel_name.toUpperCase()}</div>
+                                <div className="mt-2 rounded-md border border-border p-2.5">
+                                  <div className="text-mono text-muted-foreground text-[10px]">NOTED-ISSUE APPROVALS — {p.channel_name.toUpperCase()}</div>
                                   {approvalHistory(p.issue_resolutions).map((a, i) => (
                                     <div key={i} style={{ marginTop: 6, opacity: a.state === "superseded" ? 0.6 : 1 }}>
                                       <Label tone={a.state === "current" ? AMBER : MUTED}>{a.state}</Label>{" "}
-                                      <span style={{ color: MUTED }}>
+                                      <span className="text-muted-foreground">
                                         {a.kind} · by {a.by} · {new Date(a.at).toLocaleString()}
                                         {a.supersededAt && ` · superseded ${new Date(a.supersededAt).toLocaleString()}`}
                                       </span>
