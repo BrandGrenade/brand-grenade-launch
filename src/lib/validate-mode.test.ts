@@ -9,7 +9,7 @@ const make=()=>structuredClone({sourceKind:'client' as const,bestAlternativeComp
   '10':{...base,smp:'Existing promise',field_name:'Current',fame:dim,truth_strength:dim,competitive_impossibility:{...dim,competitor:'Rival',competitor_claim:'Saved claim'},brand_permission:{...dim,evidence:'Evidence'},clean_air:{...dim,occupier:'Rival',occupying_claim:'Claim'},commercial_precedent:{...dim,precedents:[]},composite:63,code_verdict:'PASS',code_verdict_reason:'',deltas:[]},
   '11':{...base,smp:'Existing promise',field_name:'Current',iconic_tier:false,tests:{T1:{result:'HOLDS',rationale:'Evidence'},T2:{result:'HOLDS',rationale:'Evidence'},T3:{result:'HOLDS',rationale:'Evidence'},T4:{result:'HOLDS',rationale:'Evidence'},T5:{result:'HOLDS',rationale:'Evidence',counter_line:'Rival',classification:'UNCERTAIN'},T6:{result:'HOLDS',rationale:'Evidence'},T7:{result:'HOLDS',rationale:'Evidence',misreading:'None',guard_rail:'Proof'},T8:{result:'N/A',rationale:null}},verdict:'VALIDATED',fatal:[],flags:[],exposure_note:null,strategic_note:null,rewrite:null,iconic_final:'N/A'},
   '13':{...base,credibility:{product_truth_alignment:dim,audience_permission:dim,tonal_compatibility:dim,behavioural_capacity:dim,cultural_authority:dim,historical_consistency:dim},most_vulnerable:'historical_consistency'},
-}}));
+}});
 describe('Validate ordered verdicts',()=>{
   it('keeps floors >=5/6, VALIDATED, gap below 10 and credibility above 5',()=>expect(validateVerdict(make()).verdict).toBe('KEEP'));
   it('insufficient client provenance wins over replace',()=>{const v=make();v.baseline['10'].truth_strength={...dim,score:4};v.baseline['11'].tests.T1.result='CRACKS';expect(validateVerdict({...v,sourceKind:'BG-derived'}).verdict).toBe('INSUFFICIENT EVIDENCE');});
