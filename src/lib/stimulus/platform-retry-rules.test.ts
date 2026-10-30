@@ -52,3 +52,18 @@ describe("Creative Engine platform retries", () => {
     expect(gateTwoBlockReason([row], 1)).toContain("adapt for the channel, or approve with a noted issue");
   });
 });
+
+import { approvalHistory } from "./platform-retry-rules";
+describe("approvalHistory", () => {
+  it("lists current and superseded noted-issue approvals, newest first", () => {
+    const h = approvalHistory([
+      { kind: "fidelity", action: "approved_with_issue", note: "old", by: "u1", at: "2026-10-29T03:00:00Z", superseded_at: "2026-10-29T03:55:01Z" },
+      { kind: "fidelity", action: "approved_with_issue", note: "fresh", by: "u2", at: "2026-10-29T04:15:59Z" },
+      { kind: "other", action: "something_else" },
+    ]);
+    expect(h.map((a) => [a.note, a.state, a.by, a.supersededAt])).toEqual([
+      ["fresh", "current", "u2", null],
+      ["old", "superseded", "u1", "2026-10-29T03:55:01Z"],
+    ]);
+  });
+});
