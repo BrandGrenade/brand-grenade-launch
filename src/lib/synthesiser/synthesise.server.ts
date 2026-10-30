@@ -10,6 +10,7 @@
 // Step 4: compose structured, attributed entries per category field.
 
 import { parseJsonLenient } from "@/lib/loc/json-sanitize";
+import { sourceDateFromExtraction } from './source-date';
 import { runStageFactVerification } from "@/lib/fact-verify.server";
 import {
   SYNTHESISER_CATEGORIES,
