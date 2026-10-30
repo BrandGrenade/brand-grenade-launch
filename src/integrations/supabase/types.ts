@@ -3500,6 +3500,18 @@ export type Database = {
         Args: { _client: string; _confirm_name: string; _mode: string }
         Returns: string
       }
+      bg_append_validate_assessment: {
+        Args: {
+          _actor: string
+          _baseline: string
+          _brand: string
+          _brief: Json
+          _outputs: Json
+          _session: string
+          _version: number
+        }
+        Returns: string
+      }
       bg_attach_client: {
         Args: { _bg_client_id: string; _hub_client_id: string }
         Returns: {
