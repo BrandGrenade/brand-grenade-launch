@@ -24,7 +24,7 @@ import {
   adaptPromptIssue,
   approveWithNotedIssue,
 } from "@/lib/stimulus-gate-two.functions";
-import { hasResolution, type IssueKind } from "@/lib/stimulus/platform-retry-rules";
+import { approvalHistory, hasResolution, type IssueKind } from "@/lib/stimulus/platform-retry-rules";
 import { buildFullFinishedExport, download } from "@/lib/stimulus-export";
 import { SIGNATURE_CATEGORIES } from "@/lib/stimulus/orchestration-prompts";
 import { StimulusMandate } from "@/components/stimulus/StimulusMandate";
@@ -791,6 +791,21 @@ export function StimulusOrchestration({
                               <pre className="text-body-sm" style={{ whiteSpace: "pre-wrap", color: "#EDE8E0", background: "#0A0908", border: "1px solid #1C1A18", borderRadius: 6, padding: 12, fontFamily: "inherit" }}>
                                 {p.final_prompt || p.working_prompt || p.initial_prompt || "Not written yet."}
                               </pre>
+                              {approvalHistory(p.issue_resolutions).length > 0 && (
+                                <div className="mt-2 rounded-md border border-border p-2.5">
+                                  <div className="text-mono text-muted-foreground text-[10px]">NOTED-ISSUE APPROVALS — {p.channel_name.toUpperCase()}</div>
+                                  {approvalHistory(p.issue_resolutions).map((a, i) => (
+                                    <div key={i} style={{ marginTop: 6, opacity: a.state === "superseded" ? 0.6 : 1 }}>
+                                      <Label tone={a.state === "current" ? AMBER : MUTED}>{a.state}</Label>{" "}
+                                      <span className="text-muted-foreground">
+                                        {a.kind} · by {a.by} · {new Date(a.at).toLocaleString()}
+                                        {a.supersededAt && ` · superseded ${new Date(a.supersededAt).toLocaleString()}`}
+                                      </span>
+                                      <div style={{ marginTop: 2, whiteSpace: "pre-wrap" }}>Reason: {a.note}</div>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
                               {(p.wad_reasoning || p.wad_notes || p.cd_note || p.fidelity_reason) && (
                                 <details style={{ marginTop: 8 }}>
                                   <summary className="text-mono" style={{ color: MUTED, fontSize: 10, cursor: "pointer" }}>CD AND CRAFT NOTES — {p.channel_name.toUpperCase()}</summary>

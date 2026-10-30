@@ -39,6 +39,31 @@ export function hasResolution(resolutions: unknown, kind: IssueKind): boolean {
   return Array.isArray(resolutions) && resolutions.some((r) => r?.kind === kind && r?.action === "approved_with_issue" && !r?.superseded_at);
 }
 
+export interface ApprovalHistoryEntry {
+  kind: string;
+  state: "current" | "superseded";
+  by: string;
+  at: string;
+  note: string;
+  supersededAt: string | null;
+}
+
+/** Every saved noted-issue approval, newest first, marked current or superseded. */
+export function approvalHistory(resolutions: unknown): ApprovalHistoryEntry[] {
+  if (!Array.isArray(resolutions)) return [];
+  return resolutions
+    .filter((r) => r?.action === "approved_with_issue")
+    .map((r) => ({
+      kind: String(r.kind ?? ""),
+      state: r.superseded_at ? ("superseded" as const) : ("current" as const),
+      by: String(r.by ?? "unknown"),
+      at: String(r.at ?? ""),
+      note: String(r.note ?? ""),
+      supersededAt: r.superseded_at ? String(r.superseded_at) : null,
+    }))
+    .sort((a, b) => (a.at < b.at ? 1 : a.at > b.at ? -1 : 0));
+}
+
 /** Locked Field 1 must appear verbatim; Field 2 needs a placement statement. */
 function norm(s: string) {
   return s.replace(/[\u2018\u2019]/g, "'").replace(/[\u201C\u201D]/g, '"').replace(/\s+/g, " ").trim().toLowerCase();
