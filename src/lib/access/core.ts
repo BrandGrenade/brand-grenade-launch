@@ -3,6 +3,7 @@ import { recoverSavedStage, recoverStage12 } from "../saved-stage-records";
 import { parseStage22Architecture, parseStage22Assets } from "./stage22-parse";
 import { baselineAtVersion } from '../current-position-addon';
 import { uniqueClaims } from '../synthesiser/unique-claims';
+import { VALIDATE_OUTPUTS, ValidateOutputSchema } from '../validate-mode';
 // Run access remains read-only. Only the separately scoped ensure_client
 // request may create a client and its Hub mapping; it cannot touch runs.
 import { z } from "zod";
@@ -60,6 +61,7 @@ export interface Db {
   stimulus(runId: string): Promise<{ directions: Row[]; prompts: Row[]; orchestrations: Row[] }>;
   actorName(uid: string): Promise<string | null>;
   baselineJobs?(runId: string): Promise<Row[]>;
+  validateOutputs?(runId: string, version: number): Promise<Row | null>;
 }
 
 export type Key = { id: string; scope: Scope };
@@ -76,6 +78,7 @@ export const OUTPUTS_BY_TABLE: Record<RunTable, string[]> = {
     "stage02", "stage04b", "stage09", "stage09_loc", "stage10", "stage10_current_position", "stage11", "stage11_current_position",
     "stage12_propositions", "stage13", "stage13_current_position", ...STAGE16_FORMATS.map((f) => `stage16.${f}`),
     "stage21_channels", "stage22_architecture", "stage22_assets",
+    ...VALIDATE_OUTPUTS,
   ],
   stimulus_runs: ["room04.lenses", "room04.gates", "room04.final_prompts"],
 };
@@ -213,6 +216,14 @@ function parseReport(c: Ctx): Record<string, unknown> | null | "bad" {
 async function buildOutput(outputId: string, c: Ctx): Promise<Built> {
   const { run } = c;
   if (!OUTPUTS_BY_TABLE[run.table].includes(outputId)) throw NOT_FOUND();
+  if ((VALIDATE_OUTPUTS as readonly string[]).includes(outputId)) {
+    const saved = c.db.validateOutputs ? await c.db.validateOutputs(run.id,c.v) : null;
+    const value = saved?.[outputId];
+    if (!value) return {content_status:'not_produced',schema_version:`${outputId}.v1`,content:null,evidence:[],fields:[]};
+    const parsed = ValidateOutputSchema.safeParse(value);
+    if(!parsed.success) throw new AccessError('unavailable',`VALIDATE_OUTPUT_CONTRACT_FAILED: ${outputId}`);
+    return {content_status:'structured',schema_version:`${outputId}.v1`,content:parsed.data,evidence:[],fields:['validate_assessments.outputs']};
+  }
   if (isDiagnostic(run) && NOT_IN_DIAGNOSTIC(outputId)) {
     return { content_status: "not_produced", schema_version: `${outputId}.v1`, content: { note: "not included in a diagnostic run" }, evidence: [], fields: [] };
   }

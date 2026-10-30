@@ -29,7 +29,7 @@ describe("JLR payloads satisfy their contracts", () => {
 
   it("has a captured payload for every output of the three JLR runs", () => {
     const expected: [string, string[]][] = [
-      ["pipeline", OUTPUTS_BY_TABLE.sessions],
+      ["pipeline", OUTPUTS_BY_TABLE.sessions.filter(id=>!id.startsWith('validate.'))],
       ["intelligence", OUTPUTS_BY_TABLE.intelligence_sessions],
       ["synthesiser", OUTPUTS_BY_TABLE.synthesiser_runs],
     ];

@@ -7,6 +7,7 @@
 import { z } from "zod";
 import { Stage9Schema, Stage10CurrentPositionSchema, Stage11CurrentPositionSchema, Stage13CurrentPositionSchema } from "../structured-output";
 import { Stage12PropositionsSchema } from "../saved-stage-records";
+import { VALIDATE_OUTPUTS, ValidateOutputSchema } from '../validate-mode';
 
 export type ContractStatus = "structured" | "text_only" | "unavailable" | "conditional";
 export interface OutputContract {
@@ -87,6 +88,7 @@ const withText = (record: z.ZodTypeAny) => z.object({ record, text: str }).passt
 
 
 export const CONTRACTS: OutputContract[] = [
+  ...VALIDATE_OUTPUTS.map(output_id => ({output_id,schema_version:`${output_id}.v1`,status:'conditional' as const,content:ValidateOutputSchema,note:'Explicit version-bound Validate assessment only; Campaign and Deal output contracts unchanged.'})),
   // ── Room 00 · Research Synthesiser ─────────────────────────────────────
   {
     output_id: "room00.claims",

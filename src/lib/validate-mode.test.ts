@@ -1,6 +1,5 @@
 import { describe,it,expect } from 'vitest';
 import { validateVerdict,buildValidateOutputs,VALIDATE_OUTPUTS,ValidateOutputSchema } from './validate-mode';
-import fixture from './access/fixtures/jlr-access-contracts.json';
 
 // Contract fixture has historical payloads; build concrete baseline records
 // independently so ordered rule tests do not depend on model scoring.
@@ -21,6 +20,8 @@ describe('Validate ordered verdicts',()=>{
   it('refreshes at exactly 10 of 90 below best',()=>{expect(validateVerdict({...make(),bestAlternativeComposite:73}).verdict).toBe('REFRESH');});
   for(const verdict of ['VALIDATED — EXPOSED','VALIDATED WITH STRATEGIC NOTE'])it(`refreshes ${verdict}`,()=>{const v=make();v.baseline['11'].verdict=verdict;expect(validateVerdict(v).verdict).toBe('REFRESH');});
   it('refreshes credibility at 5',()=>{const v=make();v.baseline['13'].credibility.audience_permission={...dim,score:5};expect(validateVerdict(v).verdict).toBe('REFRESH');});
+  it('does not invent a verdict for a floor breach without a fatal crack',()=>{const v=make();v.baseline['10'].truth_strength={...dim,score:4};expect(()=>validateVerdict(v)).toThrow('VALIDATE_VERDICT_RULE_UNRESOLVED');});
+  it('does not invent a KEEP when no same-brand comparison exists',()=>expect(()=>validateVerdict({...make(),bestAlternativeComposite:null})).toThrow('VALIDATE_VERDICT_RULE_UNRESOLVED'));
   it('same shared inputs yield entry-path parity',()=>{expect(validateVerdict(structuredClone(make()))).toEqual(validateVerdict(make()));});
-  it('all four outputs satisfy versioned contracts',()=>{const outputs=buildValidateOutputs({runId:'cb7ac9d6-f70b-4902-beb6-7bd0ff5da85f',version:97,brief:{currentProposition:'Existing promise',source:'Client',sourceDate:null,suppliedBy:'Owner',currentTerritory:'Territory',strategyOwner:'Owner',strategyDate:null,priorDecisions:'',knownThreats:'',decisionQuestions:['Keep?'],evidenceStandard:'Source-level evidence'},input:make(),provenance:[],checkpoints:{}});for(const id of VALIDATE_OUTPUTS)expect(ValidateOutputSchema.safeParse(outputs[id]).success).toBe(true);expect(fixture).toBeDefined();});
+  it('all four outputs satisfy versioned contracts',()=>{const outputs=buildValidateOutputs({runId:'cb7ac9d6-f70b-4902-beb6-7bd0ff5da85f',version:97,brief:{currentProposition:'Existing promise',source:'Client',sourceDate:null,suppliedBy:'Owner',currentTerritory:'Territory',strategyOwner:'Owner',strategyDate:null,priorDecisions:'',knownThreats:'',decisionQuestions:['Keep?'],evidenceStandard:'Source-level evidence'},input:make(),provenance:[],checkpoints:{}});for(const id of VALIDATE_OUTPUTS)expect(ValidateOutputSchema.safeParse(outputs[id]).success).toBe(true);});
 });
