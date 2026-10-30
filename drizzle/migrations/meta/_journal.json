@@ -295,6 +295,13 @@
       "when": 1793332737261,
       "tag": "0041_deal_required_enum_null_checks",
       "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1793332867554,
+      "tag": "0042_versioned_validate_assessments",
+      "breakpoints": true
     }
   ]
 }
