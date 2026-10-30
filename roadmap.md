@@ -1,5 +1,14 @@
 # Roadmap — Partner Hub structured evidence (27 Oct 2026)
 
+## Validate mode v1 — 30 Oct 2026
+- [x] Prep: checkpoint name, claim source dates, Deal null checks, Stage 10 comments/architecture rule; automated regression suite passes.
+- [ ] Mode form and immutable Validate context; new-run pipeline/navigation/checkpoint boundaries.
+- [ ] General same-brand locked-run Validate add-ons using versioned jobs.
+- [x] Shared deterministic verdict and four versioned access contracts/builders; saved-baseline add-on verified in preview, exact-version source checks and append-only revisions.
+- [ ] Full tests, new/add-on parity, Campaign/Deal regression and JLR fingerprints.
+- [ ] Infiniti v97 add-on live verification, publish only after passing tests, report four outputs.
+- [ ] Resolve verdict policy for a healthy existing proposition with no saved alternative comparison, and a floor breach without a fatal crack; user decision required before a complete new-run flow can be verified. No new alternatives may be generated.
+
 ## Creative Engine test resumption — 29 Oct 2026
 - [x] Current repair: copy-only output supersession, literal sentence retries, preserved-field snapshots/comparison and leased claims implemented; stress adapters exercised on copy, amendment/Gate Two rerun completed; 477 tests passed, no publication.
 - [x] Retrieve saved Anthropic credit error; one small call each to the existing Sonnet and Opus models succeeded.

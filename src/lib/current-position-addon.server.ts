@@ -49,8 +49,8 @@ export async function loadBaseline(jobId: string) {
 }
 
 function example(stage: BaselineStage) {
-  if(stage==='10') return '{"smp":"<exact proposition>","field_name":"BG-derived Infiniti current position","fame":{"score":1,"justification":"evidence"},"truth_strength":{"score":1,"justification":"evidence"},"competitive_impossibility":{"score":1,"justification":"evidence","competitor":"named rival","competitor_claim":"claim and evidence label"},"brand_permission":{"score":1,"justification":"evidence","evidence":"source"},"clean_air":{"score":1,"justification":"evidence","occupier":"named rival","occupying_claim":"claim and evidence label"},"commercial_precedent":{"score":1,"justification":"evidence","precedents":[]}}';
-  if(stage==='11') return '{"smp":"<exact proposition>","field_name":"BG-derived Infiniti current position","iconic_tier":false,"tests":{"T1":{"result":"HOLDS","rationale":"evidence"},"T2":{"result":"HOLDS","rationale":"evidence"},"T3":{"result":"WOBBLES","rationale":"evidence"},"T4":{"result":"HOLDS","rationale":"evidence"},"T5":{"result":"WOBBLES","rationale":"evidence","counter_line":"line","classification":"COMPETES-FOR-TERRITORY"},"T6":{"result":"WOBBLES","rationale":"evidence"},"T7":{"result":"WOBBLES","rationale":"evidence","misreading":"misreading","guard_rail":"guard rail"},"T8":{"result":"N/A","rationale":null}},"verdict":"VALIDATED — EXPOSED","fatal":[],"flags":[],"exposure_note":"note","strategic_note":null,"rewrite":null,"iconic_final":"N/A"}';
+  if(stage==='10') return '{"smp":"<exact proposition>","field_name":"Current position","fame":{"score":1,"justification":"evidence"},"truth_strength":{"score":1,"justification":"evidence"},"competitive_impossibility":{"score":1,"justification":"evidence","competitor":"named rival","competitor_claim":"claim and evidence label"},"brand_permission":{"score":1,"justification":"evidence","evidence":"source"},"clean_air":{"score":1,"justification":"evidence","occupier":"named rival","occupying_claim":"claim and evidence label"},"commercial_precedent":{"score":1,"justification":"evidence","precedents":[]}}';
+  if(stage==='11') return '{"smp":"<exact proposition>","field_name":"Current position","iconic_tier":false,"tests":{"T1":{"result":"HOLDS","rationale":"evidence"},"T2":{"result":"HOLDS","rationale":"evidence"},"T3":{"result":"WOBBLES","rationale":"evidence"},"T4":{"result":"HOLDS","rationale":"evidence"},"T5":{"result":"WOBBLES","rationale":"evidence","counter_line":"line","classification":"COMPETES-FOR-TERRITORY"},"T6":{"result":"WOBBLES","rationale":"evidence"},"T7":{"result":"WOBBLES","rationale":"evidence","misreading":"misreading","guard_rail":"guard rail"},"T8":{"result":"N/A","rationale":null}},"verdict":"VALIDATED — EXPOSED","fatal":[],"flags":[],"exposure_note":"note","strategic_note":null,"rewrite":null,"iconic_final":"N/A"}';
   return '{"credibility":{"product_truth_alignment":{"score":1,"justification":"evidence"},"audience_permission":{"score":1,"justification":"evidence"},"tonal_compatibility":{"score":1,"justification":"evidence"},"behavioural_capacity":{"score":1,"justification":"evidence"},"cultural_authority":{"score":1,"justification":"evidence"},"historical_consistency":{"score":1,"justification":"evidence"}},"most_vulnerable":"historical_consistency"}';
 }
 
@@ -62,6 +62,9 @@ function assess(stage: BaselineStage,args:Omit<Parameters<typeof callClaude>[0],
 
 export async function runBaselineJob(jobId:string, emit:(value:object)=>void) {
   let job=await loadBaseline(jobId);
+  const manifest=job.source_manifest as Record<string,unknown>;
+  const subjectBrand=typeof manifest.subject_brand==='string' ? manifest.subject_brand : 'Infiniti';
+  const category=typeof manifest.category==='string' ? manifest.category : 'premium automotive';
   if(job.status==='complete'||job.status==='failed'||job.status==='paused') return {status:job.status,error:job.error_message,version:job.published_version};
   if(job.status==='running'&&job.lease_until&&Date.parse(job.lease_until)>Date.now()) return {status:'running'};
   const lease=crypto.randomUUID();
@@ -81,15 +84,15 @@ export async function runBaselineJob(jobId:string, emit:(value:object)=>void) {
       const first=(previous ?? []).length+1;
       let last=''; let saved=false;
       for(let attempt=first;attempt<=3;attempt++) {
-        emit({stage,attempt,message:`Assessing Infiniti current position — Stage ${stage}`});
+        emit({stage,attempt,message:`Assessing ${subjectBrand} current position — Stage ${stage}`});
         const record=await checked(()=>sb.from('current_position_addon_attempts').insert({job_id:jobId,stage,attempt}).select('id').single());
         if(!record)throw new Error(`${BASELINE_ERRORS.save}: attempt record was not returned`);
         let raw='';
         try {
           const prompt=stage==='10'?STAGE_10_SYSTEM_PROMPT:stage==='11'?STAGE_11_SYSTEM_PROMPT:STAGE_13_SYSTEM_PROMPT;
           raw=await assess(stage,{systemPrompt:prompt+'\nADD-ON OUTPUT OVERRIDE: return ONLY the single JSON baseline object specified below, no candidate set, prose document, new proposition or downstream action.',
-            userMessage:`BRAND: Infiniti\nCATEGORY: premium automotive\nBUY-SIDE CONTEXT: Jaguar × Infiniti; evaluate the existing Infiniti position, NOT the proposed merged Jaguar campaign.\nEXACT BG-DERIVED CURRENT PROPOSITION: ${job.proposition}\nAssess only this baseline under the unchanged rubric. Do not rewrite the proposition. Use only the evidence below; keep unverified/client-supplied qualifiers and explicitly identify missing evidence. Do not import Jaguar product truths, heritage or performance into Infiniti. Competitor positioning not documented must be labelled a hypothesis, never a verified occupancy claim. Missing evidence is a limitation, not proof of a false claim.\nSOURCE MANIFEST:\n${JSON.stringify(job.source_manifest)}\nPRIOR BASELINE ASSESSMENTS:\n${JSON.stringify(job.results)}\nReturn JSON in this exact shape (scores/justifications are examples, replace them with your assessment):\n${example(stage)}\n${last?`Previous response failed schema validation: ${last}. Repair the schema, not the proposition.`:''}`,
-            stageLabel:`Infiniti baseline ${stage}`,model:'claude-opus-5',maxTokens:64000,effort:'high',skipUniversalWrapper:true});
+            userMessage:`BRAND: ${subjectBrand}\nCATEGORY: ${category}\nEXACT CURRENT PROPOSITION (${manifest.derivation_label ?? 'BG-derived'}): ${job.proposition}\nAssess only this baseline under the unchanged rubric. Do not rewrite the proposition or generate alternatives. Use only evidence for ${subjectBrand} below; keep unverified/client-supplied qualifiers and explicitly identify missing evidence. Do not import another brand's product truths, heritage or performance. Competitor positioning not documented must be labelled a hypothesis, never a verified occupancy claim. Missing evidence is a limitation, not proof of a false claim.\nSOURCE MANIFEST:\n${JSON.stringify(job.source_manifest)}\nPRIOR BASELINE ASSESSMENTS:\n${JSON.stringify(job.results)}\nReturn JSON in this exact shape (scores/justifications are examples, replace them with your assessment):\n${example(stage)}\n${last?`Previous response failed schema validation: ${last}. Repair the schema, not the proposition.`:''}`,
+            stageLabel:`${subjectBrand} baseline ${stage}`,model:'claude-opus-5',maxTokens:64000,effort:'high',skipUniversalWrapper:true});
           const result=parseBaseline(stage,raw,job.proposition,job.source_manifest as Record<string,unknown>);
           if(heartbeatError)throw new Error(heartbeatError);
           await checked(()=>sb.from('current_position_addon_attempts').update({raw_output:raw,result}).eq('id',record.id));

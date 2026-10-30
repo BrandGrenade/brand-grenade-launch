@@ -18,6 +18,14 @@ const c = (claim: string, categories: SynthesisedClaim["categories"], status: Sy
 });
 
 describe("synthesiser claim records", () => {
+  it('stores a known source date without replacing it with the save date', () => {
+    const rows = claimRecords('run-1', [{...c('Dated claim', ['input_brand_health'], 'verified'), sourceDate:'2021-09'}]);
+    expect(rows[0].source_date).toBe('2021-09');
+  });
+  it('uses Undated only for an explicitly undated source, leaving unknown dates null', () => {
+    const rows=claimRecords('run-1', [{...c('Undated claim', ['input_brand_health'], 'verified'),sourceDate:'Undated'},c('Unknown date', ['input_brand_health'], 'verified')]);
+    expect(rows.map(r=>r.source_date)).toEqual(['Undated',null]);
+  });
   it('retries idempotently, never replacing an already saved claim', async () => {
     mocks.upsert.mockResolvedValueOnce({ error: { message: 'Transient failure' } }).mockResolvedValueOnce({ error: null });
     await recordSynthesiserRun({ id: 'run-1', brandName: 'JLR', category: 'Cars', status: 'applied', claimCount: 1, claims: [c('A', ['input_primary_consumer', 'input_brand_health'], 'verified')] });

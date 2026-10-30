@@ -159,6 +159,10 @@ export function supabaseDb(sb: any): Db {
       const {data}=await retryRead(() => sb.from('current_position_addon_jobs').select('id,status,published_version,results,source_manifest,error_code,error_message,valuation_document,valuation_document_error').eq('session_id',id).eq('status','complete'), 'BASELINE_EVIDENCE_READ_FAILED');
       return data ?? [];
     },
+    async validateOutputs(id, version) {
+      const {data}=await retryRead(()=>sb.from('validate_assessments').select('outputs').eq('session_id',id).eq('run_version',version).order('assessment_revision',{ascending:false}).limit(1).maybeSingle(),'VALIDATE_OUTPUT_READ_FAILED');
+      return data?.outputs ?? null;
+    },
   };
 }
 

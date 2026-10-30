@@ -288,6 +288,34 @@
       "when": 1793245274852,
       "tag": "0040_creative_copy_output_safeguards",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1793332737261,
+      "tag": "0041_deal_required_enum_null_checks",
+      "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1793332867554,
+      "tag": "0042_versioned_validate_assessments",
+      "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1793332928963,
+      "tag": "0043_atomic_validate_assessment_append",
+      "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1793333295046,
+      "tag": "0044_validate_current_source_binding",
+      "breakpoints": true
     }
   ]
 }

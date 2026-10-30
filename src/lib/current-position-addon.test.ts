@@ -40,6 +40,10 @@ describe('version-aware current-position add-on',()=>{
   it('rejects a rewritten current proposition',()=>{expect(()=>parseBaseline('10',JSON.stringify({...raw10,smp:'A different proposition'}),line,{})).toThrow('Baseline proposition was changed');});
   it('requires named competitive occupancy evidence when the rubric requires it',()=>{expect(()=>parseBaseline('10',JSON.stringify({...raw10,competitive_impossibility:{...dimension,competitor:null,competitor_claim:null}}),line,{})).toThrow('Named competitor required');});
   it('keeps BG-derived separate from client-supplied and leaves unavailable dates null',()=>{expect(cp).toMatchObject({derivation_label:'BG-derived',evidence_label:'Unverified',source_date:null});});
+  it('uses the saved subject brand, source and date for a general client baseline',()=>{
+    const parsed=parseBaseline('10',JSON.stringify(raw10),line,{subject_brand:'Marlowe Motor Company',derivation_label:'Client-supplied',proposition_source:'Signed client brief',proposition_source_date:'2026-10-30'});
+    expect(parsed).toMatchObject({subject_brand:'Marlowe Motor Company',derivation_label:'Client-supplied',evidence_label:'Client-supplied',source:'Signed client brief',source_date:'2026-10-30',line});
+  });
   it('denials, refusals and credit exhaustion are terminal, transient 429 is not',()=>{for(const message of ['HTTP 402 credits exhausted','403 denied','401 configuration','content refusal'])expect(terminalBaselineError(message)).toBe(true);expect(terminalBaselineError('429 rate limited')).toBe(false);});
   it('failed or unpublished results cannot leak through the access point',()=>{expect(baselineAtVersion([{status:'failed',published_version:97},{status:'running',published_version:null}],97)).toBeNull();});
   it('Stage 11 requires all eight tests',()=>{expect(()=>parseBaseline('11',JSON.stringify({smp:line,tests:{T1:{result:'HOLDS',rationale:'evidence'}}}),line,{})).toThrow();});

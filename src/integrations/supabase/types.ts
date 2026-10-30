@@ -3229,6 +3229,79 @@ export type Database = {
         }
         Relationships: []
       }
+      validate_assessments: {
+        Row: {
+          actor_id: string
+          assessment_revision: number
+          brief: Json
+          created_at: string
+          entry_path: string
+          id: string
+          mode: string
+          outputs: Json
+          run_version: number
+          session_id: string
+          source_baseline_job: string | null
+          source_fingerprint: string
+          source_kind: string
+          subject_brand: string
+        }
+        Insert: {
+          actor_id: string
+          assessment_revision?: number
+          brief: Json
+          created_at?: string
+          entry_path: string
+          id?: string
+          mode?: string
+          outputs: Json
+          run_version: number
+          session_id: string
+          source_baseline_job?: string | null
+          source_fingerprint: string
+          source_kind: string
+          subject_brand: string
+        }
+        Update: {
+          actor_id?: string
+          assessment_revision?: number
+          brief?: Json
+          created_at?: string
+          entry_path?: string
+          id?: string
+          mode?: string
+          outputs?: Json
+          run_version?: number
+          session_id?: string
+          source_baseline_job?: string | null
+          source_fingerprint?: string
+          source_kind?: string
+          subject_brand?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "validate_assessments_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "brand_register_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "validate_assessments_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "validate_assessments_source_baseline_job_fkey"
+            columns: ["source_baseline_job"]
+            isOneToOne: false
+            referencedRelation: "current_position_addon_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       brand_register_briefings: {
@@ -3425,6 +3498,18 @@ export type Database = {
       }
       bg_admin_remove_client: {
         Args: { _client: string; _confirm_name: string; _mode: string }
+        Returns: string
+      }
+      bg_append_validate_assessment: {
+        Args: {
+          _actor: string
+          _baseline: string
+          _brand: string
+          _brief: Json
+          _outputs: Json
+          _session: string
+          _version: number
+        }
         Returns: string
       }
       bg_attach_client: {
