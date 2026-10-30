@@ -33,6 +33,7 @@ import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ShowcaseRouteImport } from './routes/showcase'
 import { Route as SynthesiserRouteImport } from './routes/synthesiser'
 import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
+import { Route as ValidateRouteImport } from './routes/validate'
 import { Route as WalkthroughRouteImport } from './routes/walkthrough'
 import { Route as AdminAccessRouteImport } from './routes/admin.access'
 import { Route as AdminClientsRouteImport } from './routes/admin.clients'
@@ -197,6 +198,11 @@ const SynthesiserRoute = SynthesiserRouteImport.update({
 const UnsubscribeRoute = UnsubscribeRouteImport.update({
   id: '/unsubscribe',
   path: '/unsubscribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ValidateRoute = ValidateRouteImport.update({
+  id: '/validate',
+  path: '/validate',
   getParentRoute: () => rootRouteImport,
 } as any)
 const WalkthroughRoute = WalkthroughRouteImport.update({
@@ -463,6 +469,7 @@ export interface FileRoutesByFullPath {
   '/showcase': typeof ShowcaseRoute
   '/synthesiser': typeof SynthesiserRouteWithChildren
   '/unsubscribe': typeof UnsubscribeRoute
+  '/validate': typeof ValidateRoute
   '/walkthrough': typeof WalkthroughRouteWithChildren
   '/admin/access': typeof AdminAccessRoute
   '/admin/clients': typeof AdminClientsRoute
@@ -529,6 +536,7 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsRoute
   '/showcase': typeof ShowcaseRoute
   '/unsubscribe': typeof UnsubscribeRoute
+  '/validate': typeof ValidateRoute
   '/admin/access': typeof AdminAccessRoute
   '/admin/clients': typeof AdminClientsRoute
   '/admin/hub': typeof AdminHubRoute
@@ -599,6 +607,7 @@ export interface FileRoutesById {
   '/showcase': typeof ShowcaseRoute
   '/synthesiser': typeof SynthesiserRouteWithChildren
   '/unsubscribe': typeof UnsubscribeRoute
+  '/validate': typeof ValidateRoute
   '/walkthrough': typeof WalkthroughRouteWithChildren
   '/admin/access': typeof AdminAccessRoute
   '/admin/clients': typeof AdminClientsRoute
@@ -672,6 +681,7 @@ export interface FileRouteTypes {
     | '/showcase'
     | '/synthesiser'
     | '/unsubscribe'
+    | '/validate'
     | '/walkthrough'
     | '/admin/access'
     | '/admin/clients'
@@ -738,6 +748,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/showcase'
     | '/unsubscribe'
+    | '/validate'
     | '/admin/access'
     | '/admin/clients'
     | '/admin/hub'
@@ -807,6 +818,7 @@ export interface FileRouteTypes {
     | '/showcase'
     | '/synthesiser'
     | '/unsubscribe'
+    | '/validate'
     | '/walkthrough'
     | '/admin/access'
     | '/admin/clients'
@@ -879,6 +891,7 @@ export interface RootRouteChildren {
   ShowcaseRoute: typeof ShowcaseRoute
   SynthesiserRoute: typeof SynthesiserRouteWithChildren
   UnsubscribeRoute: typeof UnsubscribeRoute
+  ValidateRoute: typeof ValidateRoute
   WalkthroughRoute: typeof WalkthroughRouteWithChildren
   AdminAccessRoute: typeof AdminAccessRoute
   AdminClientsRoute: typeof AdminClientsRoute
@@ -1077,6 +1090,13 @@ declare module '@tanstack/react-router' {
       path: '/unsubscribe'
       fullPath: '/unsubscribe'
       preLoaderRoute: typeof UnsubscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/validate': {
+      id: '/validate'
+      path: '/validate'
+      fullPath: '/validate'
+      preLoaderRoute: typeof ValidateRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/walkthrough': {
@@ -1523,6 +1543,7 @@ const rootRouteChildren: RootRouteChildren = {
   ShowcaseRoute: ShowcaseRoute,
   SynthesiserRoute: SynthesiserRouteWithChildren,
   UnsubscribeRoute: UnsubscribeRoute,
+  ValidateRoute: ValidateRoute,
   WalkthroughRoute: WalkthroughRouteWithChildren,
   AdminAccessRoute: AdminAccessRoute,
   AdminClientsRoute: AdminClientsRoute,
