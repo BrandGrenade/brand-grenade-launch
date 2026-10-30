@@ -62,9 +62,11 @@ ${categoryBlock()}
 
 When genuinely ambiguous, prefer "client_proprietary" — wrongly flagging real proprietary data as unverified is the worse failure.
 
+4. SOURCE DATE — the source document's explicitly stated publication or research date, preserving its precision (YYYY, YYYY-MM, or YYYY-MM-DD). Do not confuse a date mentioned in a claim with the date of its source. If the document explicitly states it is undated, return "Undated". If a publication date cannot be established, return null, not "Undated". Never use the upload date or today's date.
+
 Output ONLY a single JSON object, no prose, no markdown fences:
 
-{"claims":[{"claim":"...","categories":["input_cultural_trends"],"source_type":"externally_verifiable"}]}
+{"claims":[{"claim":"...","categories":["input_cultural_trends"],"source_type":"externally_verifiable","source_date":null}]}
 
 Return at most ${MAX_CLAIMS_PER_DOC} claims, prioritising the most load-bearing. If the document contains nothing classifiable, return {"claims":[]}.`;
 
@@ -72,6 +74,7 @@ interface RawClaim {
   claim?: unknown;
   categories?: unknown;
   source_type?: unknown;
+  source_date?: unknown;
 }
 
 async function callClaude(system: string, user: string): Promise<string> {
@@ -158,6 +161,7 @@ Extract every individually classifiable claim. Begin your response with { and en
       categories: cats,
       sourceType,
       sourceDocument: doc.name,
+      sourceDate: sourceDateFromExtraction(c.source_date),
       status: sourceType === "client_proprietary" ? "client_supplied" : "not_checked",
     });
   }

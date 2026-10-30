@@ -5,12 +5,13 @@
 import { supabase } from "@/integrations/supabase/client";
 import { hubColumns, readHubContext } from "@/lib/hub/context";
 import { SYNTHESISER_CATEGORIES, type SynthesisedClaim } from "@/lib/synthesiser/types";
+import { sourceDateFromExtraction } from './source-date';
 
 const HEADING = new Map(SYNTHESISER_CATEGORIES.map((c) => [c.key, c.title]));
 
 /** One record per exact claim; all category headings retained on that row. */
 export function claimRecords(runId: string, claims: SynthesisedClaim[]) {
-  const rows: Array<{ synthesiser_run_id: string; heading: string; claim_text: string; label: SynthesisedClaim["status"]; source: string | null; source_date: null; position: number }> = [];
+  const rows: Array<{ synthesiser_run_id: string; heading: string; claim_text: string; label: SynthesisedClaim["status"]; source: string | null; source_date: string | null; position: number }> = [];
   for (const c of claims) {
     const existing = rows.find(r => r.claim_text === c.claim);
     const headings = SYNTHESISER_CATEGORIES.filter(cat => c.categories.includes(cat.key)).map(cat => HEADING.get(cat.key) ?? cat.title);
@@ -18,7 +19,7 @@ export function claimRecords(runId: string, claims: SynthesisedClaim[]) {
       existing.heading = [...new Set([...existing.heading.split('; '), ...headings])].join('; ');
       continue;
     }
-    rows.push({ synthesiser_run_id: runId, heading: headings.join('; ') || 'Brand Grenade Intelligence Pack', claim_text: c.claim, label: c.status, source: c.sourceDocument || null, source_date: null, position: rows.length + 1 });
+    rows.push({ synthesiser_run_id: runId, heading: headings.join('; ') || 'Brand Grenade Intelligence Pack', claim_text: c.claim, label: c.status, source: c.sourceDocument || null, source_date: sourceDateFromExtraction(c.sourceDate), position: rows.length + 1 });
   }
   return rows;
 }

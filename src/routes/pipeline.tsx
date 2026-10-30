@@ -2953,7 +2953,7 @@ function PipelineView() {
     if (stageId === "12" && (selectedStatus === "checkpoint" || !session?.selection_rationale)) return;
     if (stageId === "13" && !intelSubmitted) return;
     if (!nextStage) return;
-    // Checkpoint D — Master Brand Strategy Sign-Off gate between Stage 13/13B and Stage 14.
+    // Strategy Sign-Off gate between Stage 13/13B and Stage 14 (not territory Checkpoint D).
     if (
       (stageId === "13" || stageId === "13B") &&
       nextStage.id === "14" &&
@@ -2974,7 +2974,7 @@ function PipelineView() {
     setSelectedId(nextStage.id);
   };
 
-  // ─────────────────── Checkpoint D — Strategy Sign-Off ───────────────────
+  // ─────────────────── Strategy Sign-Off ─────────────────────────────────
   const [strategySignoffOpen, setStrategySignoffOpen] = useState(false);
   const [strategySignoffSaving, setStrategySignoffSaving] = useState(false);
 
@@ -3062,7 +3062,7 @@ function PipelineView() {
       }
       const { error } = await supabase.from("sessions").update(patch as never).eq("id", sessionId);
       if (error) {
-        console.error("[Checkpoint D] persist failed", error);
+        console.error("[Strategy Sign-Off] persist failed", error);
         return;
       }
       setSession((prev) =>
@@ -3556,7 +3556,7 @@ function PipelineView() {
       <Dialog open={strategySignoffOpen} onOpenChange={setStrategySignoffOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Checkpoint D — Master Brand Strategy Sign-Off</DialogTitle>
+            <DialogTitle>Master Brand Strategy Sign-Off</DialogTitle>
             <DialogDescription>
               Confirm the validated brand strategy before advancing into creative territory
               (Stage 14) — or stop here with a complete strategy deliverable.

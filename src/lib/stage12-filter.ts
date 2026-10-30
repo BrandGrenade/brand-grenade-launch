@@ -47,7 +47,7 @@ export interface Stage11Verdict {
   exposureNote?: string;
 }
 
-// ─── V6 weighting (percent, sums to 100) ─────────────────────────────────
+// ─── V6 weighting (weights total 90) ────────────────────────────────────
 export const STAGE_10_WEIGHTS = {
   fame: 30,
   truthStrength: 20,
@@ -157,7 +157,7 @@ interface V6Dims {
 }
 
 export function computeWeightedComposite(s: V6Dims): number {
-  // weights are percent and sum to 100; each score is 0–10, so weighted = Σ(score × weight) / 10.
+  // Weights total 90; each score is 0–10, so weighted = Σ(score × weight) / 10, maximum 90.
   const raw =
     (s.fame || 0) * STAGE_10_WEIGHTS.fame +
     (s.truthStrength || 0) * STAGE_10_WEIGHTS.truthStrength +

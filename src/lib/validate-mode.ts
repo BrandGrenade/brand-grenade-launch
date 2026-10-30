@@ -41,7 +41,7 @@ export function validateVerdict(input: ValidateInputs): { verdict: VerdictCode; 
   if(floorsPass && s11.data.verdict === 'VALIDATED' && gap !== null && gap < 10) return {verdict:'KEEP',reasons:[{code:'FLOORS_AND_PRESSURE_TESTS_PASS',evidence:{stage10:s10.data.code_verdict,stage11:s11.data.verdict,gap,credibility:s13.data.credibility}}]};
   // The brief deliberately defines no verdict for a floor breach without fatal
   // cracks or a missing same-brand comparison. Never invent a KEEP/REFRESH.
-  return {verdict:'INSUFFICIENT EVIDENCE',reasons:[{code:'VERDICT_RULE_INPUTS_UNRESOLVED',evidence:{floorsPass,stage11:s11.data.verdict,gap}}]};
+  throw new Error(`VALIDATE_VERDICT_RULE_UNRESOLVED: ${JSON.stringify({floorsPass,stage11:s11.data.verdict,gap})}`);
 }
 
 export const ValidateOutputSchema = z.object({

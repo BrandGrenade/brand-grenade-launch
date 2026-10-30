@@ -65,6 +65,8 @@ export interface SynthesisedClaim {
   categories: SynthesiserCategory[];
   sourceType: SourceType;
   sourceDocument: string;
+  /** Publication/source date from the document, never its upload/save date. */
+  sourceDate?: string | null;
   status: VerificationStatus;
   note?: string;
 }
