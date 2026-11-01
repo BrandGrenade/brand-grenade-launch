@@ -6,7 +6,7 @@
 - [ ] General same-brand locked-run Validate add-ons using versioned jobs.
 - [x] Shared deterministic verdict and four versioned access contracts/builders; saved-baseline add-on verified in preview, exact-version source checks and append-only revisions.
 - [ ] Full tests, new/add-on parity, Campaign/Deal regression and JLR fingerprints.
-- [ ] Infiniti v97 add-on live verification, publish only after passing tests, report four outputs.
+- [x] Infiniti v97 add-on live verification (1 Nov): published after 511 tests passed; live verdict INSUFFICIENT EVIDENCE; all four validate.* outputs structured via live access point; temp key revoked; JLR session fingerprint unchanged.
 - [x] Apply clarified verdicts: missing saved alternative comparison → INSUFFICIENT EVIDENCE with named missing comparison; floor breach without fatal T1–T4 crack → REFRESH with floor scores and Stage 11 results; retain named errors/evidence for every other uncovered combination. 511 tests pass; publication remains withheld pending the incomplete new-run and generalized-job paths.
 
 ## Creative Engine test resumption — 29 Oct 2026
