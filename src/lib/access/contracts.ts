@@ -1,3 +1,4 @@
+import { ExecutiveSummarySchema } from "../executive-summary";
 // Serve-time contracts for every output the Partner Hub allow-lists can
 // request. One contract per output: name, schema version, required fields.
 // Contracts describe the access-point payload (which may be a recovered
@@ -197,6 +198,7 @@ export const CONTRACTS: OutputContract[] = [
   { output_id: "stage16.workshop", schema_version: "stage16.document.v1", status: "text_only", content: textDoc, note: "Final document; served as text." },
   { output_id: "stage16.vision", schema_version: "stage16.document.v1", status: "text_only", content: textDoc, note: "Final document; served as text." },
   { output_id: "stage16.valuation", schema_version: "stage16.document.v1", status: "text_only", content: textDoc, note: "Final document; served as text." },
+  { output_id: "stage16.executive_summary", schema_version: "stage16.executive_summary.v1", status: "structured", content: z.object({ record: ExecutiveSummarySchema, text: z.string().min(1) }), note: "Scannable Executive Summary assembled deterministically from stored outputs; nine sections with source stages." },
   {
     output_id: "stage21_channels",
     schema_version: "stage21_channels.v1",

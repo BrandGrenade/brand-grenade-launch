@@ -4,6 +4,7 @@ import { parseStage22Architecture, parseStage22Assets } from "./stage22-parse";
 import { baselineAtVersion } from '../current-position-addon';
 import { uniqueClaims } from '../synthesiser/unique-claims';
 import { VALIDATE_OUTPUTS, ValidateOutputSchema } from '../validate-mode';
+import { EXEC_SUMMARY_OUTPUT, EXEC_SUMMARY_SCHEMA, buildExecutiveSummary, isValidateVariant } from '../executive-summary';
 import { COMPARATOR_NOTE, COMPARATOR_ROLE } from '../validate-run';
 // Run access remains read-only. Only the separately scoped ensure_client
 // request may create a client and its Hub mapping; it cannot touch runs.
@@ -77,7 +78,7 @@ export const OUTPUTS_BY_TABLE: Record<RunTable, string[]> = {
   saved_briefs: ["room02.saved_brief"],
   sessions: [
     "stage02", "stage04b", "stage09", "stage09_loc", "stage10", "stage10_current_position", "stage11", "stage11_current_position",
-    "stage12_propositions", "stage13", "stage13_current_position", ...STAGE16_FORMATS.map((f) => `stage16.${f}`),
+    "stage12_propositions", "stage13", "stage13_current_position", ...STAGE16_FORMATS.map((f) => `stage16.${f}`), EXEC_SUMMARY_OUTPUT,
     "stage21_channels", "stage22_architecture", "stage22_assets",
     ...VALIDATE_OUTPUTS,
   ],
@@ -85,7 +86,7 @@ export const OUTPUTS_BY_TABLE: Record<RunTable, string[]> = {
 };
 const ALL_OUTPUTS = new Set(Object.values(OUTPUTS_BY_TABLE).flat());
 /** Creative and activation outputs — never part of a diagnostic run. */
-const NOT_IN_DIAGNOSTIC = (id: string) => (id.startsWith("stage16.") && id !== "stage16.valuation") || id.startsWith("stage21") || id.startsWith("stage22");
+const NOT_IN_DIAGNOSTIC = (id: string) => (id.startsWith("stage16.") && id !== "stage16.valuation" && id !== EXEC_SUMMARY_OUTPUT) || id.startsWith("stage21") || id.startsWith("stage22");
 
 const SECOND_BRAIN = (id: string) =>
   id === "room02.saved_brief" || id.startsWith("stage16.") || id === "room04.final_prompts" || id === "stage22_architecture";
@@ -251,6 +252,7 @@ async function buildOutputInner(outputId: string, c: Ctx): Promise<Built> {
     if (t) return { content_status: "text_only", schema_version: `stage${m[1]}.text.v1`, content: { text: t, ...(c.get(`stage_${n}_structured_error`) ? { platform_error: c.get(`stage_${n}_structured_error`) } : {}) }, evidence: [], fields: [tf] };
     return { content_status: "not_produced", schema_version: `stage${m[1]}.text.v1`, content: null, evidence: [], fields: [tf] };
   }
+  if (outputId === EXEC_SUMMARY_OUTPUT) return executiveSummaryOutput(c);
   if (outputId.startsWith("stage16.")) {
     const f = outputId.slice(8);
     if (f === 'valuation' && c.baseline?.valuation_document) {
@@ -446,12 +448,45 @@ async function checkpoints(c: Ctx): Promise<Checkpoint[]> {
   return [];
 }
 
+const recordOf = async (id: string, c: Ctx): Promise<Row | null> => {
+  try { const b = await buildOutputInner(id, c); const ct = b.content as Row | null; return b.content_status === 'structured' && ct ? ((ct.record as Row | undefined) ?? ct) : null; }
+  catch { return null; }
+};
+/** Deterministic assembly from stored outputs at this version; writes nothing. */
+async function executiveSummaryOutput(c: Ctx): Promise<Built> {
+  if (c.run.table !== 'sessions') throw NOT_FOUND();
+  const row = c.run.row;
+  const saved = c.db.validateOutputs ? await c.db.validateOutputs(c.run.id, c.v) : null;
+  const useValidate = isValidateVariant(row, saved);
+  let validate: Row | null = null;
+  if (useValidate && saved) { const { __subject_brand: _b, ...rest } = saved; void _b; validate = rest; }
+  const s9 = c.get('stage_9_structured') as Row | null; const loc = c.get('loc_engine_outputs');
+  const rationale = c.get('selection_rationale');
+  try {
+    const built = buildExecutiveSummary({
+      runId: c.run.id, version: c.v, brand: String(row.brand_name ?? ''), runMode: isDiagnostic(c.run) ? 'diagnostic' : 'full',
+      stage1: text(c.get('stage_1_output')), stage9Ranking: Array.isArray(s9?.ranking) ? (s9!.ranking as unknown[]).length : null,
+      locEngines: loc && typeof loc === 'object' && !Array.isArray(loc) ? Object.keys(loc as Row).length : null,
+      stage10: await recordOf('stage10', c), stage11: await recordOf('stage11', c), stage12: await recordOf('stage12_propositions', c), stage13: await recordOf('stage13', c),
+      selectedSmp: text(c.get('selected_smp')), selectionRationale: rationale && typeof rationale === 'object' ? rationale as Row : null,
+      stage22Architecture: await recordOf('stage22_architecture', c), stage22Assets: await recordOf('stage22_assets', c), validate,
+    });
+    return { content_status: 'structured', schema_version: EXEC_SUMMARY_SCHEMA, content: built, evidence: [], fields: ['stage_1_output', 'stage_10_output', 'stage_11_output', 'stage_12_output', 'stage_13_output', 'selected_smp', 'selection_rationale', 'stage_22_brand_architecture', 'stage_22_distinctive_assets', ...(validate ? ['validate_assessments.outputs'] : [])] };
+  } catch (e) { throw new AccessError('unavailable', `EXEC_SUMMARY_ASSEMBLY_FAILED: ${e instanceof Error ? e.message : String(e)}`.slice(0, 300)); }
+}
+
+/** Shared with the Deliverables export: same assembly as the access point, after the caller is authorised. */
+export async function executiveSummaryForRun(db: Db, run: RunRec, v?: number) {
+  const c = await ctxFor(db, run, v);
+  return { version: c.v, ...(await executiveSummaryOutput(c)) };
+}
+
 export function documentId(runId: string, format: string, v: number) {
   return `${runId}~stage16.${format}~v${v}`;
 }
 function parseDocumentId(id: string): { runId: string; format: string; v: number } | null {
-  const m = /^([0-9a-f-]{36})~stage16\.([a-z]+)~v(\d+)$/.exec(id);
-  if (!m || !(STAGE16_FORMATS as readonly string[]).includes(m[2])) return null;
+  const m = /^([0-9a-f-]{36})~stage16\.([a-z_]+)~v(\d+)$/.exec(id);
+  if (!m || !([...STAGE16_FORMATS, 'executive_summary'] as readonly string[]).includes(m[2])) return null;
   return { runId: m[1], format: m[2], v: Number(m[3]) };
 }
 function fetchRoute(clientRef: string, runId: string, v: number, outputId: string) {
@@ -467,7 +502,10 @@ function documents(c: Ctx, clientRef: string) {
     version: c.v,
     mime: "text/markdown",
     fetch: fetchRoute(clientRef, c.run.id, c.v, `stage16.${f}`),
-  }));
+  })).concat(text(c.get('stage_13_output')) ? [{
+    document_id: documentId(c.run.id, 'executive_summary', c.v), output_id: EXEC_SUMMARY_OUTPUT, format: 'executive_summary' as never, version: c.v, mime: 'text/markdown',
+    fetch: fetchRoute(clientRef, c.run.id, c.v, EXEC_SUMMARY_OUTPUT),
+  }] : []);
 }
 function provenance(c: Ctx, fields: string[]) {
   const hist = c.vc.rows
