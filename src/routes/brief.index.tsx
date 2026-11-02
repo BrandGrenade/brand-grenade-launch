@@ -125,7 +125,7 @@ function BriefIntake() {
   const [runMode, setRunMode] = useState<"full" | "diagnostic">("full");
   const [briefType, setBriefType] = useState<"campaign" | "deal">("campaign");
   const [validateMode, setValidateMode] = useState(false);
-  const [vf, setVf] = useState({ suppliedBy: "", derivationLabel: "Client-supplied" as "Client-supplied" | "BG-derived", currentTerritory: "", strategyOwner: "", strategyDate: "", priorDecisions: "", knownThreats: "", decisionQuestions: "", evidenceStandard: "" });
+  const [vf, setVf] = useState({ suppliedBy: "", derivationLabel: "Client-supplied" as "Client-supplied" | "Owner-stated (public)" | "BG-derived", sourceQuote: "", currentTerritory: "", strategyOwner: "", strategyDate: "", priorDecisions: "", knownThreats: "", decisionQuestions: "", evidenceStandard: "" });
   const [dealTx, setDealTx] = useState("");
   const [dealTargets, setDealTargets] = useState("");
   const [dealQuestions, setDealQuestions] = useState("");
@@ -163,7 +163,7 @@ function BriefIntake() {
     if (m) {
       setBriefType(m.briefType === "deal" ? "deal" : "campaign");
       setValidateMode(!!m.validate);
-      if (m.validate) setVf({ suppliedBy: m.validate.suppliedBy, derivationLabel: m.validate.derivationLabel ?? "Client-supplied", currentTerritory: m.validate.currentTerritory, strategyOwner: m.validate.strategyOwner, strategyDate: m.validate.strategyDate ?? "", priorDecisions: m.validate.priorDecisions, knownThreats: m.validate.knownThreats, decisionQuestions: m.validate.decisionQuestions.join("\n"), evidenceStandard: m.validate.evidenceStandard });
+      if (m.validate) setVf({ suppliedBy: m.validate.suppliedBy, derivationLabel: m.validate.derivationLabel ?? "Client-supplied", sourceQuote: m.validate.sourceQuote ?? "", currentTerritory: m.validate.currentTerritory, strategyOwner: m.validate.strategyOwner, strategyDate: m.validate.strategyDate ?? "", priorDecisions: m.validate.priorDecisions, knownThreats: m.validate.knownThreats, decisionQuestions: m.validate.decisionQuestions.join("\n"), evidenceStandard: m.validate.evidenceStandard });
       setRunMode(m.runMode ?? (m.briefType === "deal" ? "diagnostic" : "full"));
       setDealTx(m.deal?.transactionType ?? "");
       setDealDepth(m.deal?.depth ?? "");
@@ -256,7 +256,7 @@ function BriefIntake() {
   function validateBriefOrNull(): ValidateBrief | null {
     const r = ValidateBriefSchema.safeParse({
       currentProposition: currentProp.trim(), source: currentPropSource.trim(), sourceDate: currentPropDate || null,
-      suppliedBy: vf.suppliedBy, derivationLabel: vf.derivationLabel, currentTerritory: vf.currentTerritory, strategyOwner: vf.strategyOwner,
+      suppliedBy: vf.suppliedBy, derivationLabel: vf.derivationLabel, sourceQuote: vf.sourceQuote.trim() || undefined, currentTerritory: vf.currentTerritory, strategyOwner: vf.strategyOwner,
       strategyDate: vf.strategyDate || null, priorDecisions: vf.priorDecisions, knownThreats: vf.knownThreats,
       decisionQuestions: linesToList(vf.decisionQuestions), evidenceStandard: vf.evidenceStandard,
     });
@@ -702,9 +702,14 @@ function BriefIntake() {
                   ))}
                   <label className="text-body-sm font-semibold">Proposition supplied as
                     <select aria-label="Proposition supplied as" value={vf.derivationLabel} onChange={(e) => setVf({ ...vf, derivationLabel: e.target.value as typeof vf.derivationLabel })} className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-body-sm" style={{ borderColor: "var(--color-border)" }}>
-                      <option value="Client-supplied">Client-supplied</option><option value="BG-derived">BG-derived</option>
+                      <option value="Client-supplied">Client-supplied</option><option value="Owner-stated (public)">Owner-stated (public)</option><option value="BG-derived">BG-derived</option>
                     </select>
                   </label>
+                  {vf.derivationLabel === "Owner-stated (public)" && (
+                    <label className="text-body-sm font-semibold sm:col-span-2">Quote from the owner's published statement (required, with source and date above; otherwise treated as BG-derived)
+                      <textarea rows={2} aria-label="Owner-stated quote" value={vf.sourceQuote} onChange={(e) => setVf({ ...vf, sourceQuote: e.target.value })} className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-body-sm" style={{ borderColor: "var(--color-border)" }} />
+                    </label>
+                  )}
                   <label className="text-body-sm font-semibold">Strategy date
                     <input type="date" aria-label="Strategy date" value={vf.strategyDate} onChange={(e) => setVf({ ...vf, strategyDate: e.target.value })} className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-body-sm" style={{ borderColor: "var(--color-border)" }} />
                   </label>
