@@ -109,6 +109,15 @@ export async function runBaselineJob(jobId:string, emit:(value:object)=>void) {
       const previous=await checked(()=>sb.from('current_position_addon_attempts').select('attempt').eq('job_id',jobId).eq('stage',stage));
       const first=(previous ?? []).length+1;
       let last=''; let saved=false;
+      // Re-read saved unreadable attempts first (no model call) before spending a new one.
+      const unread=await checked(()=>sb.from('current_position_addon_attempts').select('id,raw_output').eq('job_id',jobId).eq('stage',stage).is('result',null).not('raw_output','is',null).order('attempt'));
+      for(const a of unread ?? []){
+        try{const result=parseBaseline(stage,String(a.raw_output),job.proposition,job.source_manifest as Record<string,unknown>);
+          await checked(()=>sb.from('current_position_addon_attempts').update({result}).eq('id',a.id));
+          await checked(()=>sb.from('current_position_addon_jobs').update({results:{...(job.results as Record<string,unknown>),[stage]:result} as never,completed_stages:[...job.completed_stages,stage]}).eq('id',jobId).eq('lease_token',lease));
+          emit({stage,complete:true,message:`Stage ${stage} recovered from a saved response`});saved=true;break;}catch{/* keep looking */}
+      }
+      if(saved)continue;
       for(let attempt=first;attempt<=3;attempt++) {
         emit({stage,attempt,message:`Assessing ${subjectBrand} current position — Stage ${stage}`});
         const record=await checked(()=>sb.from('current_position_addon_attempts').insert({job_id:jobId,stage,attempt}).select('id').single());

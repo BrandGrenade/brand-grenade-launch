@@ -51,3 +51,8 @@ describe('version-aware current-position add-on',()=>{
   it('Stage 13 requires all six credibility dimensions',()=>{expect(()=>parseBaseline('13',JSON.stringify({credibility:{product_truth_alignment:dimension},most_vulnerable:'product_truth_alignment'}),line,{})).toThrow();});
   it('other-client linking does not authorize baseline access',async()=>{const db=database();db.resolveClient=async()=>'22222222-2222-4222-8222-222222222222';await expect(call(97,'stage10_current_position',db)).rejects.toThrow('Not found');});
 });
+import { parseJsonClosingBraces } from './current-position-addon';
+describe('closing-brace repair', () => {
+  it('appends only missing trailing braces', () => expect(parseJsonClosingBraces('{"a":{"b":"x}"}')).toEqual({ a: { b: 'x}' } }));
+  it('rejects other malformed JSON', () => expect(() => parseJsonClosingBraces('{"a":1 "b":2}')).toThrow());
+});
