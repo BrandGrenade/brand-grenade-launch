@@ -483,6 +483,7 @@ export type Database = {
           completed_at: string | null
           completed_stages: string[]
           created_at: string
+          entry_path: string
           error_code: string | null
           error_message: string | null
           heartbeat_at: string | null
@@ -507,6 +508,7 @@ export type Database = {
           completed_at?: string | null
           completed_stages?: string[]
           created_at?: string
+          entry_path?: string
           error_code?: string | null
           error_message?: string | null
           heartbeat_at?: string | null
@@ -531,6 +533,7 @@ export type Database = {
           completed_at?: string | null
           completed_stages?: string[]
           created_at?: string
+          entry_path?: string
           error_code?: string | null
           error_message?: string | null
           heartbeat_at?: string | null
@@ -1657,6 +1660,7 @@ export type Database = {
           truth_product: string | null
           updated_at: string
           user_id: string | null
+          validate_brief: Json | null
           version_actor: string | null
           version_reason: string | null
         }
@@ -1891,6 +1895,7 @@ export type Database = {
           truth_product?: string | null
           updated_at?: string
           user_id?: string | null
+          validate_brief?: Json | null
           version_actor?: string | null
           version_reason?: string | null
         }
@@ -2125,6 +2130,7 @@ export type Database = {
           truth_product?: string | null
           updated_at?: string
           user_id?: string | null
+          validate_brief?: Json | null
           version_actor?: string | null
           version_reason?: string | null
         }
@@ -3512,6 +3518,19 @@ export type Database = {
         }
         Returns: string
       }
+      bg_append_validate_assessment_v2: {
+        Args: {
+          _actor: string
+          _baseline: string
+          _brand: string
+          _brief: Json
+          _entry: string
+          _outputs: Json
+          _session: string
+          _version: number
+        }
+        Returns: string
+      }
       bg_attach_client: {
         Args: { _bg_client_id: string; _hub_client_id: string }
         Returns: {
@@ -3592,6 +3611,10 @@ export type Database = {
           _version: number
         }
         Returns: string
+      }
+      bg_rebind_validate_job: {
+        Args: { _job: string; _manifest: Json }
+        Returns: undefined
       }
       bg_resolve_hub: {
         Args: { _client: string; _job: string }
