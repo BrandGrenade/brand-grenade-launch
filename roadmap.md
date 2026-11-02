@@ -1,6 +1,7 @@
 # Roadmap — Partner Hub structured evidence (27 Oct 2026)
 
 ## Validate mode v1 — 30 Oct 2026
+- [x] 2 Nov rule change: three proposition sources (Client-supplied / Owner-stated (public) with source+date+quote / BG-derived); only BG-derived or missing → INSUFFICIENT EVIDENCE; owner-stated carries client-confirmation gap and note on all four outputs. 529 tests; published; live test copy v3 → REFRESH.
 - [x] Prep: checkpoint name, claim source dates, Deal null checks, Stage 10 comments/architecture rule; automated regression suite passes.
 - [x] Mode field (Campaign/Deal/Validate) fixed at start; Validate runs follow the Diagnostic path with comparator labels, auto-queued baseline on lock, and completion only once the four outputs save. Not yet exercised end to end on a real new run.
 - [x] General add-on for any client/run/brand (2 Nov): live JLR on test copy → v2, INSUFFICIENT EVIDENCE (BG-derived proposition), best comparator 70.5 vs 68.
