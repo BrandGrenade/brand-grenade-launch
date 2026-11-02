@@ -16,7 +16,7 @@ const base = (): ExecInputs => ({
   stage22Assets: { recommended_assets: [{ asset: 'Hands before names', type: 'Visual' }] }, validate: null,
 });
 const validateOutputs = () => ({
-  'validate.verdict': { notes: ['Confirm with client before relying on this verdict'], decision_questions: ['Keep, refresh or replace?'], data: { verdict: 'REFRESH', reasons: [{ code: 'CREDIBILITY_AT_OR_BELOW_5', evidence: { justification: 'No car on sale.' } }] } },
+  'validate.verdict': { notes: ['Confirm with client before relying on this verdict'], decision_questions: ['Keep, refresh or replace?'], data: { verdict: 'REFRESH', reasons: [{ code: 'CREDIBILITY_AT_OR_BELOW_5', evidence: { justification: 'No car on sale.' } as Record<string, unknown> }] } },
   'validate.current_position': { notes: ['Confirm with client before relying on this verdict'], data: { proposition: 'Made to last.', stage10: { composite: 64, competitive_impossibility: dim(6, { competitor: 'Rival Motors' }), clean_air: dim(8) } } },
   'validate.evidence_gaps': { data: { comparators: { items: [{ smp: 'Built to be kept.', composite: 71.5, code_verdict: 'PASS', role: 'comparator' }, { smp: 'Quiet power.', composite: 55, code_verdict: 'PASS', role: 'comparator' }] } } },
 });
@@ -88,7 +88,7 @@ describe('Executive Summary (stage16.executive_summary)', () => {
     const v = validateOutputs();
     v['validate.current_position'].data = { ...v['validate.current_position'].data, source_kind: 'owner-stated', source: 'Official statement', source_date: '2024-11-19' } as typeof v['validate.current_position']['data'];
     const r = buildExecutiveSummary({ ...base(), validate: v, validateSubjectBrand: 'Marlowe Motor Company' });
-    expect(r.record.sections[0].body).toContain('Is Made to last. still the right strategy for Marlowe Motor Company?');
+    expect(r.record.sections[0].body).toContain('Is "Made to last" still the right strategy for Marlowe Motor Company?');
     expect(r.record.sections[0].body).toContain('OWNER-STATED (PUBLIC)');
     expect(r.record.sections[0].body).not.toContain('Governing tension');
   });

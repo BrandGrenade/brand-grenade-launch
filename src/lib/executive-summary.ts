@@ -133,7 +133,7 @@ export function buildExecutiveSummary(inp: ExecInputs): { record: ExecutiveSumma
   const current = (validate?.['validate.current_position'] as Row | undefined)?.data as Row | undefined;
   const subjectBrand = inp.validateSubjectBrand ?? inp.brand;
   const sourceKind = current?.source_kind === 'owner-stated' ? 'OWNER-STATED (PUBLIC)' : current?.source_kind === 'client' ? 'CLIENT-SUPPLIED' : 'BG-DERIVED';
-  const s1 = validate ? `Is ${str(current?.proposition) ?? MISSING} still the right strategy for ${subjectBrand}? Current strategy source: ${sourceKind}. ${str(current?.source) ?? MISSING}${str(current?.source_date) ? ` (${current?.source_date})` : ''}.` : campaignChallenge;
+  const s1 = validate ? `Is "${(str(current?.proposition) ?? MISSING).replace(/[.!?]+$/, '')}" still the right strategy for ${subjectBrand}? Current strategy source: ${sourceKind}. ${str(current?.source) ?? MISSING}${str(current?.source_date) ? ` (${current?.source_date})` : ''}.` : campaignChallenge;
   // (2) Finding — Stage 1 human/cultural shift, the evidence the tension rests on.
   const s2 = condense(mdSection(inp.stage1, /Human \/ Cultural Shift|Cultural Shift/i), 60, 2);
   // (3) Process line.
@@ -196,9 +196,9 @@ export function buildExecutiveSummary(inp: ExecInputs): { record: ExecutiveSumma
       items: (v?.reasons ?? []).map((r, i) => ({ label: `Reason ${i + 1}`, text: explainReason(r.code, r.evidence), role: 'reason' })),
     });
   } else {
-    const resolves = condense(str(inp.selectionRationale?.f2) ?? str(inp.selectionRationale?.f1), 30, 2);
+    const resolves = condense(str(inp.selectionRationale?.f2) ?? str(inp.selectionRationale?.f1), 30, 2)?.replace(/^Credibility\./, 'It resolves the credibility tension.');
     const truth = condense(str(cardW?.truth), 55, 1);
-    const ci = condense(str((s10w?.competitive_impossibility as Row | undefined)?.justification), 30, 2);
+    const ci = condense(str((s10w?.competitive_impossibility as Row | undefined)?.justification), 30, 2)?.replace(/^Possible only/, 'A competitor could say it only');
     const parts = [resolves && `Tension it resolves: ${resolves}`, truth && `True of this brand: ${truth}`, ci && `Why a competitor could not say it: ${ci}`].filter(Boolean);
     s6 = sec(6, parts.length ? parts.join(' ') : null, ['Stage 12 rationale', 'Stage 12 card', 'Stage 10']);
   }
