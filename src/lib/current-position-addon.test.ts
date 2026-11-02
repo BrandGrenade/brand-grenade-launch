@@ -1,5 +1,6 @@
 import {describe,it,expect} from 'vitest';
-import {baselineAtVersion,parseBaseline,terminalBaselineError,INFINITI_PROPOSITION} from './current-position-addon';
+import {baselineAtVersion,parseBaseline,terminalBaselineError} from './current-position-addon';
+const INFINITI_PROPOSITION='Japanese precision and thoughtful hospitality, expressed through the car and the ownership experience.';
 import {handleAccess,type Db,type LogEntry} from './access/core';
 
 const line=INFINITI_PROPOSITION;
