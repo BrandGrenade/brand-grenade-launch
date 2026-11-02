@@ -25,8 +25,9 @@ const mentions=(text:string,brand:string,width=900,limit=6)=>{
 /** Saved research for any client/run/brand. Read-only; shared by both Validate routes. */
 export async function gatherBaselineEvidence(sessionId:string,subjectBrand:string){
   const session=await checked(()=>sb.from('sessions').select('id,brand_name,category,brief_text,bg_client_id,test_copy_of').eq('id',sessionId).single());
+  if(!session)throw new Error(`${BASELINE_ERRORS.evidence}: run not found`);
   let clientId=session.bg_client_id as string|null;
-  if(!clientId&&session.test_copy_of){const o=await checked(()=>sb.from('sessions').select('bg_client_id').eq('id',session.test_copy_of as string).single());clientId=o.bg_client_id as string|null;}
+  if(!clientId&&session.test_copy_of){const o=await checked(()=>sb.from('sessions').select('bg_client_id').eq('id',session.test_copy_of as string).single());clientId=(o?.bg_client_id as string|null)??null;}
   const brief=mentions(session.brief_text??'',subjectBrand);
   const source_runs:Row[]=[{run_id:sessionId,kind:'run_brief'}];
   let evidence:Row[]=[];let lab_context:string[]=[];
@@ -55,7 +56,7 @@ export async function queueBaseline(actor:string,a:QueueBaselineArgs){
   if(!ev.brief_excerpts.length&&!ev.evidence.length&&!ev.lab_context)throw new Error(`${BASELINE_ERRORS.evidence}: no saved research for ${a.subjectBrand} on this run or its client`);
   const manifest={derivation_label:a.derivationLabel,subject_brand:a.subjectBrand.trim(),proposition:a.proposition,proposition_source:a.source,proposition_source_date:a.sourceDate,supplied_by:a.suppliedBy,
     derivation_note:a.derivationNote??null,entry_path:'addon',...ev};
-  return checked(()=>sb.rpc('bg_queue_current_position_addon',{_session:a.sessionId,_version:a.version,_actor:actor,_proposition:a.proposition,_manifest:manifest}));
+  return checked(()=>sb.rpc('bg_queue_current_position_addon',{_session:a.sessionId,_version:a.version,_actor:actor,_proposition:a.proposition,_manifest:manifest as never}));
 }
 
 export async function loadBaseline(jobId: string) {
