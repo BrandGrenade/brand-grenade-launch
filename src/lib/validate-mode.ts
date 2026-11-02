@@ -6,6 +6,7 @@ export const ValidateBriefSchema = z.object({
   currentProposition: z.string().trim().min(1), source: z.string().trim().min(1), sourceDate: z.string().nullable(), suppliedBy: z.string().trim().min(1),
   currentTerritory: z.string().trim().min(1), strategyOwner: z.string().trim().min(1), strategyDate: z.string().nullable(),
   priorDecisions: z.string(), knownThreats: z.string(), decisionQuestions: z.array(z.string().min(1)).min(1), evidenceStandard: z.string().trim().min(1),
+  derivationLabel: z.enum(['Client-supplied','BG-derived']).optional(),
 });
 export type ValidateBrief = z.infer<typeof ValidateBriefSchema>;
 export type ValidateInputs = { sourceKind: 'client' | 'BG-derived' | 'unverified'; baseline: Record<string, unknown>; bestAlternativeComposite: number | null };
