@@ -1,5 +1,9 @@
 # Roadmap — Partner Hub structured evidence (27 Oct 2026)
 
+## Executive Summary (register #41) — 2 Nov 2026
+- [x] Deterministic nine-section assembly, gates, Diagnostic/Validate variants, access contract, Deliverables export, tests.
+- [ ] Publish; live access-point reads for JLR v97 and Creative Engine test copy v3.
+
 ## Validate mode v1 — 30 Oct 2026
 - [x] 2 Nov rule change: three proposition sources (Client-supplied / Owner-stated (public) with source+date+quote / BG-derived); only BG-derived or missing → INSUFFICIENT EVIDENCE; owner-stated carries client-confirmation gap and note on all four outputs. 529 tests; published; live test copy v3 → REFRESH.
 - [x] Prep: checkpoint name, claim source dates, Deal null checks, Stage 10 comments/architecture rule; automated regression suite passes.
