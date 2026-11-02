@@ -3047,5 +3047,163 @@
     }
    ]
   }
+ },
+ {
+  "run": "pipeline",
+  "output_id": "stage16.executive_summary",
+  "content_status": "structured",
+  "schema_version": "stage16.executive_summary.v1",
+  "content": {
+   "record": {
+    "schema_version": "stage16.executive_summary.v1",
+    "run_id": "3470f1ad-b322-4230-8e3d-bf0072e95b7a",
+    "version": 97,
+    "brand": "JLR",
+    "variant": "full",
+    "notes": [],
+    "sections": [
+     {
+      "number": 1,
+      "title": "The Challenge",
+      "status": "ok",
+      "body": "Jaguar asks for a repositioning that presents a newly combined line-up. Governing tension: The standard is set by a car nobody can own; the house is being judged by the cars that are not it.",
+      "sources": [
+       "Stage 1 (Briefing Room tension)"
+      ]
+     },
+     {
+      "number": 2,
+      "title": "What We Found",
+      "status": "ok",
+      "body": "Luxury buyers now affiliate before they purchase: 50,000-plus people registered interest in a car that did not exist to buy, roughly 80% of them having never owned a Jaguar, which is a declaration of belonging made in advance of a transaction.",
+      "sources": [
+       "Stage 1"
+      ]
+     },
+     {
+      "number": 3,
+      "title": "The Process, In Brief",
+      "status": "ok",
+      "body": "Research → methodologies and 13 lateral engines → 6 propositions generated → validation (Stage 10 scored, Stage 11 tested 6) → one recommendation",
+      "sources": [
+       "Stage 8B",
+       "Stage 9",
+       "Stage 10",
+       "Stage 11"
+      ]
+     },
+     {
+      "number": 4,
+      "title": "The Shortlist",
+      "status": "ok",
+      "body": "4 propositions seriously considered.",
+      "items": [
+       {
+        "label": "One house. Every ambition. Including the one you have now.",
+        "text": "This proposition takes the position that the ambition a buyer has today is a complete ambition, not a stepping stone to a better one. Set aside: Stage 10 composite 63.5/90 against 70.5/90 for the recommendation; Stage 11 VALIDATED WITH STRATEGIC NOTE.",
+        "role": "considered"
+       },
+       {
+        "label": "Change the car. Keep the standing.",
+        "text": "This proposition moves status out of the object and into the person. Set aside: Stage 10 composite 54.5/90 against 70.5/90 for the recommendation; Stage 11 VALIDATED — EXPOSED.",
+        "role": "considered"
+       },
+       {
+        "label": "The jaguar doesn't share its name lightly.",
+        "text": "This proposition turns the brand's own name into a standard that every car has to meet before it is allowed to carry it. Selected.",
+        "role": "recommendation"
+       },
+       {
+        "label": "You'll never see it try.",
+        "text": "This proposition claims composure — capability that is real, proven elsewhere, and deliberately never performed. Set aside: Stage 10 composite 66/90 against 70.5/90 for the recommendation; Stage 11 VALIDATED.",
+        "role": "considered"
+       }
+      ],
+      "sources": [
+       "Stage 12",
+       "Stage 10",
+       "Stage 11"
+      ]
+     },
+     {
+      "number": 5,
+      "title": "The Recommendation",
+      "status": "ok",
+      "body": "\"The jaguar doesn't share its name lightly.\" (The Name As Threshold).",
+      "sources": [
+       "Stage 12 selection"
+      ]
+     },
+     {
+      "number": 6,
+      "title": "Why This Wins",
+      "status": "ok",
+      "body": "Tension it resolves: Credibility. It answers the question every buyer and journalist will ask about the merger, so the rebadge reads as a mark of quality rather than something to explain away. True of this brand: Jaguar is named after a creature with a temperament a product can genuinely fail to live up to, and it runs a single badge with no lesser marque beneath it,… Why a competitor could not say it: Possible only through fundamental contradiction.",
+      "sources": [
+       "Stage 12 rationale",
+       "Stage 12 card",
+       "Stage 10"
+      ]
+     },
+     {
+      "number": 7,
+      "title": "The Proof, At A Glance",
+      "status": "ok",
+      "body": "At a glance:",
+      "table": [
+       {
+        "measure": "Stage 10 score",
+        "value": "70.5/90",
+        "source": "Stage 10"
+       },
+       {
+        "measure": "Distinctive asset in play",
+        "value": "Hands before names (Visual)",
+        "source": "Stage 22"
+       },
+       {
+        "measure": "Competitive impossibility",
+        "value": "9/10",
+        "source": "Stage 10"
+       },
+       {
+        "measure": "Clean air",
+        "value": "8/10",
+        "source": "Stage 10"
+       }
+      ],
+      "sources": [
+       "Stage 10",
+       "Stage 22"
+      ]
+     },
+     {
+      "number": 8,
+      "title": "The Brand World",
+      "status": "ok",
+      "body": "Premium automotive, held by reserve, candour, devotion. Personality: Unhurried, exacting, unfinished. Assets: \"Nobody arrived finished.\"; Morgan Freeman narration; Hands recognised before names; Badge withheld until last.",
+      "sources": [
+       "Stage 22"
+      ]
+     },
+     {
+      "number": 9,
+      "title": "The Next Step",
+      "status": "ok",
+      "body": "Build and publish the standard, then submit to it. Jaguar must put into the public domain a named ownership standard with criteria specific enough that a motoring journalist can test a vehicle against them — and must then accept being measured against it. By: Not available in this run.",
+      "sources": [
+       "Stage 13 commitments"
+      ]
+     }
+    ],
+    "word_count": 574,
+    "gates": {
+     "banned_words": [],
+     "numbers_checked": 63,
+     "language": "en-AU"
+    }
+   },
+   "text": "# JLR — Executive Summary\n\n## 1. The Challenge\nJaguar asks for a repositioning that presents a newly combined line-up. Governing tension: The standard is set by a car nobody can own; the house is being judged by the cars that are not it.\n_Source: Stage 1 (Briefing Room tension)_\n\n## 2. What We Found\nLuxury buyers now affiliate before they purchase: 50,000-plus people registered interest in a car that did not exist to buy, roughly 80% of them having never owned a Jaguar, which is a declaration of belonging made in advance of a transaction.\n_Source: Stage 1_\n\n## 3. The Process, In Brief\nResearch → methodologies and 13 lateral engines → 6 propositions generated → validation (Stage 10 scored, Stage 11 tested 6) → one recommendation\n_Source: Stage 8B, Stage 9, Stage 10, Stage 11_\n\n## 4. The Shortlist\n4 propositions seriously considered.\n- **\"One house. Every ambition. Including the one you have now.\"** This proposition takes the position that the ambition a buyer has today is a complete ambition, not a stepping stone to a better one. Set aside: Stage 10 composite 63.5/90 against 70.5/90 for the recommendation; Stage 11 VALIDATED WITH STRATEGIC NOTE.\n- **\"Change the car. Keep the standing.\"** This proposition moves status out of the object and into the person. Set aside: Stage 10 composite 54.5/90 against 70.5/90 for the recommendation; Stage 11 VALIDATED — EXPOSED.\n- **\"The jaguar doesn't share its name lightly.\"** This proposition turns the brand's own name into a standard that every car has to meet before it is allowed to carry it. Selected.\n- **\"You'll never see it try.\"** This proposition claims composure — capability that is real, proven elsewhere, and deliberately never performed. Set aside: Stage 10 composite 66/90 against 70.5/90 for the recommendation; Stage 11 VALIDATED.\n_Source: Stage 12, Stage 10, Stage 11_\n\n## 5. The Recommendation\n\"The jaguar doesn't share its name lightly.\" (The Name As Threshold).\n_Source: Stage 12 selection_\n\n## 6. Why This Wins\nTension it resolves: Credibility. It answers the question every buyer and journalist will ask about the merger, so the rebadge reads as a mark of quality rather than something to explain away. True of this brand: Jaguar is named after a creature with a temperament a product can genuinely fail to live up to, and it runs a single badge with no lesser marque beneath it,… Why a competitor could not say it: Possible only through fundamental contradiction.\n_Source: Stage 12 rationale, Stage 12 card, Stage 10_\n\n## 7. The Proof, At A Glance\nAt a glance:\n| Measure | Value | Source |\n|---|---|---|\n| Stage 10 score | 70.5/90 | Stage 10 |\n| Distinctive asset in play | Hands before names (Visual) | Stage 22 |\n| Competitive impossibility | 9/10 | Stage 10 |\n| Clean air | 8/10 | Stage 10 |\n_Source: Stage 10, Stage 22_\n\n## 8. The Brand World\nPremium automotive, held by reserve, candour, devotion. Personality: Unhurried, exacting, unfinished. Assets: \"Nobody arrived finished.\"; Morgan Freeman narration; Hands recognised before names; Badge withheld until last.\n_Source: Stage 22_\n\n## 9. The Next Step\nBuild and publish the standard, then submit to it. Jaguar must put into the public domain a named ownership standard with criteria specific enough that a motoring journalist can test a vehicle against them — and must then accept being measured against it. By: Not available in this run.\n_Source: Stage 13 commitments_"
+  }
  }
 ]

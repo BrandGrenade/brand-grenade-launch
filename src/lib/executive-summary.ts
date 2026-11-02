@@ -199,10 +199,7 @@ export function buildExecutiveSummary(inp: ExecInputs): { record: ExecutiveSumma
 
   // Gates: banned words (outside verbatim quotes), invented numbers, length.
   const hits = findBannedWordHits({ text: text.replace(/"[^"]*"/g, ''), terms: UNIVERSAL_BANNED_STAGE9, rule: 'universal', stageLabel: 'Stage 16', columnLabel: EXEC_SUMMARY_OUTPUT }).map(h => h.match);
-  const corpus = JSON.stringify(inp);
-  const nums = text.match(/\d+(?:[.,]\d+)*/g) ?? [];
-  const STRUCTURAL = new Set(['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '16', '22', '90', '8B']);
-  for (const n of nums) if (!STRUCTURAL.has(n) && !derived.has(n) && !corpus.includes(n)) throw new Error(`EXEC_SUMMARY_INVENTED_NUMBER: ${n}`);
+  const nums = assertNoInventedNumbers(text, JSON.stringify(inp), derived);
   const record = ExecutiveSummarySchema.parse({ schema_version: EXEC_SUMMARY_SCHEMA, run_id: inp.runId, version: inp.version, brand: inp.brand, variant, notes: [...notes], sections, word_count: words(text), gates: { banned_words: hits, numbers_checked: nums.length, language: 'en-AU' } });
   return { record, text };
 }
@@ -217,4 +214,12 @@ function render(brand: string, variant: string, notes: string[], sections: Secti
     if (s.sources.length) out.push(`_Source: ${s.sources.join(', ')}_`);
   }
   return out.filter(x => x !== '').join('\n');
+}
+
+const STRUCTURAL = new Set(['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '16', '22', '90']);
+/** Invented-number gate: every number must be structural, a derived count, or present in stored inputs. */
+export function assertNoInventedNumbers(text: string, corpus: string, derived: Set<string> = new Set()): string[] {
+  const nums = text.match(/\d+(?:[.,]\d+)*/g) ?? [];
+  for (const n of nums) if (!STRUCTURAL.has(n) && !derived.has(n) && !corpus.includes(n)) throw new Error(`EXEC_SUMMARY_INVENTED_NUMBER: ${n}`);
+  return nums;
 }

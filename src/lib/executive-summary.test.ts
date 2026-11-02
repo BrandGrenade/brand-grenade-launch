@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildExecutiveSummary, ExecutiveSummarySchema, MISSING, NOT_IN_TYPE, DOC_MAX_WORDS, SECTION_MAX_WORDS, isValidateVariant, type ExecInputs } from './executive-summary';
+import { buildExecutiveSummary, ExecutiveSummarySchema, MISSING, NOT_IN_TYPE, DOC_MAX_WORDS, SECTION_MAX_WORDS, isValidateVariant, assertNoInventedNumbers, type ExecInputs } from './executive-summary';
 import { CONTRACTS } from './access/contracts';
 
 const dim = (score: number, extra: Record<string, unknown> = {}) => ({ score, justification: 'Possible only through fundamental contradiction. Rivals are bound to their own heritage claims.', ...extra });
@@ -44,10 +44,8 @@ describe('Executive Summary (stage16.executive_summary)', () => {
     expect(r.record.sections[3].items!.length).toBeLessThanOrEqual(5);
   });
   it('rejects an invented number with a named error', () => {
-    const i = base(); (i.stage22Assets!.recommended_assets as { asset: string }[])[0].asset = 'Hands';
-    // Inject a number that is not present in any stored input.
-    const r = buildExecutiveSummary(i); expect(r.text).not.toContain('4242');
-    expect(() => buildExecutiveSummary({ ...i, brand: 'Marlowe 4242', runId: i.runId })).not.toThrow(); // brand is stored input
+    expect(() => assertNoInventedNumbers('Composite 71.5/90 and 4242 buyers', JSON.stringify(base()))).toThrow('EXEC_SUMMARY_INVENTED_NUMBER: 4242');
+    expect(assertNoInventedNumbers('Composite 71.5/90', JSON.stringify(base()))).toEqual(['71.5', '90']);
   });
   it('Diagnostic run: sections needing later stages show "Not in this run type"', () => {
     const r = buildExecutiveSummary({ ...base(), runMode: 'diagnostic', stage22Architecture: null, stage22Assets: null });
