@@ -1,5 +1,11 @@
 # Roadmap — Partner Hub structured evidence (27 Oct 2026)
 
+## Executive Summary follow-up — 2 Nov 2026
+- [ ] Audit test-copy Stage 10 scores and comparator counts by saved version; preserve all outputs.
+- [ ] Correct Validate challenge/reasons/comparators/proposition-specific Brand World, full-run ordering, sentence integrity and proposed creative labels; add tests.
+- [ ] Mark test copy in access metadata and exclude it from current/default client selection; test JLR resolution.
+- [ ] Run full suite, publish only after passing, retrieve both live summaries, confirm unchanged run fingerprints, report both in full.
+
 ## Executive Summary (register #41) — 2 Nov 2026
 - [x] Deterministic nine-section assembly, gates, Diagnostic/Validate variants, access contract, Deliverables export, tests.
 - [x] Published; live access-point reads for JLR v97 (full, 574 words) and test copy v3 (validate, 479 words); Deliverables download checked live; JLR fingerprint unchanged.
