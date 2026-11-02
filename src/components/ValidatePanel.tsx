@@ -61,13 +61,13 @@ export function ValidateRunStatus({ sessionId, poll = true, onAssessment }: { se
 
 export function AddonQueueForm({ sessionId, version, brand }: { sessionId: string; version: number; brand: string }) {
   const queue = useServerFn(queueValidateBaseline);
-  const [f, setF] = useState({ proposition: "", derivationLabel: "BG-derived" as "BG-derived" | "Client-supplied", source: "", sourceDate: "", suppliedBy: "" });
+  const [f, setF] = useState({ proposition: "", derivationLabel: "BG-derived" as "BG-derived" | "Client-supplied" | "Owner-stated (public)", source: "", sourceDate: "", suppliedBy: "", sourceQuote: "" });
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const ok = sessionId && brand.trim() && f.proposition.trim() && f.source.trim() && f.suppliedBy.trim();
   async function go() {
     setBusy(true); setMsg(null);
-    try { const r = await queue({ data: { sessionId, version, subjectBrand: brand, ...f, sourceDate: f.sourceDate || null } }); setMsg(`Queued assessment ${r.jobId}. It runs in the background; reload to see progress.`); }
+    try { const r = await queue({ data: { sessionId, version, subjectBrand: brand, ...f, sourceDate: f.sourceDate || null, sourceQuote: f.sourceQuote.trim() || undefined } }); setMsg(`Queued assessment ${r.jobId}. It runs in the background; reload to see progress.`); }
     catch (e) { setMsg(e instanceof Error ? e.message : String(e)); } finally { setBusy(false); }
   }
   return (
@@ -75,7 +75,8 @@ export function AddonQueueForm({ sessionId, version, brand }: { sessionId: strin
       <summary className="cursor-pointer text-sm font-semibold">Run a current-position assessment for this brand</summary>
       <div className="mt-3 grid gap-3 sm:grid-cols-2">
         <label className="text-sm">Current proposition<textarea aria-label="Current proposition to assess" className="input-base mt-2 w-full" rows={2} value={f.proposition} onChange={(e) => setF({ ...f, proposition: e.target.value })} /></label>
-        <label className="text-sm">Who supplied it<select aria-label="Who supplied it" className="input-base mt-2 w-full" value={f.derivationLabel} onChange={(e) => setF({ ...f, derivationLabel: e.target.value as typeof f.derivationLabel })}><option value="BG-derived">BG-derived from saved research</option><option value="Client-supplied">Client-supplied</option></select></label>
+        <label className="text-sm">Who supplied it<select aria-label="Who supplied it" className="input-base mt-2 w-full" value={f.derivationLabel} onChange={(e) => setF({ ...f, derivationLabel: e.target.value as typeof f.derivationLabel })}><option value="BG-derived">BG-derived from saved research</option><option value="Client-supplied">Client-supplied</option><option value="Owner-stated (public)">Owner-stated (public) — needs source, date and quote</option></select></label>
+        {f.derivationLabel === "Owner-stated (public)" && <label className="text-sm sm:col-span-2">Quote from the owner's published statement<textarea aria-label="Owner-stated quote" className="input-base mt-2 w-full" rows={2} value={f.sourceQuote} onChange={(e) => setF({ ...f, sourceQuote: e.target.value })} /></label>}
         <label className="text-sm">Source<input aria-label="Proposition source" className="input-base mt-2 w-full" value={f.source} onChange={(e) => setF({ ...f, source: e.target.value })} /></label>
         <label className="text-sm">Source date<input aria-label="Proposition source date" type="date" className="input-base mt-2 w-full" value={f.sourceDate} onChange={(e) => setF({ ...f, sourceDate: e.target.value })} /></label>
         <label className="text-sm">Supplied by<input aria-label="Supplied by" className="input-base mt-2 w-full" value={f.suppliedBy} onChange={(e) => setF({ ...f, suppliedBy: e.target.value })} /></label>
