@@ -51,3 +51,16 @@ describe('version-aware current-position add-on',()=>{
   it('Stage 13 requires all six credibility dimensions',()=>{expect(()=>parseBaseline('13',JSON.stringify({credibility:{product_truth_alignment:dimension},most_vulnerable:'product_truth_alignment'}),line,{})).toThrow();});
   it('other-client linking does not authorize baseline access',async()=>{const db=database();db.resolveClient=async()=>'22222222-2222-4222-8222-222222222222';await expect(call(97,'stage10_current_position',db)).rejects.toThrow('Not found');});
 });
+import { parseJsonClosingBraces } from './current-position-addon';
+describe('closing-brace repair', () => {
+  it('appends only missing trailing braces', () => expect(parseJsonClosingBraces('{"a":{"b":"x}"}')).toEqual({ a: { b: 'x}' } }));
+  it('rejects other malformed JSON', () => expect(() => parseJsonClosingBraces('{"a":1 "b":2}')).toThrow());
+});
+describe('Stage 13 nested most_vulnerable', () => {
+  it('only the named key is hoisted out of credibility', () => {
+    const dim = { score: 6, justification: 'e' };
+    const raw = JSON.stringify({ credibility: { product_truth_alignment: dim, audience_permission: dim, tonal_compatibility: dim, behavioural_capacity: dim, cultural_authority: dim, historical_consistency: dim, most_vulnerable: 'behavioural_capacity' } }).slice(0, -1);
+    const r = parseBaseline('13', raw, 'P', { derivation_label: 'BG-derived', subject_brand: 'B' }) as { most_vulnerable: string; credibility: Record<string, unknown> };
+    expect(r.most_vulnerable).toBe('behavioural_capacity'); expect(Object.keys(r.credibility)).toHaveLength(6);
+  });
+});

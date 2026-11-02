@@ -3563,6 +3563,10 @@ export type Database = {
         }[]
       }
       bg_diagnostic_complete: { Args: { n: Json }; Returns: boolean }
+      bg_effective_derivation: {
+        Args: { _date: string; _label: string; _quote: string; _source: string }
+        Returns: string
+      }
       bg_ensure_client: {
         Args: { _hub_client_id: string; _name: string }
         Returns: {

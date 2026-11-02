@@ -1,3 +1,4 @@
+import { effectiveDerivation } from './validate-mode';
 import { Stage10Schema, Stage10CurrentPositionSchema, Stage11CurrentPositionSchema, Stage13CurrentPositionSchema } from './structured-output';
 import { computeWeightedComposite, evaluateStage10Verdict } from './stage12-filter';
 
@@ -10,12 +11,13 @@ export const BASELINE_ERRORS = {
 
 export function parseBaseline(stage: BaselineStage, raw: string, line: string, manifest: Record<string, unknown>) {
   const block = raw.includes('<<<STRUCTURED_JSON') ? raw.split('<<<STRUCTURED_JSON')[1]?.split('>>>')[0] : raw;
-  const parsed = JSON.parse((block ?? '').replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '').trim());
-  const clientSupplied = manifest.derivation_label === 'Client-supplied';
+  const parsed = parseJsonClosingBraces((block ?? '').replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '').trim());
+  const derivation = effectiveDerivation(manifest.derivation_label, { source: manifest.proposition_source, date: manifest.proposition_source_date, quote: manifest.proposition_source_quote });
+  const clientSupplied = derivation === 'Client-supplied';
   const envelope = { status: 'scored', line, evidence_label: clientSupplied ? 'Client-supplied' : 'Unverified',
     source: typeof manifest.proposition_source === 'string' ? manifest.proposition_source : 'Specified saved research; see source_manifest',
     source_date: typeof manifest.proposition_source_date === 'string' ? manifest.proposition_source_date : null,
-    is_current: true, excluded_from_selection: true, derivation_label: clientSupplied ? 'Client-supplied' : 'BG-derived',
+    is_current: true, excluded_from_selection: true, derivation_label: derivation === 'unverified' ? 'BG-derived' : derivation,
     subject_brand: String(manifest.subject_brand ?? ''), source_manifest: manifest };
   if (stage === '10') {
     const row = Stage10Schema.shape.scores.element.parse(parsed);
@@ -29,7 +31,12 @@ export function parseBaseline(stage: BaselineStage, raw: string, line: string, m
       deltas: [], comparison_note: 'No cross-brand delta: alternative comparisons require version-matched evidence for the same subject brand.' };
     Stage10CurrentPositionSchema.parse(result); return result;
   }
-  const result = { ...parsed, ...envelope };
+  // Known Stage 13 slip: a missing brace nests most_vulnerable inside credibility. Hoist only that named key.
+  const p13 = parsed as { credibility?: Record<string, unknown>; most_vulnerable?: unknown };
+  if (stage === '13' && p13?.credibility && p13.most_vulnerable === undefined && typeof p13.credibility.most_vulnerable === 'string') {
+    const { most_vulnerable, ...credibility } = p13.credibility; p13.credibility = credibility; p13.most_vulnerable = most_vulnerable;
+  }
+  const result = { ...(parsed as object), ...envelope };
   if (stage === '11') {
     if (result.smp !== line) throw new Error('Baseline proposition was changed');
     Stage11CurrentPositionSchema.parse(result);
@@ -44,4 +51,17 @@ export function terminalBaselineError(message: string) {
 export function baselineAtVersion(jobs: Record<string, unknown>[], version: number) {
   return jobs.filter(j => j.status === 'complete' && typeof j.published_version === 'number' && j.published_version <= version)
     .sort((a,b) => Number(b.published_version)-Number(a.published_version))[0] ?? null;
+}
+/** Parses JSON; if the only defect is missing closing braces/brackets at the very end, appends them. Never alters content. */
+export function parseJsonClosingBraces(text: string): unknown {
+  try { return JSON.parse(text); } catch (first) {
+    const stack: string[] = []; let inStr = false, esc = false;
+    for (const ch of text) {
+      if (inStr) { if (esc) esc = false; else if (ch === '\\') esc = true; else if (ch === '"') inStr = false; continue; }
+      if (ch === '"') inStr = true; else if (ch === '{') stack.push('}'); else if (ch === '[') stack.push(']');
+      else if (ch === '}' || ch === ']') { if (stack.pop() !== ch) throw first; }
+    }
+    if (inStr || !stack.length) throw first;
+    return JSON.parse(text + stack.reverse().join(''));
+  }
 }

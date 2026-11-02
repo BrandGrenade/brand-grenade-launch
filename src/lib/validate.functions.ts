@@ -16,7 +16,7 @@ export const saveValidateAssessment=createServerFn({method:'POST'}).middleware([
   return {id:result.id,outputs:JSON.stringify(result.outputs)};
 });
 const QueueInput=z.object({sessionId:z.string().uuid(),version:z.number().int().min(1),subjectBrand:z.string().trim().min(1).max(200),proposition:z.string().trim().min(1).max(2000),
-  derivationLabel:z.enum(['BG-derived','Client-supplied']),source:z.string().trim().min(1).max(1000),sourceDate:z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),suppliedBy:z.string().trim().min(1).max(300)});
+  derivationLabel:z.enum(['BG-derived','Client-supplied','Owner-stated (public)']),source:z.string().trim().min(1).max(1000),sourceDate:z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),suppliedBy:z.string().trim().min(1).max(300),sourceQuote:z.string().trim().max(4000).optional()});
 /** Route (a) add-on for any client, locked run and brand. */
 export const queueValidateBaseline=createServerFn({method:'POST'}).middleware([requireSupabaseAuth]).inputValidator(i=>QueueInput.parse(i)).handler(async({data,context})=>{
   const {data:admin,error}=await context.supabase.rpc('bg_is_admin',{_uid:context.userId});

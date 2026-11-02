@@ -6,10 +6,23 @@ export const ValidateBriefSchema = z.object({
   currentProposition: z.string().trim().min(1), source: z.string().trim().min(1), sourceDate: z.string().nullable(), suppliedBy: z.string().trim().min(1),
   currentTerritory: z.string().trim().min(1), strategyOwner: z.string().trim().min(1), strategyDate: z.string().nullable(),
   priorDecisions: z.string(), knownThreats: z.string(), decisionQuestions: z.array(z.string().min(1)).min(1), evidenceStandard: z.string().trim().min(1),
-  derivationLabel: z.enum(['Client-supplied','BG-derived']).optional(),
+  derivationLabel: z.enum(['Client-supplied','Owner-stated (public)','BG-derived']).optional(),
+  sourceQuote: z.string().optional(),
 });
+export const DERIVATION_LABELS = ['Client-supplied','Owner-stated (public)','BG-derived'] as const;
+export type DerivationLabel = typeof DERIVATION_LABELS[number];
+export const CONFIRM_WITH_CLIENT_NOTE = 'Confirm with client before relying on this verdict';
+export const OWNER_STATED_GAP = 'proposition not confirmed by client — could reverse the verdict';
+/** OWNER-STATED (PUBLIC) needs a cited source, date and quote; otherwise it is treated as BG-DERIVED. */
+export function effectiveDerivation(label: unknown, cite: { source?: unknown; date?: unknown; quote?: unknown }): DerivationLabel | 'unverified' {
+  const has = (v: unknown) => typeof v === 'string' && v.trim().length > 0;
+  if (label === 'Client-supplied') return 'Client-supplied';
+  if (label === 'Owner-stated (public)') return has(cite.source) && has(cite.date) && has(cite.quote) ? 'Owner-stated (public)' : 'BG-derived';
+  if (label === 'BG-derived') return 'BG-derived';
+  return 'unverified';
+}
 export type ValidateBrief = z.infer<typeof ValidateBriefSchema>;
-export type ValidateInputs = { sourceKind: 'client' | 'BG-derived' | 'unverified'; baseline: Record<string, unknown>; bestAlternativeComposite: number | null };
+export type ValidateInputs = { sourceKind: 'client' | 'owner-stated' | 'BG-derived' | 'unverified'; baseline: Record<string, unknown>; bestAlternativeComposite: number | null };
 export type VerdictCode = 'INSUFFICIENT EVIDENCE' | 'REPLACE' | 'REFRESH' | 'KEEP';
 export type Reason = { code: string; evidence: unknown };
 const CRED = ['product_truth_alignment','audience_permission','tonal_compatibility','behavioural_capacity','cultural_authority','historical_consistency'] as const;
@@ -20,7 +33,7 @@ export function validateVerdict(input: ValidateInputs): { verdict: VerdictCode; 
   const s11 = Stage11CurrentPositionSchema.safeParse(input.baseline['11']);
   const s13 = Stage13CurrentPositionSchema.safeParse(input.baseline['13']);
   const reasons: Reason[] = [];
-  if (input.sourceKind !== 'client') reasons.push({code:'PROPOSITION_NOT_CLIENT_SUPPLIED', evidence:input.sourceKind});
+  if (input.sourceKind === 'BG-derived' || input.sourceKind === 'unverified') reasons.push({code:'PROPOSITION_NOT_CLIENT_SUPPLIED', evidence:input.sourceKind});
   if (input.bestAlternativeComposite === null) reasons.push({code:'no alternative comparison',evidence:{missing_comparison:'Version-matched saved same-brand best alternative Stage 10 composite (out of 90) compared with the existing proposition',baseline_composite:s10.success?s10.data.composite:null}});
   for (const [stage, parsed] of [['10',s10],['11',s11],['13',s13]] as const) {
     if (!parsed.success) reasons.push({code:`BASELINE_${stage}_MISSING_OR_INVALID`, evidence:parsed.error.issues.map(i=>({path:i.path,message:i.message}))});
@@ -53,15 +66,18 @@ export function validateVerdict(input: ValidateInputs): { verdict: VerdictCode; 
 export const ValidateOutputSchema = z.object({
   mode:z.literal('validate'), run_id:z.string().uuid(), run_version:z.number().int().min(1), decision_questions:z.array(z.string()),
   provenance:z.array(z.record(z.unknown())), confidence:z.object({strength_of_analysis:z.string(),agreement:z.string(),key_facts:z.string(),reversible_gaps:z.string()}),
-  checkpoint_status:z.record(z.unknown()), limitations:z.array(z.string()), data:z.record(z.unknown()),
+  checkpoint_status:z.record(z.unknown()), limitations:z.array(z.string()), notes:z.array(z.string()).optional(), data:z.record(z.unknown()),
 });
 export function buildValidateOutputs(args: {runId:string; version:number; brief:ValidateBrief; input:ValidateInputs; provenance:Record<string,unknown>[]; checkpoints:Record<string,unknown>}) {
   const verdict=validateVerdict(args.input);
+  const owner=args.input.sourceKind==='owner-stated';
+  const gapText=verdict.reasons.filter(r=>/MISSING|UNSCORED|UNRESOLVED|NOT_CLIENT|no alternative comparison/.test(r.code)).map(r=>r.code);
+  if(owner) gapText.unshift(OWNER_STATED_GAP);
   const common={mode:'validate' as const,run_id:args.runId,run_version:args.version,decision_questions:args.brief.decisionQuestions,provenance:args.provenance,
-    confidence:{strength_of_analysis:'Structured Stage 10/11/13 assessment under the saved rubrics; not independent verification.',agreement:'Stage-level agreement is recorded in reason evidence; no independent analyst consensus measured.',key_facts:args.input.sourceKind==='client'?'Client-supplied proposition; source claims retain their original labels.':'Current proposition is BG-derived or unverified, not client supplied.',reversible_gaps:verdict.reasons.filter(r=>/MISSING|UNSCORED|UNRESOLVED|NOT_CLIENT|no alternative comparison/.test(r.code)).map(r=>r.code).join('; ')||'Independent verification of saved claims may reverse the verdict.'},
-    checkpoint_status:args.checkpoints,limitations:['No new propositions or creative work generated.','Saved evidence is not independently verified.','Cross-brand scores are not a valid best-alternative comparison.']};
+    confidence:{strength_of_analysis:'Structured Stage 10/11/13 assessment under the saved rubrics; not independent verification.',agreement:'Stage-level agreement is recorded in reason evidence; no independent analyst consensus measured.',key_facts:args.input.sourceKind==='client'?'Client-supplied proposition; source claims retain their original labels.':owner?`Owner-stated (public) proposition from ${args.brief.source}${args.brief.sourceDate?`, ${args.brief.sourceDate}`:''}; not confirmed by the client.`:'Current proposition is BG-derived or unverified, not client supplied.',reversible_gaps:gapText.join('; ')||'Independent verification of saved claims may reverse the verdict.'},
+    checkpoint_status:args.checkpoints,...(owner?{notes:[CONFIRM_WITH_CLIENT_NOTE]}:{}),limitations:[...(owner?[CONFIRM_WITH_CLIENT_NOTE]:[]),'No new propositions or creative work generated.','Saved evidence is not independently verified.','Cross-brand scores are not a valid best-alternative comparison.']};
   return Object.fromEntries(VALIDATE_OUTPUTS.map(id=>[id,ValidateOutputSchema.parse({...common,data:
-    id==='validate.verdict'?verdict:id==='validate.current_position'?{proposition:args.brief.currentProposition,source:args.brief.source,source_date:args.brief.sourceDate,supplied_by:args.brief.suppliedBy,territory:args.brief.currentTerritory,stage10:args.input.baseline['10']??null}:
+    id==='validate.verdict'?verdict:id==='validate.current_position'?{proposition:args.brief.currentProposition,source_kind:args.input.sourceKind,source:args.brief.source,source_date:args.brief.sourceDate,source_quote:args.brief.sourceQuote??null,supplied_by:args.brief.suppliedBy,territory:args.brief.currentTerritory,stage10:args.input.baseline['10']??null}:
     id==='validate.pressure_tests'?{stage11:args.input.baseline['11']??null,stage13:args.input.baseline['13']??null}:
     {gaps:verdict.reasons.filter(r=>/MISSING|UNSCORED|UNRESOLVED|NOT_CLIENT|no alternative comparison/.test(r.code)),evidence_standard:args.brief.evidenceStandard}})]));
 }

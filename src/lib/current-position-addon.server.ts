@@ -1,3 +1,4 @@
+import { effectiveDerivation } from './validate-mode';
 import { supabaseAdmin } from '@/integrations/supabase/client.server';
 import { BASELINE_STAGES, BASELINE_ERRORS, parseBaseline, terminalBaselineError, type BaselineStage } from './current-position-addon';
 import { STAGE_10_SYSTEM_PROMPT } from './stage10-prompt';
@@ -49,12 +50,13 @@ export async function gatherBaselineEvidence(sessionId:string,subjectBrand:strin
     date_limitations:'Snapshot/save dates are not source publication dates; claims keep their saved labels and source_date values.'};
 }
 
-export type QueueBaselineArgs={sessionId:string;version:number;subjectBrand:string;proposition:string;derivationLabel:'BG-derived'|'Client-supplied';source:string;sourceDate:string|null;suppliedBy:string;derivationNote?:string};
+export type QueueBaselineArgs={sessionId:string;version:number;subjectBrand:string;proposition:string;derivationLabel:'BG-derived'|'Client-supplied'|'Owner-stated (public)';sourceQuote?:string;source:string;sourceDate:string|null;suppliedBy:string;derivationNote?:string};
 /** Route (a): any client, locked run and brand. Admin verification is repeated in the database. */
 export async function queueBaseline(actor:string,a:QueueBaselineArgs){
   const ev=await gatherBaselineEvidence(a.sessionId,a.subjectBrand);
   if(!ev.brief_excerpts.length&&!ev.evidence.length&&!ev.lab_context)throw new Error(`${BASELINE_ERRORS.evidence}: no saved research for ${a.subjectBrand} on this run or its client`);
-  const manifest={derivation_label:a.derivationLabel,subject_brand:a.subjectBrand.trim(),proposition:a.proposition,proposition_source:a.source,proposition_source_date:a.sourceDate,supplied_by:a.suppliedBy,
+  const effective=effectiveDerivation(a.derivationLabel,{source:a.source,date:a.sourceDate,quote:a.sourceQuote});
+  const manifest={derivation_label:effective==='unverified'?'BG-derived':effective,requested_derivation_label:a.derivationLabel,proposition_source_quote:a.sourceQuote??null,subject_brand:a.subjectBrand.trim(),proposition:a.proposition,proposition_source:a.source,proposition_source_date:a.sourceDate,supplied_by:a.suppliedBy,
     derivation_note:a.derivationNote??null,entry_path:'addon',...ev};
   return checked(()=>sb.rpc('bg_queue_current_position_addon',{_session:a.sessionId,_version:a.version,_actor:actor,_proposition:a.proposition,_manifest:manifest as never}));
 }
@@ -107,6 +109,15 @@ export async function runBaselineJob(jobId:string, emit:(value:object)=>void) {
       const previous=await checked(()=>sb.from('current_position_addon_attempts').select('attempt').eq('job_id',jobId).eq('stage',stage));
       const first=(previous ?? []).length+1;
       let last=''; let saved=false;
+      // Re-read saved unreadable attempts first (no model call) before spending a new one.
+      const unread=await checked(()=>sb.from('current_position_addon_attempts').select('id,raw_output').eq('job_id',jobId).eq('stage',stage).is('result',null).not('raw_output','is',null).order('attempt'));
+      for(const a of unread ?? []){
+        try{const result=parseBaseline(stage,String(a.raw_output),job.proposition,job.source_manifest as Record<string,unknown>);
+          await checked(()=>sb.from('current_position_addon_attempts').update({result}).eq('id',a.id));
+          await checked(()=>sb.from('current_position_addon_jobs').update({results:{...(job.results as Record<string,unknown>),[stage]:result} as never,completed_stages:[...job.completed_stages,stage]}).eq('id',jobId).eq('lease_token',lease));
+          emit({stage,complete:true,message:`Stage ${stage} recovered from a saved response`});saved=true;break;}catch{/* keep looking */}
+      }
+      if(saved)continue;
       for(let attempt=first;attempt<=3;attempt++) {
         emit({stage,attempt,message:`Assessing ${subjectBrand} current position — Stage ${stage}`});
         const record=await checked(()=>sb.from('current_position_addon_attempts').insert({job_id:jobId,stage,attempt}).select('id').single());
