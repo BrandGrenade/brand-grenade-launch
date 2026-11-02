@@ -155,6 +155,8 @@ export type BriefMeta = {
     depth: string;
   } | null;
   currentProposition?: { line: string; source: string; date: string } | null;
+  /** Validate mode details (Diagnostic path, Campaign brief type). */
+  validate?: import("./validate-mode").ValidateBrief | null;
 };
 
 export type BriefVersion = {
