@@ -206,7 +206,7 @@ export function buildExecutiveSummary(inp: ExecInputs): { record: ExecutiveSumma
   // (7) Proof table.
   const base = validate ? (((validate['validate.current_position'] as Row | undefined)?.data as Row | undefined)?.stage10 as Row | undefined) : s10w;
   const worldMatches = !validate || (!!winner && norm(current?.proposition) === norm(winner));
-  const asset = ((worldMatches ? inp.stage22Assets?.recommended_assets : undefined) as Row[] | undefined) ?? [])[0];
+  const asset = (((worldMatches ? inp.stage22Assets?.recommended_assets : undefined) as Row[] | undefined) ?? [])[0];
   const ciS = scoreOf(base, 'competitive_impossibility'), caS = scoreOf(base, 'clean_air');
   const table = [
     { measure: 'Stage 10 score', value: typeof base?.composite === 'number' ? `${base.composite}/90` : MISSING, source: 'Stage 10' },
@@ -233,7 +233,8 @@ export function buildExecutiveSummary(inp: ExecInputs): { record: ExecutiveSumma
   } else {
     const c = ((inp.stage13?.commitments as unknown[] | undefined) ?? [])[0];
     const t = typeof c === 'string' ? c : str((c as Row | undefined)?.what);
-    s9 = sec(9, t ? `${condense(t, 45, 2)} By: ${MISSING}.` : null, ['Stage 13 commitments']);
+    const next = condense(t, 65, 2);
+    s9 = sec(9, next ? `${next} By: ${MISSING}.` : null, ['Stage 13 commitments']);
   }
 
   if (validate) { s5.title = 'The Verdict (in place of a recommendation)'; s6.title = 'Why This Verdict'; }
