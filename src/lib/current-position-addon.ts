@@ -31,7 +31,12 @@ export function parseBaseline(stage: BaselineStage, raw: string, line: string, m
       deltas: [], comparison_note: 'No cross-brand delta: alternative comparisons require version-matched evidence for the same subject brand.' };
     Stage10CurrentPositionSchema.parse(result); return result;
   }
-  const result = { ...parsed, ...envelope };
+  // Known Stage 13 slip: a missing brace nests most_vulnerable inside credibility. Hoist only that named key.
+  const p13 = parsed as { credibility?: Record<string, unknown>; most_vulnerable?: unknown };
+  if (stage === '13' && p13?.credibility && p13.most_vulnerable === undefined && typeof p13.credibility.most_vulnerable === 'string') {
+    const { most_vulnerable, ...credibility } = p13.credibility; p13.credibility = credibility; p13.most_vulnerable = most_vulnerable;
+  }
+  const result = { ...(parsed as object), ...envelope };
   if (stage === '11') {
     if (result.smp !== line) throw new Error('Baseline proposition was changed');
     Stage11CurrentPositionSchema.parse(result);
