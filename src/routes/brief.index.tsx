@@ -1,5 +1,6 @@
 import { readHubContext } from "@/lib/hub/context";
 import { useHubBrand } from "@/hooks/use-hub-brand";
+import { ValidateBriefSchema, type ValidateBrief } from "@/lib/validate-mode";
 import { DealFieldsSchema, linesToList, TRANSACTION_TYPES, DEAL_DEPTHS, sessionFieldsFromMeta } from "@/lib/deal-brief";
 import { supabase } from "@/integrations/supabase/client";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
@@ -123,6 +124,8 @@ function BriefIntake() {
   const [submitting, setSubmitting] = useState(false);
   const [runMode, setRunMode] = useState<"full" | "diagnostic">("full");
   const [briefType, setBriefType] = useState<"campaign" | "deal">("campaign");
+  const [validateMode, setValidateMode] = useState(false);
+  const [vf, setVf] = useState({ suppliedBy: "", derivationLabel: "Client-supplied" as "Client-supplied" | "BG-derived", currentTerritory: "", strategyOwner: "", strategyDate: "", priorDecisions: "", knownThreats: "", decisionQuestions: "", evidenceStandard: "" });
   const [dealTx, setDealTx] = useState("");
   const [dealTargets, setDealTargets] = useState("");
   const [dealQuestions, setDealQuestions] = useState("");
@@ -159,6 +162,8 @@ function BriefIntake() {
     const m = b.briefMeta;
     if (m) {
       setBriefType(m.briefType === "deal" ? "deal" : "campaign");
+      setValidateMode(!!m.validate);
+      if (m.validate) setVf({ suppliedBy: m.validate.suppliedBy, derivationLabel: m.validate.derivationLabel ?? "Client-supplied", currentTerritory: m.validate.currentTerritory, strategyOwner: m.validate.strategyOwner, strategyDate: m.validate.strategyDate ?? "", priorDecisions: m.validate.priorDecisions, knownThreats: m.validate.knownThreats, decisionQuestions: m.validate.decisionQuestions.join("\n"), evidenceStandard: m.validate.evidenceStandard });
       setRunMode(m.runMode ?? (m.briefType === "deal" ? "diagnostic" : "full"));
       setDealTx(m.deal?.transactionType ?? "");
       setDealDepth(m.deal?.depth ?? "");
@@ -244,7 +249,18 @@ function BriefIntake() {
           }
         : null,
       currentProposition: cp,
+      validate: validateMode ? validateBriefOrNull() : null,
     };
+  }
+
+  function validateBriefOrNull(): ValidateBrief | null {
+    const r = ValidateBriefSchema.safeParse({
+      currentProposition: currentProp.trim(), source: currentPropSource.trim(), sourceDate: currentPropDate || null,
+      suppliedBy: vf.suppliedBy, derivationLabel: vf.derivationLabel, currentTerritory: vf.currentTerritory, strategyOwner: vf.strategyOwner,
+      strategyDate: vf.strategyDate || null, priorDecisions: vf.priorDecisions, knownThreats: vf.knownThreats,
+      decisionQuestions: linesToList(vf.decisionQuestions), evidenceStandard: vf.evidenceStandard,
+    });
+    return r.success ? r.data : null;
   }
 
   function currentBriefFields(): BriefFields {
@@ -348,9 +364,10 @@ function BriefIntake() {
     depth: dealDepth || undefined,
   });
   const dealValid = briefType !== "deal" || (dealParsed.success && !!currentProp.trim() && !!currentPropSource.trim() && !!currentPropDate);
-  const canSubmitSections = brand.trim().length >= 2 && (briefType === "deal" ? dealValid : objectiveSelected);
+  const validateValid = !validateMode || !!validateBriefOrNull();
+  const canSubmitSections = brand.trim().length >= 2 && validateValid && (briefType === "deal" ? dealValid : objectiveSelected);
 
-  const canSubmitAlt = !!altFile && brand.trim().length >= 2 && dealValid;
+  const canSubmitAlt = !!altFile && brand.trim().length >= 2 && dealValid && validateValid;
 
   function addFiles(incoming: FileList | File[], target: "support" | "alt") {
     const list = Array.from(incoming).filter((f) => {
@@ -400,6 +417,7 @@ function BriefIntake() {
           currentProposition: currentProp.trim() || undefined,
           currentPropositionSource: currentPropSource.trim() || undefined,
           currentPropositionDate: currentPropDate || undefined,
+          validate: validateMode ? validateBriefOrNull() ?? undefined : undefined,
         },
       });
       navigate({ to: "/pipeline", search: { session: sessionId } });
@@ -437,6 +455,7 @@ function BriefIntake() {
           currentProposition: currentProp.trim() || undefined,
           currentPropositionSource: currentPropSource.trim() || undefined,
           currentPropositionDate: currentPropDate || undefined,
+          validate: validateMode ? validateBriefOrNull() ?? undefined : undefined,
         },
       });
       navigate({ to: "/pipeline", search: { session: sessionId } });
@@ -657,18 +676,46 @@ function BriefIntake() {
           {!isEditMode && (
             <div className="mt-6 space-y-4 rounded-md border p-4" style={{ borderColor: "var(--color-border)" }}>
               <fieldset>
-                <legend className="text-body-sm font-semibold">Brief type</legend>
+                <legend className="text-body-sm font-semibold">Mode</legend>
                 <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:gap-6">
                   <label className="flex items-start gap-2 text-body-sm">
-                    <input type="radio" name="brief_type" checked={briefType === "campaign"} onChange={() => { setBriefType("campaign"); setRunMode("full"); }} />
+                    <input type="radio" name="brief_type" checked={briefType === "campaign" && !validateMode} onChange={() => { setValidateMode(false); setBriefType("campaign"); setRunMode("full"); }} />
                     <span>Campaign — framed by the strategic objective.</span>
                   </label>
                   <label className="flex items-start gap-2 text-body-sm">
-                    <input type="radio" name="brief_type" checked={briefType === "deal"} onChange={() => { setBriefType("deal"); setRunMode("diagnostic"); }} />
+                    <input type="radio" name="brief_type" checked={briefType === "deal"} onChange={() => { setValidateMode(false); setBriefType("deal"); setRunMode("diagnostic"); }} />
                     <span>Deal — diligence or exit, framed by the decision questions. Defaults to a diagnostic run.</span>
+                  </label>
+                  <label className="flex items-start gap-2 text-body-sm">
+                    <input type="radio" name="brief_type" checked={validateMode} onChange={() => { setValidateMode(true); setBriefType("campaign"); setRunMode("diagnostic"); }} />
+                    <span>Validate — keep, refresh or replace the current strategy. Diagnostic path; generated propositions are comparators only.</span>
                   </label>
                 </div>
               </fieldset>
+              <p className="text-body-sm" style={{ color: "var(--color-text-secondary)" }}>Mode is fixed once the run starts.</p>
+              {validateMode && (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {([["suppliedBy","Supplied by"],["currentTerritory","Current territory"],["strategyOwner","Strategy owner"],["priorDecisions","Prior decisions"],["knownThreats","Known threats"],["evidenceStandard","Evidence standard required"]] as const).map(([k, l]) => (
+                    <label key={k} className="text-body-sm font-semibold">{l}
+                      <textarea rows={2} aria-label={l} value={vf[k]} onChange={(e) => setVf({ ...vf, [k]: e.target.value })} className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-body-sm" style={{ borderColor: "var(--color-border)" }} />
+                    </label>
+                  ))}
+                  <label className="text-body-sm font-semibold">Proposition supplied as
+                    <select aria-label="Proposition supplied as" value={vf.derivationLabel} onChange={(e) => setVf({ ...vf, derivationLabel: e.target.value as typeof vf.derivationLabel })} className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-body-sm" style={{ borderColor: "var(--color-border)" }}>
+                      <option value="Client-supplied">Client-supplied</option><option value="BG-derived">BG-derived</option>
+                    </select>
+                  </label>
+                  <label className="text-body-sm font-semibold">Strategy date
+                    <input type="date" aria-label="Strategy date" value={vf.strategyDate} onChange={(e) => setVf({ ...vf, strategyDate: e.target.value })} className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-body-sm" style={{ borderColor: "var(--color-border)" }} />
+                  </label>
+                  <label className="text-body-sm font-semibold sm:col-span-2">Decision questions (one per line)
+                    <textarea rows={3} aria-label="Validate decision questions" value={vf.decisionQuestions} onChange={(e) => setVf({ ...vf, decisionQuestions: e.target.value })} className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-body-sm" style={{ borderColor: "var(--color-border)" }} />
+                  </label>
+                  <p className="text-body-sm sm:col-span-2" style={{ color: "var(--color-text-secondary)" }}>
+                    All Validate fields are required, including the current proposition and its source below. Stages 8, 8B, 9 and 12 produce comparators for the best-alternative test only; the verdict concerns the current strategy.
+                  </p>
+                </div>
+              )}
               {briefType === "deal" && (
                 <div className="grid gap-3 sm:grid-cols-2">
                   <label className="text-body-sm font-semibold">Transaction type
@@ -712,7 +759,7 @@ function BriefIntake() {
                 <legend className="text-body-sm font-semibold">Run type</legend>
                 <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:gap-6">
                   <label className="flex items-start gap-2 text-body-sm">
-                    <input type="radio" name="run_mode" checked={runMode === "full"} onChange={() => setRunMode("full")} />
+                    <input type="radio" name="run_mode" disabled={validateMode} checked={runMode === "full"} onChange={() => setRunMode("full")} />
                     <span>Full run — every stage and document.</span>
                   </label>
                   <label className="flex items-start gap-2 text-body-sm">
@@ -722,7 +769,7 @@ function BriefIntake() {
                 </div>
               </fieldset>
               <div>
-                <label className="text-body-sm font-semibold" htmlFor="current_prop">Current proposition {briefType === "deal" ? "(required)" : "(optional)"}</label>
+                <label className="text-body-sm font-semibold" htmlFor="current_prop">Current proposition {briefType === "deal" || validateMode ? "(required)" : "(optional)"}</label>
                 <p className="text-body-sm" style={{ color: "var(--color-text-secondary)" }}>
                   The line the brand uses today. Scored as a baseline at Stage 10, never selected.
                 </p>

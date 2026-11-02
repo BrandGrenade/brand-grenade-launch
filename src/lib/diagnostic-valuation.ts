@@ -2,6 +2,7 @@ import { Stage9Schema, Stage10Schema, Stage11Schema, Stage13Schema, Stage10Curre
 import { VALUATION_DISCLAIMER, VALUATION_READER_GUIDE, DOCUMENT_FOOTER } from "./valuation-front-matter";
 
 type Run = {
+  validate_brief?: unknown;
   brand_name: string; category: string; selected_smp?: string | null;
   stage_9_structured?: unknown; stage_10_structured?: unknown;
   stage_11_structured?: unknown; stage_13_structured?: unknown;
@@ -55,6 +56,15 @@ function credibility(row: Record<string, unknown>): string {
 
 /** Pure, structured-only assembly. No model, text-stage fallback, selection or scoring. */
 export function buildDiagnosticValuation(run: Run): string {
+  const doc = buildDiagnosticValuationDoc(run);
+  // Validate runs: generated propositions are comparators, never recommendations.
+  return run.validate_brief ? comparatorWording(doc) : doc;
+}
+export function comparatorWording(doc: string): string {
+  return doc.replace(/Proposition under test/g, "Comparator (evidence only, not a recommendation)")
+    .replace(/proposition under test/g, "comparator (evidence only, not a recommendation)");
+}
+function buildDiagnosticValuationDoc(run: Run): string {
   const s9 = Stage9Schema.safeParse(run.stage_9_structured);
   const s10 = Stage10Schema.safeParse(run.stage_10_structured);
   const s11 = Stage11Schema.safeParse(run.stage_11_structured);

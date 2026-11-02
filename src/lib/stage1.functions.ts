@@ -8,6 +8,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertSessionAccess } from "@/lib/auth-helpers.server";
 import { findBannedWordHits, generateWithBannedWordGate, type OutputGateMode } from "./output-banned-word-gate";
 import { BRIEF_TYPES, DealFieldsSchema } from "./deal-brief";
+import { ValidateBriefSchema } from "./validate-mode";
 
 const BriefFieldsSchema = z
   .object({
@@ -37,7 +38,14 @@ const CreateSessionInput = z.object({
   continuesDiagnosticId: z.string().uuid().optional(),
   briefType: z.enum(BRIEF_TYPES).default("campaign"),
   deal: DealFieldsSchema.optional(),
+  /** Validate mode: Diagnostic path, Campaign brief type, details fixed at start. */
+  validate: ValidateBriefSchema.optional(),
 }).superRefine((d, ctx) => {
+  if (d.validate) {
+    if (d.briefType !== "campaign" || d.runMode !== "diagnostic" || d.deal) ctx.addIssue({ code: "custom", message: "Validate runs follow the Diagnostic path and cannot carry Deal fields." });
+    if (d.continuesDiagnosticId) ctx.addIssue({ code: "custom", message: "A Validate run cannot continue another run." });
+    if (d.validate.sourceDate && !/^\d{4}-\d{2}-\d{2}$/.test(d.validate.sourceDate)) ctx.addIssue({ code: "custom", message: "Validate source date must be YYYY-MM-DD." });
+  }
   if (d.briefType === "deal") {
     if (!d.deal) ctx.addIssue({ code: "custom", message: "Deal briefs need every deal field." });
     if (!d.currentProposition?.trim() || !d.currentPropositionSource?.trim() || !d.currentPropositionDate)
@@ -68,9 +76,11 @@ export const createSession = createServerFn({ method: "POST" })
       await check(data.continuesDiagnosticId, context.userId);
       const { data: src } = await supabaseAdmin
         .from("sessions")
-        .select("run_mode, bg_source_id, brief_type, deal_transaction_type, deal_target_brands, deal_decision_questions, deal_competitors, deal_decision_date, deal_depth, current_proposition, current_proposition_source, current_proposition_date")
+        .select("validate_brief, run_mode, bg_source_id, brief_type, deal_transaction_type, deal_target_brands, deal_decision_questions, deal_competitors, deal_decision_date, deal_depth, current_proposition, current_proposition_source, current_proposition_date")
         .eq("id", data.continuesDiagnosticId).single();
       if ((src as { run_mode?: string } | null)?.run_mode !== "diagnostic") throw new Error("Source run is not a diagnostic run");
+      // Validate comparators must never become a recommendation through a full-run continuation.
+      if ((src as { validate_brief?: unknown }).validate_brief) throw new Error("A Validate run cannot be continued as a full run: its propositions are comparators only");
       if (data.runMode !== "full") throw new Error("A run continuing a diagnostic must be a full run");
       inheritedSource = (src as { bg_source_id?: string | null }).bg_source_id ?? null;
       const s = src as Record<string, unknown>;
@@ -85,7 +95,10 @@ export const createSession = createServerFn({ method: "POST" })
         };
       }
     }
-    const cp = data.currentProposition?.trim() || null;
+    const cp = data.validate ? data.validate.currentProposition : data.currentProposition?.trim() || null;
+    const validateCols = data.validate
+      ? { validate_brief: data.validate as never, current_proposition_source: data.validate.source, current_proposition_date: data.validate.sourceDate }
+      : {};
     const { data: row, error } = await supabaseAdmin
       .from("sessions")
       .insert({
@@ -108,6 +121,7 @@ export const createSession = createServerFn({ method: "POST" })
         current_proposition_date: cp ? data.currentPropositionDate ?? null : null,
         continues_diagnostic_id: data.continuesDiagnosticId ?? null,
         ...(inheritedDeal ?? {}),
+        ...validateCols,
         brand_name: data.brandName,
         category: data.category,
         brief_text: data.briefText,

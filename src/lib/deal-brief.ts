@@ -1,6 +1,7 @@
 // Deal brief type (T1). Client-safe pure module: shared by the brief form,
 // createSession validation, the Stage 1–13 framing block and the access point.
 import { z } from "zod";
+import { ValidateBriefSchema, type ValidateBrief } from "./validate-mode";
 
 export const BRIEF_TYPES = ["campaign", "deal"] as const;
 export type BriefType = (typeof BRIEF_TYPES)[number];
@@ -88,6 +89,7 @@ export function sessionFieldsFromMeta(meta: {
   runMode?: string;
   deal?: unknown;
   currentProposition?: { line?: string; source?: string; date?: string } | null;
+  validate?: unknown;
 } | null | undefined): {
   ok: boolean;
   fields: {
@@ -97,6 +99,7 @@ export function sessionFieldsFromMeta(meta: {
     currentProposition?: string;
     currentPropositionSource?: string;
     currentPropositionDate?: string;
+    validate?: ValidateBrief;
   };
 } {
   const cp = meta?.currentProposition;
@@ -108,6 +111,10 @@ export function sessionFieldsFromMeta(meta: {
       }
     : {};
   const runMode = meta?.runMode === "diagnostic" || meta?.runMode === "full" ? meta.runMode : undefined;
+  if (meta?.validate) {
+    const v = ValidateBriefSchema.safeParse(meta.validate);
+    return { ok: v.success, fields: { briefType: "campaign", runMode: "diagnostic", ...(v.success ? { validate: v.data } : {}) } };
+  }
   if (meta?.briefType !== "deal") return { ok: true, fields: { briefType: "campaign", runMode, ...cpFields } };
   const d = DealFieldsSchema.safeParse(meta.deal);
   const ok = d.success && !!cpFields.currentProposition && !!cpFields.currentPropositionSource && !!cpFields.currentPropositionDate;

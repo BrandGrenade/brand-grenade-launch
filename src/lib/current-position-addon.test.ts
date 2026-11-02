@@ -1,11 +1,12 @@
 import {describe,it,expect} from 'vitest';
-import {baselineAtVersion,parseBaseline,terminalBaselineError,INFINITI_PROPOSITION} from './current-position-addon';
+import {baselineAtVersion,parseBaseline,terminalBaselineError} from './current-position-addon';
+const INFINITI_PROPOSITION='Japanese precision and thoughtful hospitality, expressed through the car and the ownership experience.';
 import {handleAccess,type Db,type LogEntry} from './access/core';
 
 const line=INFINITI_PROPOSITION;
 const dimension={score:7,justification:'Saved evidence, explicitly unverified'};
 const raw10={smp:line,field_name:'Infiniti baseline',fame:dimension,truth_strength:dimension,competitive_impossibility:{...dimension,competitor:'Lexus',competitor_claim:'Saved Japanese precision positioning'},brand_permission:{...dimension,evidence:'Saved 2023 refresh'},clean_air:{...dimension,occupier:'Lexus',occupying_claim:'Saved precision claim'},commercial_precedent:{...dimension,precedents:[]}};
-const cp=parseBaseline('10',JSON.stringify(raw10),line,{derivation_label:'BG-derived'});
+const cp=parseBaseline('10',JSON.stringify(raw10),line,{derivation_label:'BG-derived',subject_brand:'Infiniti'});
 const R='3470f1ad-b322-4230-8e3d-bf0072e95b7a',C='11111111-1111-4111-8111-111111111111';
 function database():Db {
   return {listClients:async()=>[],ensureClient:async()=>{throw new Error('not allowed');},attachClient:async()=>{throw new Error('not allowed');},resolveClient:async()=>C,resolveEngagement:async()=>null,listLinkedRuns:async()=>[],actorName:async()=>null,claims:async()=>[],stimulus:async()=>({directions:[],prompts:[],orchestrations:[]}),

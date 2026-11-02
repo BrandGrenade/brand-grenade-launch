@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { buildAddonValuation } from './addon-valuation';
-import { parseBaseline, INFINITI_PROPOSITION as line } from './current-position-addon';
+import { parseBaseline } from './current-position-addon';
+const line = 'Japanese precision and thoughtful hospitality, expressed through the car and the ownership experience.';
 
 const dim = { score: 7, justification: 'Exact saved evidence.' };
 const ten = { smp: line, field_name: 'Infiniti', fame: dim, truth_strength: dim, competitive_impossibility: { ...dim, competitor: 'Lexus', competitor_claim: null }, brand_permission: { ...dim, evidence: null }, clean_air: { ...dim, occupier: 'Lexus', occupying_claim: null }, commercial_precedent: { ...dim, precedents: [] } };

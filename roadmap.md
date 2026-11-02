@@ -2,10 +2,10 @@
 
 ## Validate mode v1 — 30 Oct 2026
 - [x] Prep: checkpoint name, claim source dates, Deal null checks, Stage 10 comments/architecture rule; automated regression suite passes.
-- [ ] Mode form and immutable Validate context; new-run pipeline/navigation/checkpoint boundaries.
-- [ ] General same-brand locked-run Validate add-ons using versioned jobs.
+- [x] Mode field (Campaign/Deal/Validate) fixed at start; Validate runs follow the Diagnostic path with comparator labels, auto-queued baseline on lock, and completion only once the four outputs save. Not yet exercised end to end on a real new run.
+- [x] General add-on for any client/run/brand (2 Nov): live JLR on test copy → v2, INSUFFICIENT EVIDENCE (BG-derived proposition), best comparator 70.5 vs 68.
 - [x] Shared deterministic verdict and four versioned access contracts/builders; saved-baseline add-on verified in preview, exact-version source checks and append-only revisions.
-- [ ] Full tests, new/add-on parity, Campaign/Deal regression and JLR fingerprints.
+- [x] 517 tests incl. real-route parity and comparator tests; JLR fingerprint unchanged (excluding the new empty Validate field).
 - [x] Infiniti v97 add-on live verification (1 Nov): published after 511 tests passed; live verdict INSUFFICIENT EVIDENCE; all four validate.* outputs structured via live access point; temp key revoked; JLR session fingerprint unchanged.
 - [x] Apply clarified verdicts: missing saved alternative comparison → INSUFFICIENT EVIDENCE with named missing comparison; floor breach without fatal T1–T4 crack → REFRESH with floor scores and Stage 11 results; retain named errors/evidence for every other uncovered combination. 511 tests pass; publication remains withheld pending the incomplete new-run and generalized-job paths.
 

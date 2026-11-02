@@ -19,7 +19,7 @@ export const LIST_COLS: Record<RunTable, string> = {
   intelligence_sessions: `id, ${BASE_LIST}`,
   briefing_room_workspaces: `id, ${BASE_LIST}, locked_at, earlier_versions_kept`,
   saved_briefs: "brief_id, brand_name, created_at, bg_client_id, engagement_id, link_status",
-  sessions: `id, ${BASE_LIST}, locked_at, earlier_versions_kept, run_mode, diagnostic_status, brief_type, current_proposition, current_proposition_source, current_proposition_date, deal_transaction_type, deal_target_brands, deal_decision_questions, deal_competitors, deal_decision_date, deal_depth`,
+  sessions: `id, ${BASE_LIST}, locked_at, earlier_versions_kept, run_mode, validate_brief, diagnostic_status, brief_type, current_proposition, current_proposition_source, current_proposition_date, deal_transaction_type, deal_target_brands, deal_decision_questions, deal_competitors, deal_decision_date, deal_depth`,
   stimulus_runs: "id, status, created_at, run_mode, locked_at, bg_client_id, engagement_id, link_status",
 };
 

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { z } from 'zod';
 import { TopNav } from '@/components/TopNav';
 import { Button } from '@/components/ui/button';
+import { AddonQueueForm, ValidateRunStatus } from '@/components/ValidatePanel';
 import { getValidateSource, saveValidateAssessment } from '@/lib/validate.functions';
 import { ValidateBriefSchema, type ValidateBrief } from '@/lib/validate-mode';
 
@@ -33,9 +34,10 @@ function ValidatePage(){
       <label className="text-sm">Run version<input type="number" min={1} className="input-base mt-2 w-full" value={version} disabled={!!source} onChange={e=>setVersion(Number(e.target.value))}/></label>
       <label className="text-sm">Subject brand<input className="input-base mt-2 w-full" value={brand} disabled={!!source} onChange={e=>setBrand(e.target.value)}/></label>
     </div>
+    {/^[0-9a-f-]{36}$/i.test(sessionId)&&!source&&<><AddonQueueForm sessionId={sessionId} version={version} brand={brand}/><div className="mt-4"><ValidateRunStatus sessionId={sessionId} poll={false}/></div></>}
     {!source&&<Button className="mt-4" disabled={busy} onClick={()=>void loadSource()}>{busy?'Loading…':'Load saved baseline'}</Button>}
     {source&&<><p className="mt-6 text-sm text-muted-foreground">Mode: Validate · v{source.version} · {source.sourceKind}</p><div className="mt-6 grid gap-4 sm:grid-cols-2">
-      {(Object.keys(empty) as (keyof ValidateBrief)[]).map(key=><label key={key} className="text-sm">{({currentProposition:'Current proposition',source:'Proposition source',sourceDate:'Source date',suppliedBy:'Supplied by',currentTerritory:'Current territory',strategyOwner:'Strategy owner',strategyDate:'Strategy date',priorDecisions:'Prior decisions',knownThreats:'Known threats',decisionQuestions:'Decision questions',evidenceStandard:'Evidence standard required'})[key]}
+      {(Object.keys(empty) as Exclude<keyof ValidateBrief,'derivationLabel'>[]).map(key=><label key={key} className="text-sm">{({currentProposition:'Current proposition',source:'Proposition source',sourceDate:'Source date',suppliedBy:'Supplied by',currentTerritory:'Current territory',strategyOwner:'Strategy owner',strategyDate:'Strategy date',priorDecisions:'Prior decisions',knownThreats:'Known threats',decisionQuestions:'Decision questions',evidenceStandard:'Evidence standard required'})[key]}
       <textarea aria-label={({currentProposition:'Current proposition',source:'Proposition source',sourceDate:'Source date',suppliedBy:'Supplied by',currentTerritory:'Current territory',strategyOwner:'Strategy owner',strategyDate:'Strategy date',priorDecisions:'Prior decisions',knownThreats:'Known threats',decisionQuestions:'Decision questions',evidenceStandard:'Evidence standard required'})[key]} className="input-base mt-2 w-full" rows={key==='decisionQuestions'?3:2} readOnly={key==='currentProposition'||!!result} value={Array.isArray(brief[key])?(brief[key] as string[]).join('\n'):String(brief[key]??'')} onChange={e=>update(key,e.target.value)}/></label>)}
     </div>{!result&&<Button className="mt-6" disabled={busy||!ValidateBriefSchema.safeParse(brief).success} onClick={()=>void assess()}>{busy?'Assessing…':'Validate saved position'}</Button>}</>}
     {error&&<p role="alert" className="mt-6 text-destructive">{error}</p>}
