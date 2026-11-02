@@ -4,6 +4,7 @@ import { parseStage22Architecture, parseStage22Assets } from "./stage22-parse";
 import { baselineAtVersion } from '../current-position-addon';
 import { uniqueClaims } from '../synthesiser/unique-claims';
 import { VALIDATE_OUTPUTS, ValidateOutputSchema } from '../validate-mode';
+import { COMPARATOR_NOTE, COMPARATOR_ROLE } from '../validate-run';
 // Run access remains read-only. Only the separately scoped ensure_client
 // request may create a client and its Hub mapping; it cannot touch runs.
 import { z } from "zod";
@@ -213,7 +214,14 @@ function parseReport(c: Ctx): Record<string, unknown> | null | "bad" {
   }
 }
 
+const COMPARATOR_OUTPUT = /^stage(08|08b|09|10|11|12|13)\b/;
+/** Validate runs: generated propositions are comparators only, never recommendations. */
 async function buildOutput(outputId: string, c: Ctx): Promise<Built> {
+  const built = await buildOutputInner(outputId, c);
+  if (c.run.table !== "sessions" || !c.run.row.validate_brief || !COMPARATOR_OUTPUT.test(outputId) || !built.content || typeof built.content !== "object") return built;
+  return { ...built, content: { ...(built.content as Record<string, unknown>), validate_role: COMPARATOR_ROLE, is_recommendation: false, validate_note: COMPARATOR_NOTE } };
+}
+async function buildOutputInner(outputId: string, c: Ctx): Promise<Built> {
   const { run } = c;
   if (!OUTPUTS_BY_TABLE[run.table].includes(outputId)) throw NOT_FOUND();
   if ((VALIDATE_OUTPUTS as readonly string[]).includes(outputId)) {
