@@ -3,7 +3,7 @@
 //  Diagnostic path. Identical saved inputs must give identical verdicts.
 // Generated propositions (Stages 8, 8B, 9, 12) are COMPARATORS ONLY: they feed
 // the best-alternative test and are shown as evidence, never as a recommendation.
-import { buildValidateOutputs, type ValidateBrief, type ValidateInputs } from './validate-mode';
+import { buildValidateOutputs, effectiveDerivation, type ValidateBrief, type ValidateInputs } from './validate-mode';
 import { recoverSavedStage } from './saved-stage-records';
 
 /** Pipeline stages whose propositions are comparators on a Validate run. */
@@ -36,7 +36,8 @@ export function comparatorsFromRun(session: Row): Comparator[] {
 }
 
 export function sourceKindOf(manifest: Row): ValidateInputs['sourceKind'] {
-  return manifest.derivation_label === 'Client-supplied' ? 'client' : manifest.derivation_label === 'BG-derived' ? 'BG-derived' : 'unverified';
+  const d = effectiveDerivation(manifest.derivation_label, { source: manifest.proposition_source, date: manifest.proposition_source_date, quote: manifest.proposition_source_quote });
+  return d === 'Client-supplied' ? 'client' : d === 'Owner-stated (public)' ? 'owner-stated' : d;
 }
 
 export type SavedValidateSource = { session: Row; original?: Row | null; job: { proposition: string; results: Row; source_manifest: Row } };

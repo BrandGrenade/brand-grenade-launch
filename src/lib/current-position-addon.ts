@@ -1,3 +1,4 @@
+import { effectiveDerivation } from './validate-mode';
 import { Stage10Schema, Stage10CurrentPositionSchema, Stage11CurrentPositionSchema, Stage13CurrentPositionSchema } from './structured-output';
 import { computeWeightedComposite, evaluateStage10Verdict } from './stage12-filter';
 
@@ -11,11 +12,12 @@ export const BASELINE_ERRORS = {
 export function parseBaseline(stage: BaselineStage, raw: string, line: string, manifest: Record<string, unknown>) {
   const block = raw.includes('<<<STRUCTURED_JSON') ? raw.split('<<<STRUCTURED_JSON')[1]?.split('>>>')[0] : raw;
   const parsed = JSON.parse((block ?? '').replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '').trim());
-  const clientSupplied = manifest.derivation_label === 'Client-supplied';
+  const derivation = effectiveDerivation(manifest.derivation_label, { source: manifest.proposition_source, date: manifest.proposition_source_date, quote: manifest.proposition_source_quote });
+  const clientSupplied = derivation === 'Client-supplied';
   const envelope = { status: 'scored', line, evidence_label: clientSupplied ? 'Client-supplied' : 'Unverified',
     source: typeof manifest.proposition_source === 'string' ? manifest.proposition_source : 'Specified saved research; see source_manifest',
     source_date: typeof manifest.proposition_source_date === 'string' ? manifest.proposition_source_date : null,
-    is_current: true, excluded_from_selection: true, derivation_label: clientSupplied ? 'Client-supplied' : 'BG-derived',
+    is_current: true, excluded_from_selection: true, derivation_label: derivation === 'unverified' ? 'BG-derived' : derivation,
     subject_brand: String(manifest.subject_brand ?? ''), source_manifest: manifest };
   if (stage === '10') {
     const row = Stage10Schema.shape.scores.element.parse(parsed);

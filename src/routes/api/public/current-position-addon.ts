@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { z } from 'zod';
 
 const Body=z.object({sessionId:z.string().uuid(),version:z.number().int().min(1),subjectBrand:z.string().trim().min(1).max(200),proposition:z.string().trim().min(1).max(2000),
-  derivationLabel:z.enum(['BG-derived','Client-supplied']),source:z.string().trim().min(1).max(1000),sourceDate:z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),suppliedBy:z.string().trim().min(1).max(300),derivationNote:z.string().max(2000).optional()});
+  derivationLabel:z.enum(['BG-derived','Client-supplied','Owner-stated (public)']),source:z.string().trim().min(1).max(1000),sourceDate:z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),suppliedBy:z.string().trim().min(1).max(300),sourceQuote:z.string().trim().max(4000).optional(),derivationNote:z.string().max(2000).optional()});
 
 export const Route=createFileRoute('/api/public/current-position-addon')({server:{handlers:{POST:async({request})=>{
   const token=request.headers.get('authorization')?.replace(/^Bearer /i,'');
