@@ -9,6 +9,7 @@ import { useAuth } from "@/context/AuthContext";
 import { generateStrategicPlatformPdf } from "@/lib/pdf-generator";
 import { runStage16 } from "@/lib/stage16.functions";
 import { getValuationAddon } from '@/lib/addon-valuation.functions';
+import { ExecutiveSummaryExport } from '@/components/ExecutiveSummaryExport';
 import {
   buildPhase2Document,
   buildAllPhase2,
@@ -607,6 +608,7 @@ function CompletePage() {
           );
         })()}
 
+        {session?.id && session.stage_13_output && <ExecutiveSummaryExport sessionId={session.id} brand={session.brand_name ?? "Brand"} />}
         {/* Download section */}
         <div style={{ marginTop: 32 }}>
           {(() => {
