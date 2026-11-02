@@ -3,7 +3,6 @@ import { computeWeightedComposite, evaluateStage10Verdict } from './stage12-filt
 
 export const BASELINE_STAGES = ['10', '11', '13'] as const;
 export type BaselineStage = typeof BASELINE_STAGES[number];
-export const INFINITI_PROPOSITION = 'Japanese precision and thoughtful hospitality, expressed through the car and the ownership experience.';
 export const BASELINE_ERRORS = {
   evidence: 'BASELINE_PROPOSITION_EVIDENCE_INSUFFICIENT', validation: 'BASELINE_RESULT_CONTRACT_FAILED',
   save: 'BASELINE_STRUCTURED_SAVE_FAILED', source: 'BASELINE_SOURCE_VERSION_CHANGED', generation: 'BASELINE_GENERATION_FAILED',
@@ -17,7 +16,7 @@ export function parseBaseline(stage: BaselineStage, raw: string, line: string, m
     source: typeof manifest.proposition_source === 'string' ? manifest.proposition_source : 'Specified saved research; see source_manifest',
     source_date: typeof manifest.proposition_source_date === 'string' ? manifest.proposition_source_date : null,
     is_current: true, excluded_from_selection: true, derivation_label: clientSupplied ? 'Client-supplied' : 'BG-derived',
-    subject_brand: typeof manifest.subject_brand === 'string' ? manifest.subject_brand : 'Infiniti', source_manifest: manifest };
+    subject_brand: String(manifest.subject_brand ?? ''), source_manifest: manifest };
   if (stage === '10') {
     const row = Stage10Schema.shape.scores.element.parse(parsed);
     if (row.smp !== line) throw new Error('Baseline proposition was changed');
