@@ -113,7 +113,7 @@ export async function runBaselineJob(jobId:string, emit:(value:object)=>void) {
       const unread=await checked(()=>sb.from('current_position_addon_attempts').select('id,raw_output').eq('job_id',jobId).eq('stage',stage).is('result',null).not('raw_output','is',null).order('attempt'));
       for(const a of unread ?? []){
         try{const result=parseBaseline(stage,String(a.raw_output),job.proposition,job.source_manifest as Record<string,unknown>);
-          await checked(()=>sb.from('current_position_addon_attempts').update({result}).eq('id',a.id));
+          await checked(()=>sb.from('current_position_addon_attempts').update({result: result as never}).eq('id',a.id));
           await checked(()=>sb.from('current_position_addon_jobs').update({results:{...(job.results as Record<string,unknown>),[stage]:result} as never,completed_stages:[...job.completed_stages,stage]}).eq('id',jobId).eq('lease_token',lease));
           emit({stage,complete:true,message:`Stage ${stage} recovered from a saved response`});saved=true;break;}catch{/* keep looking */}
       }
@@ -130,7 +130,7 @@ export async function runBaselineJob(jobId:string, emit:(value:object)=>void) {
             stageLabel:`${subjectBrand} baseline ${stage}`,model:'claude-opus-5',maxTokens:64000,effort:'high',skipUniversalWrapper:true});
           const result=parseBaseline(stage,raw,job.proposition,job.source_manifest as Record<string,unknown>);
           if(heartbeatError)throw new Error(heartbeatError);
-          await checked(()=>sb.from('current_position_addon_attempts').update({raw_output:raw,result}).eq('id',record.id));
+          await checked(()=>sb.from('current_position_addon_attempts').update({raw_output:raw,result:result as never}).eq('id',record.id));
           const results={...(job.results as Record<string,unknown>),[stage]:result};
           await checked(()=>sb.from('current_position_addon_jobs').update({results:results as never,completed_stages:[...job.completed_stages,stage]}).eq('id',jobId).eq('lease_token',lease));
           emit({stage,complete:true,message:`Stage ${stage} structured assessment saved`});saved=true;break;
