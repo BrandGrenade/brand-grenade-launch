@@ -10,7 +10,7 @@ export const EXEC_SUMMARY_OUTPUT = 'stage16.executive_summary' as const;
 export const EXEC_SUMMARY_SCHEMA = 'stage16.executive_summary.v1' as const;
 export const MISSING = 'Not available in this run';
 export const NOT_IN_TYPE = 'Not in this run type';
-export const SECTION_MAX_WORDS = 70;
+export const SECTION_MAX_WORDS = 100;
 export const DOC_MAX_WORDS = 900;
 export const TITLES = ['The Challenge', 'What We Found', 'The Process, In Brief', 'The Shortlist', 'The Recommendation', 'Why This Wins', 'The Proof, At A Glance', 'The Brand World', 'The Next Step'] as const;
 
@@ -45,7 +45,7 @@ type Section = z.infer<typeof SectionSchema>;
 
 const str = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : null);
 const words = (s: string) => s.split(/\s+/).filter(Boolean).length;
-const plain = (s: string) => s.replace(/\*\*|__|`/g, '').replace(/^>\s*/gm, '').replace(/\s+/g, ' ').trim();
+const plain = (s: string) => s.replace(/\s\((?:\d+(?:,\s*\d+)*)\)/g, '').replace(/[“”"]/g, '').replace(/\*\*|__|`/g, '').replace(/^>\s*/gm, '').replace(/\s+/g, ' ').trim();
 function sentences(s: string): string[] { return (plain(s).match(/[^.!?]+[.!?]+(?:["'’”)]+)?|[^.!?]+$/g) ?? []).map(x => x.trim()).filter(Boolean); }
 /** Whole sentences up to the word budget; a first sentence over budget is cut at a clause boundary. */
 export function condense(s: string | null, max = SECTION_MAX_WORDS, maxSentences = 3): string | null {
@@ -94,7 +94,7 @@ export function buildExecutiveSummary(inp: ExecInputs): { record: ExecutiveSumma
 
   // (1) Challenge — Stage 1 surface request + governing tension (anchored from the Briefing Room).
   const req = condense(mdSection(inp.stage1, /Surface Request/i), 40, 1);
-  const tension = condense(mdSection(inp.stage1, /Underlying Strategic Problem/i), 45, 1);
+  const tension = condense(mdSection(inp.stage1, /Underlying Strategic Problem/i), 55, 1);
   const s1 = req || tension ? [req, tension && `Governing tension: ${tension}`].filter(Boolean).join(' ') : null;
   // (2) Finding — Stage 1 human/cultural shift, the evidence the tension rests on.
   const s2 = condense(mdSection(inp.stage1, /Human \/ Cultural Shift|Cultural Shift/i), 60, 2);
@@ -148,9 +148,9 @@ export function buildExecutiveSummary(inp: ExecInputs): { record: ExecutiveSumma
     const t = str(ev?.justification) ?? str(ev?.exposure) ?? str(ev?.note) ?? (typeof first?.evidence === 'string' ? first.evidence : null);
     s6 = sec(6, first ? `Why this verdict: ${first.code}. ${condense(t, 50, 2) ?? ''}`.trim() : null, ['validate.verdict']);
   } else {
-    const resolves = condense(str(inp.selectionRationale?.f2) ?? str(inp.selectionRationale?.f1), 25, 1);
-    const truth = condense(str(cardW?.truth), 25, 1);
-    const ci = condense(str((s10w?.competitive_impossibility as Row | undefined)?.justification), 25, 1);
+    const resolves = condense(str(inp.selectionRationale?.f2) ?? str(inp.selectionRationale?.f1), 30, 2);
+    const truth = condense(str(cardW?.truth), 30, 1);
+    const ci = condense(str((s10w?.competitive_impossibility as Row | undefined)?.justification), 30, 2);
     const parts = [resolves && `Tension it resolves: ${resolves}`, truth && `True of this brand: ${truth}`, ci && `Why a competitor could not say it: ${ci}`].filter(Boolean);
     s6 = sec(6, parts.length ? parts.join(' ') : null, ['Stage 12 rationale', 'Stage 12 card', 'Stage 10']);
   }
