@@ -94,7 +94,10 @@ export function buildExecutiveSummary(inp: ExecInputs): { record: ExecutiveSumma
 
   // (1) Challenge — Stage 1 surface request + governing tension (anchored from the Briefing Room).
   const req = condense(mdSection(inp.stage1, /Surface Request/i), 40, 1);
-  const tension = condense(mdSection(inp.stage1, /Underlying Strategic Problem/i), 55, 1);
+  const problem = mdSection(inp.stage1, /Underlying Strategic Problem/i);
+  const quoted = problem?.split('\n').filter(l => l.trim().startsWith('>')).join(' ') || null;
+  // The anchored tension's closing sentence states it most compactly; otherwise the problem's first sentence.
+  const tension = condense(quoted ? sentences(quoted).slice(-1)[0] ?? null : problem, 55, 1);
   const s1 = req || tension ? [req, tension && `Governing tension: ${tension}`].filter(Boolean).join(' ') : null;
   // (2) Finding — Stage 1 human/cultural shift, the evidence the tension rests on.
   const s2 = condense(mdSection(inp.stage1, /Human \/ Cultural Shift|Cultural Shift/i), 60, 2);
