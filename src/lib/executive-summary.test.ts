@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildExecutiveSummary, ExecutiveSummarySchema, MISSING, NOT_IN_TYPE, DOC_MAX_WORDS, SECTION_MAX_WORDS, isValidateVariant, assertNoInventedNumbers, type ExecInputs } from './executive-summary';
+import { buildExecutiveSummary, condense, explainReason, ExecutiveSummarySchema, MISSING, NOT_IN_TYPE, DOC_MAX_WORDS, SECTION_MAX_WORDS, isValidateVariant, assertNoInventedNumbers, type ExecInputs } from './executive-summary';
 import { CONTRACTS } from './access/contracts';
 
 const dim = (score: number, extra: Record<string, unknown> = {}) => ({ score, justification: 'Possible only through fundamental contradiction. Rivals are bound to their own heritage claims.', ...extra });
@@ -16,7 +16,7 @@ const base = (): ExecInputs => ({
   stage22Assets: { recommended_assets: [{ asset: 'Hands before names', type: 'Visual' }] }, validate: null,
 });
 const validateOutputs = () => ({
-  'validate.verdict': { notes: ['Confirm with client before relying on this verdict'], decision_questions: ['Keep, refresh or replace?'], data: { verdict: 'REFRESH', reasons: [{ code: 'CREDIBILITY_AT_OR_BELOW_5', evidence: { justification: 'No car on sale.' } }] } },
+  'validate.verdict': { notes: ['Confirm with client before relying on this verdict'], decision_questions: ['Keep, refresh or replace?'], data: { verdict: 'REFRESH', reasons: [{ code: 'CREDIBILITY_AT_OR_BELOW_5', evidence: { justification: 'No car on sale.' } as Record<string, unknown> }] } },
   'validate.current_position': { notes: ['Confirm with client before relying on this verdict'], data: { proposition: 'Made to last.', stage10: { composite: 64, competitive_impossibility: dim(6, { competitor: 'Rival Motors' }), clean_air: dim(8) } } },
   'validate.evidence_gaps': { data: { comparators: { items: [{ smp: 'Built to be kept.', composite: 71.5, code_verdict: 'PASS', role: 'comparator' }, { smp: 'Quiet power.', composite: 55, code_verdict: 'PASS', role: 'comparator' }] } } },
 });
@@ -51,7 +51,7 @@ describe('Executive Summary (stage16.executive_summary)', () => {
     const r = buildExecutiveSummary({ ...base(), runMode: 'diagnostic', stage22Architecture: null, stage22Assets: null });
     expect(r.record.variant).toBe('diagnostic');
     expect(r.record.sections[7].body).toBe(NOT_IN_TYPE);
-    expect(r.record.sections[6].table!.find(t => t.measure === 'Distinctive asset in play')!.value).toBe(NOT_IN_TYPE);
+    expect(r.record.sections[6].table?.find(t => t.measure === 'Proposed creative idea in play')?.value).toBe(NOT_IN_TYPE);
   });
   it('Validate run: verdict with reason codes replaces the recommendation, comparators labelled, client note carried', () => {
     const r = buildExecutiveSummary({ ...base(), validate: validateOutputs(), validateStrategyOwner: 'Marlowe board' });
@@ -78,5 +78,54 @@ describe('Executive Summary (stage16.executive_summary)', () => {
     expect(c.schema_version).toBe('stage16.executive_summary.v1');
     expect(c.content!.safeParse(built).success).toBe(true);
     for (const f of ['agency', 'consulting', 'workshop', 'vision', 'valuation']) expect(CONTRACTS.find(x => x.output_id === `stage16.${f}`)!.schema_version).toBe('stage16.document.v1');
+  });
+  it('never cuts long sentences or emits unfinished trailing fragments', () => {
+    expect(condense('A complete sentence. An unfinished fragment', 100, 3)).toBe('A complete sentence.');
+    expect(condense('A sentence with far too many words to fit.', 3)).toBeNull();
+    expect(condense('A complete sentence; with a clause that is still part of it.', 5)).toBeNull();
+  });
+  it('asks the Validate question with its source instead of the Campaign tension', () => {
+    const v = validateOutputs();
+    v['validate.current_position'].data = { ...v['validate.current_position'].data, source_kind: 'owner-stated', source: 'Official statement', source_date: '2024-11-19' } as typeof v['validate.current_position']['data'];
+    const r = buildExecutiveSummary({ ...base(), validate: v, validateSubjectBrand: 'Marlowe Motor Company' });
+    expect(r.record.sections[0].body).toContain('Is "Made to last" still the right strategy for Marlowe Motor Company?');
+    expect(r.record.sections[0].body).toContain('OWNER-STATED (PUBLIC)');
+    expect(r.record.sections[0].body).not.toContain('Governing tension');
+  });
+  it('shows a repeated code once while explaining all dimensions with their exact scores', () => {
+    const v = validateOutputs();
+    v['validate.verdict'].data.reasons = [
+      { code: 'CREDIBILITY_AT_OR_BELOW_5', evidence: { dimension: 'product_truth_alignment', score: 5, justification: 'No car on sale.' } },
+      { code: 'CREDIBILITY_AT_OR_BELOW_5', evidence: { dimension: 'behavioural_capacity', score: 4, justification: 'The cost base is strained.' } },
+    ];
+    const r = buildExecutiveSummary({ ...base(), validate: v });
+    expect(r.text.match(/CREDIBILITY_AT_OR_BELOW_5/g)).toHaveLength(1);
+    expect(r.record.sections[5].items).toHaveLength(2);
+    expect(r.text).toContain('product truth alignment scored 5/10');
+    expect(r.text).toContain('behavioural capacity scored 4/10');
+    expect(() => explainReason('UNRECOGNISED', {})).toThrow('EXEC_SUMMARY_REASON_UNSUPPORTED');
+  });
+  it('shows all six comparators, including an eliminated scored comparator and a missing-score explanation', () => {
+    const v = validateOutputs();
+    v['validate.evidence_gaps'].data.comparators.items = Array.from({ length: 6 }, (_, i) => ({ smp: `Comparator ${i + 1}.`, composite: 50 + i, code_verdict: i === 0 ? 'ELIMINATED' : 'PASS', role: 'comparator' }));
+    const r = buildExecutiveSummary({ ...base(), validate: v, stage9: { propositions: [{ smp: 'Earlier candidate.' }] } });
+    expect(r.record.sections[3].items).toHaveLength(7);
+    expect(r.record.sections[3].items?.every(i => i.role === 'comparator')).toBe(true);
+    expect(r.text).toContain('50/90, ELIMINATED');
+    expect(r.text).toContain('No version-matched Stage 10 score is saved');
+  });
+  it('omits the Brand World and creative asset proof for a different strategy', () => {
+    const r = buildExecutiveSummary({ ...base(), validate: validateOutputs() });
+    expect(r.record.sections[7].body).toBe('Brand world not assessed for the current strategy');
+    expect(r.text).not.toContain('Hands before names');
+  });
+  it('orders the selected proposition first, then the others by Stage 10 score', () => {
+    const b = base();
+    const r = buildExecutiveSummary({ ...b, stage12: { propositions: [...(b.stage12?.propositions as object[])].reverse() } });
+    expect(r.record.sections[3].items?.map(i => i.label)).toEqual(['Built to be kept.', 'Every road, one house.', 'Quiet power.']);
+  });
+  it('labels proposed celebrity voices as creative ideas rather than owned assets', () => {
+    const r = buildExecutiveSummary({ ...base(), stage22Architecture: { domain: 'Automotive', assets: ['Morgan Freeman narration'] } });
+    expect(r.record.sections[7].body).toContain('Proposed creative ideas (not owned assets): Morgan Freeman narration');
   });
 });

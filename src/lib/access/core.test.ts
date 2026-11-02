@@ -75,6 +75,22 @@ describe("BG access point", () => {
   const db = makeDb();
   const g = (run_id: string, output_id: string, key: Key = HUB, version = 1) => call(db, key, "get_output", { client_ref: "hub-c1", run_id, version, output_id });
 
+  it('keeps the JLR test copy out of default/current lists but labels explicit reads test', async () => {
+    const production = '3470f1ad-b322-4230-8e3d-bf0072e95b7a';
+    const copy = 'cb7ac9d6-f70b-4902-beb6-7bd0ff5da85f';
+    const rows: RunRec[] = [
+      { table: 'sessions', id: copy, row: { ...linked, test_copy_of: production, brand_name: 'Creative Engine Test (copy of JLR)', created_at: '2026-11-02', stage_2_output: 'Copy evidence' } },
+      { table: 'sessions', id: production, row: { ...linked, brand_name: 'JLR', created_at: '2026-10-20' } },
+    ];
+    const history = Array.from({ length: 96 }, (_, i) => ({ field: '__boundary', content: null, version_no: i + 1, reason: 'saved', created_at: new Date(Date.UTC(2026, 0, 1, 0, i)).toISOString() }));
+    const db: Db = { ...makeDb(), listLinkedRuns: async () => rows, findRun: async id => rows.find(r => r.id === id) ?? null, versions: async (_, id) => id === production ? history : [] };
+    const list = await call(db, HUB, 'list_runs', { client_ref: 'hub-c1' });
+    expect((list.content as any).runs).toEqual([expect.objectContaining({ run_id: production, version: 97, is_test: false, eligible_for_default: true })]);
+    expect((list.content as any).test_runs).toEqual([expect.objectContaining({ run_id: copy, run_classification: 'test', eligible_for_default: false })]);
+    const explicit = await call(db, HUB, 'get_output', { client_ref: 'hub-c1', run_id: copy, version: 1, output_id: 'stage02' });
+    expect(explicit).toMatchObject({ run_classification: 'test', is_test: true, eligible_for_default: false, content: { text: 'Copy evidence' } });
+  });
+
   it("every named request returns the standard response", async () => {
     const docs = await call(db, HUB, "list_documents", { client_ref: "hub-c1", run_id: RUN, version: 1 });
     const responses = [

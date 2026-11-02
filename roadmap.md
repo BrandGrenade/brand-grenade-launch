@@ -1,5 +1,11 @@
 # Roadmap — Partner Hub structured evidence (27 Oct 2026)
 
+## Executive Summary follow-up — 2 Nov 2026
+- [x] Audit: v1 has no Copy Nothing baseline; v2 saved 68/90, v3 saved 68.5/90; both assessments contain six comparators, prior summary capped at five.
+- [x] Correct Validate challenge/reasons/comparators/proposition-specific Brand World, full-run ordering, sentence integrity and proposed creative labels; eight new tests.
+- [x] Existing test_copy_of marker drives test metadata and separate test_runs; live production JLR list contains only 3470f1ad v97; explicit copy reads remain test.
+- [x] 546 tests / 78 files passed, build OK, published and both live summaries retrieved (590/525 words), zero banned-word hits/no truncation. Both session fingerprints unchanged; temporary keys revoked; full report supplied.
+
 ## Executive Summary (register #41) — 2 Nov 2026
 - [x] Deterministic nine-section assembly, gates, Diagnostic/Validate variants, access contract, Deliverables export, tests.
 - [x] Published; live access-point reads for JLR v97 (full, 574 words) and test copy v3 (validate, 479 words); Deliverables download checked live; JLR fingerprint unchanged.

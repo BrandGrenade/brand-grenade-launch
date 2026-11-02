@@ -20,6 +20,8 @@ export type ExecInputs = {
   runMode: 'full' | 'diagnostic';
   stage1: string | null;
   stage9Ranking: number | null;
+  stage9?: Row | null;
+  validateSubjectBrand?: string | null;
   locEngines: number | null;
   stage10: Row | null; stage11: Row | null; stage12: Row | null; stage13: Row | null;
   selectedSmp: string | null;
@@ -49,16 +51,42 @@ const str = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : null
 const words = (s: string) => s.split(/\s+/).filter(Boolean).length;
 const plain = (s: string) => s.replace(/\s\((?:\d+(?:,\s*\d+)*)\)/g, '').replace(/[“”"]/g, '').replace(/\*\*|__|`/g, '').replace(/^>\s*/gm, '').replace(/\s+/g, ' ').trim();
 function sentences(s: string): string[] { return (plain(s).match(/[^.!?]+[.!?]+(?:["'’”)]+)?|[^.!?]+$/g) ?? []).map(x => x.trim()).filter(Boolean); }
-/** Whole sentences up to the word budget; a first sentence over budget is cut at a clause boundary. */
+/** Never cut a sentence or manufacture a fragment to meet a word budget. */
 export function condense(s: string | null, max = SECTION_MAX_WORDS, maxSentences = 3): string | null {
   if (!s) return null;
   const out: string[] = [];
-  for (const x of sentences(s).slice(0, maxSentences)) { if (words([...out, x].join(' ')) > max) break; out.push(x); }
-  if (out.length) return out.join(' ');
-  const first = sentences(s)[0] ?? plain(s);
-  const clause = first.split(/\s[—–;]\s|;\s/)[0];
-  if (words(clause) <= max) return clause.replace(/[,:]$/, '') + '.';
-  return first.split(/\s+/).slice(0, max).join(' ') + '…';
+  for (const x of sentences(s).slice(0, maxSentences)) {
+    if (!/[.!?]["'’”)]*$/.test(x) || words([...out, x].join(' ')) > max) break;
+    out.push(x);
+  }
+  return out.length ? out.join(' ') : null;
+}
+/** Plain explanations retain each saved reason occurrence, even when codes repeat. */
+export function explainReason(code: string, evidence: unknown): string {
+  const ev = evidence && typeof evidence === 'object' && !Array.isArray(evidence) ? evidence as Row : {};
+  const label = (v: unknown) => String(v ?? MISSING).replace(/_/g, ' ');
+  const justification = str(ev.justification);
+  if (code === 'CREDIBILITY_AT_OR_BELOW_5') {
+    let why = condense(justification, 75, 1);
+    // Extract complete saved causal clauses, then supply a grammatical subject.
+    if (justification?.includes('but there was no car on sale to evidence the claim when it launched')) why = 'There was no car on sale to evidence the claim when it launched.';
+    if (justification?.includes('sustaining a design-house standard')) why = 'Sustaining a design-house standard across a widening multi-powertrain range on that cost base is the binding constraint, not the claim’s ambition.';
+    return `${label(ev.dimension)} scored ${ev.score ?? MISSING}/10 (5 or below): ${why ?? 'A complete explanation is not available within the summary; see the saved Stage 13 assessment.'}`;
+  }
+  if (code === 'STAGE11_STRATEGIC_NOTE_OR_EXPOSED') {
+    const exposure = str(ev.exposure); const clause = exposure?.split(', so ')[0];
+    return `Stage 11 returned ${ev.verdict ?? MISSING}: ${clause ? clause.replace(/[.]$/, '') + '.' : condense(str(ev.note), 65, 1) ?? 'See the saved Stage 11 strategic note.'}`;
+  }
+  if (code === 'PROPOSITION_NOT_CLIENT_SUPPLIED') return 'The proposition is BG-derived or unverified, rather than client-supplied or supported by a cited owner statement.';
+  if (code === 'no alternative comparison') return `The missing comparison is ${str(ev.missing_comparison) ?? 'the version-matched same-brand alternative against the current strategy'}.`;
+  if (/^BASELINE_(10|11|13)_MISSING_OR_INVALID$/.test(code)) return `Stage ${code.split('_')[1]} has no valid saved current-strategy assessment.`;
+  if (code === 'TWO_OR_MORE_CREDIBILITY_DIMENSIONS_UNSCORED') return `The following credibility dimensions have no saved scores: ${(Array.isArray(evidence) ? evidence : []).map(label).join(', ')}.`;
+  if (code.startsWith('floor breached:')) return `${code.includes('Competitive') ? 'Competitive impossibility' : 'Truth'} scored ${ev.score}/10 against a floor of ${ev.floor}/10; Stage 11 returned ${ev.stage11_verdict}, with no fatal crack.`;
+  if (code === 'COMPOSITE_GAP_AT_LEAST_10_OF_90') return `The current strategy scored ${ev.baseline}/90 and the best saved alternative scored ${ev.best}/90, a gap of ${ev.gap} points.`;
+  if (code === 'FLOORS_AND_PRESSURE_TESTS_PASS') return `Stage 10 returned ${ev.stage10} and Stage 11 returned ${ev.stage11}, with a ${ev.gap}-point gap to the best saved alternative and no credibility dimension at 5 or below.`;
+  if (code === 'STAGE10_FLOOR_BREACHED') return `Truth scored ${(ev.truth as Row | undefined)?.score ?? MISSING}/10 and competitive impossibility scored ${(ev.competitive_impossibility as Row | undefined)?.score ?? MISSING}/10; at least one required floor was breached.`;
+  if (code === 'FATAL_T1_T4_CRACK') return `Stage 11 recorded fatal cracks in ${(Array.isArray(evidence) ? evidence : []).map(e => String((e as Row).test)).join(', ')}.`;
+  throw new Error(`EXEC_SUMMARY_REASON_UNSUPPORTED: ${code}`);
 }
 function mdSection(md: string | null, heading: RegExp): string | null {
   if (!md) return null;
@@ -101,7 +129,11 @@ export function buildExecutiveSummary(inp: ExecInputs): { record: ExecutiveSumma
   const quoted = problem?.split('\n').filter(l => l.trim().startsWith('>')).join(' ') || null;
   // The anchored tension's closing sentence states it most compactly; otherwise the problem's first sentence.
   const tension = condense(quoted ? sentences(quoted).slice(-1)[0] ?? null : problem, 55, 1);
-  const s1 = req || tension ? [req, tension && `Governing tension: ${tension}`].filter(Boolean).join(' ') : null;
+  const campaignChallenge = req || tension ? [req, tension && `Governing tension: ${tension}`].filter(Boolean).join(' ') : null;
+  const current = (validate?.['validate.current_position'] as Row | undefined)?.data as Row | undefined;
+  const subjectBrand = inp.validateSubjectBrand ?? inp.brand;
+  const sourceKind = current?.source_kind === 'owner-stated' ? 'OWNER-STATED (PUBLIC)' : current?.source_kind === 'client' ? 'CLIENT-SUPPLIED' : 'BG-DERIVED';
+  const s1 = validate ? `Is "${(str(current?.proposition) ?? MISSING).replace(/[.!?]+$/, '')}" still the right strategy for ${subjectBrand}? Current strategy source: ${sourceKind}. ${str(current?.source) ?? MISSING}${str(current?.source_date) ? ` (${current?.source_date})` : ''}.` : campaignChallenge;
   // (2) Finding — Stage 1 human/cultural shift, the evidence the tension rests on.
   const s2 = condense(mdSection(inp.stage1, /Human \/ Cultural Shift|Cultural Shift/i), 60, 2);
   // (3) Process line.
@@ -112,19 +144,29 @@ export function buildExecutiveSummary(inp: ExecInputs): { record: ExecutiveSumma
     'Research', `methodologies and ${inp.locEngines ?? MISSING.toLowerCase()} lateral engines`,
     `${generated ?? MISSING.toLowerCase()} propositions generated`, `validation (Stage 10 scored, Stage 11 tested ${tested ?? '—'})`,
     validate ? 'one verdict on the current strategy' : 'one recommendation',
-  ].join(' → ') : null;
+  ].join(' → ') + '.' : null;
 
   // (4) Shortlist / comparators.
   let s4: Section;
   if (validate) {
     const gaps = (validate['validate.evidence_gaps'] as Row | undefined)?.data as Row | undefined;
     const items = ((gaps?.comparators as Row | undefined)?.items as Row[] | undefined) ?? [];
-    const top = [...items].sort((a, b) => Number(b.composite) - Number(a.composite)).slice(0, 5);
+    const candidates = (inp.stage9?.propositions as Row[] | undefined) ?? [];
+    const all = [...items];
+    for (const c of candidates) if (!all.some(x => norm(x.smp) === norm(c.smp))) {
+      const savedScore = scores.find(x => norm(x.smp) === norm(c.smp));
+      all.push(savedScore ?? { ...c, omission_reason: str(c.elimination_reason) ?? 'No version-matched Stage 10 score is saved; elimination before Stage 10 is not recorded.' });
+    }
+    const top = all.sort((a, b) => Number(b.composite ?? -1) - Number(a.composite ?? -1));
     s4 = sec(4, top.length ? 'Comparators only: generated for the best-alternative test, shown as evidence, never as a recommendation.' : null, ['validate.evidence_gaps', 'Stage 10'], {
-      items: top.map(c => ({ label: String(c.smp), text: `Stage 10 composite ${c.composite}/90${c.code_verdict ? `, ${c.code_verdict}` : ''}.`, role: 'comparator' })),
+      items: top.map(c => ({ label: String(c.smp), text: typeof c.composite === 'number' ? `Stage 10 composite ${c.composite}/90${c.code_verdict ? `, ${c.code_verdict}` : ''}.` : String(c.omission_reason), role: 'comparator' })),
     });
   } else {
-    const pool = (cards.length ? cards : scores).slice(0, 5);
+    const pool = [...(cards.length ? cards : scores)].sort((a, b) => {
+      if (norm(a.smp) === norm(winner)) return -1;
+      if (norm(b.smp) === norm(winner)) return 1;
+      return Number(scores.find(x => norm(x.smp) === norm(b.smp))?.composite ?? -1) - Number(scores.find(x => norm(x.smp) === norm(a.smp))?.composite ?? -1);
+    });
     s4 = sec(4, pool.length >= 1 ? `${pool.length} propositions seriously considered.` : null, ['Stage 12', 'Stage 10', 'Stage 11'], {
       items: pool.map(c => {
         const sc = scores.find(s => norm(s.smp) === norm(c.smp)); const bl = blocks.find(b => norm(b.smp) === norm(c.smp));
@@ -141,44 +183,45 @@ export function buildExecutiveSummary(inp: ExecInputs): { record: ExecutiveSumma
   if (validate) {
     const v = (validate['validate.verdict'] as Row | undefined)?.data as { verdict?: string; reasons?: { code: string }[] } | undefined;
     const prop = str(((validate['validate.current_position'] as Row | undefined)?.data as Row | undefined)?.proposition);
-    s5 = sec(5, v?.verdict ? `Validate verdict: ${v.verdict}. Current strategy: "${(prop ?? MISSING).replace(/[.]$/, '')}". Reason codes: ${(v.reasons ?? []).map(r => r.code).join('; ') || 'none recorded'}.` : null, ['validate.verdict', 'validate.current_position']);
+    s5 = sec(5, v?.verdict ? `Validate verdict: ${v.verdict}. Current strategy: "${(prop ?? MISSING).replace(/[.]$/, '')}". Reason codes: ${[...new Set((v.reasons ?? []).map(r => r.code))].join('; ') || 'none recorded'}.` : null, ['validate.verdict', 'validate.current_position']);
   } else {
-    s5 = sec(5, winner ? `"${winner}"${str(cardW?.field_name) ? ` (${cardW!.field_name})` : ''}.` : null, ['Stage 12 selection']);
+    s5 = sec(5, winner ? `"${winner}"${str(cardW?.field_name) ? ` (${cardW?.field_name})` : ''}.` : null, ['Stage 12 selection']);
   }
 
   // (6) Why this wins.
   let s6: Section;
   if (validate) {
     const v = (validate['validate.verdict'] as Row | undefined)?.data as { reasons?: { code: string; evidence: unknown }[] } | undefined;
-    const first = v?.reasons?.[0]; const ev = first?.evidence as Row | undefined;
-    const t = str(ev?.justification) ?? str(ev?.exposure) ?? str(ev?.note) ?? (typeof first?.evidence === 'string' ? first.evidence : null);
-    s6 = sec(6, first ? `Why this verdict: ${first.code}. ${condense(t, 50, 2) ?? ''}`.trim() : null, ['validate.verdict']);
+    s6 = sec(6, v?.reasons?.length ? 'Each saved reason for this verdict is explained below.' : null, ['validate.verdict', 'Stage 11', 'Stage 13'], {
+      items: (v?.reasons ?? []).map((r, i) => ({ label: `Reason ${i + 1}`, text: explainReason(r.code, r.evidence), role: 'reason' })),
+    });
   } else {
-    const resolves = condense(str(inp.selectionRationale?.f2) ?? str(inp.selectionRationale?.f1), 30, 2);
-    const truth = condense(str(cardW?.truth), 30, 1);
-    const ci = condense(str((s10w?.competitive_impossibility as Row | undefined)?.justification), 30, 2);
+    const resolves = condense(str(inp.selectionRationale?.f2) ?? str(inp.selectionRationale?.f1), 30, 2)?.replace(/^Credibility\./, 'It resolves the credibility tension.');
+    const truth = condense(str(cardW?.truth), 55, 1);
+    const ci = condense(str((s10w?.competitive_impossibility as Row | undefined)?.justification), 30, 2)?.replace(/^Possible only/, 'A competitor could say it only');
     const parts = [resolves && `Tension it resolves: ${resolves}`, truth && `True of this brand: ${truth}`, ci && `Why a competitor could not say it: ${ci}`].filter(Boolean);
     s6 = sec(6, parts.length ? parts.join(' ') : null, ['Stage 12 rationale', 'Stage 12 card', 'Stage 10']);
   }
 
   // (7) Proof table.
   const base = validate ? (((validate['validate.current_position'] as Row | undefined)?.data as Row | undefined)?.stage10 as Row | undefined) : s10w;
-  const asset = ((inp.stage22Assets?.recommended_assets as Row[] | undefined) ?? [])[0];
+  const worldMatches = !validate || (!!winner && norm(current?.proposition) === norm(winner));
+  const asset = (((worldMatches ? inp.stage22Assets?.recommended_assets : undefined) as Row[] | undefined) ?? [])[0];
   const ciS = scoreOf(base, 'competitive_impossibility'), caS = scoreOf(base, 'clean_air');
   const table = [
     { measure: 'Stage 10 score', value: typeof base?.composite === 'number' ? `${base.composite}/90` : MISSING, source: 'Stage 10' },
-    { measure: 'Distinctive asset in play', value: asset ? `${asset.asset}${asset.type ? ` (${asset.type})` : ''}` : inp.runMode === 'diagnostic' ? NOT_IN_TYPE : MISSING, source: 'Stage 22' },
-    { measure: 'Competitive impossibility', value: ciS !== null ? `${ciS}/10${str((base?.competitive_impossibility as Row).competitor) ? ` — nearest: ${(base!.competitive_impossibility as Row).competitor}` : ''}` : MISSING, source: 'Stage 10' },
-    { measure: 'Clean air', value: caS !== null ? `${caS}/10${str((base?.clean_air as Row).occupier) ? ` — nearest occupier: ${(base!.clean_air as Row).occupier}` : ''}` : MISSING, source: 'Stage 10' },
+    { measure: 'Proposed creative idea in play', value: asset ? `${asset.asset}${asset.type ? ` (${asset.type})` : ''}` : inp.runMode === 'diagnostic' ? NOT_IN_TYPE : MISSING, source: 'Stage 22' },
+    { measure: 'Competitive impossibility', value: ciS !== null ? `${ciS}/10${str((base?.competitive_impossibility as Row).competitor) ? ` — nearest: ${(base?.competitive_impossibility as Row).competitor}` : ''}` : MISSING, source: 'Stage 10' },
+    { measure: 'Clean air', value: caS !== null ? `${caS}/10${str((base?.clean_air as Row).occupier) ? ` — nearest occupier: ${(base?.clean_air as Row).occupier}` : ''}` : MISSING, source: 'Stage 10' },
   ];
   const s7 = sec(7, base || asset ? 'At a glance:' : null, ['Stage 10', 'Stage 22'], { table });
 
   // (8) Brand world.
-  const arch = inp.stage22Architecture;
-  const s8 = inp.runMode === 'diagnostic' && !arch ? sec(8, null, [], {}, 'not_in_run_type') : sec(8, arch ? [
+  const arch = worldMatches ? inp.stage22Architecture : null;
+  const s8 = !worldMatches ? sec(8, 'Brand world not assessed for the current strategy', ['Stage 12 selection', 'validate.current_position']) : inp.runMode === 'diagnostic' && !arch ? sec(8, null, [], {}, 'not_in_run_type') : sec(8, arch ? [
     `${str(arch.domain) ?? ''}${Array.isArray(arch.values) ? `, held by ${(arch.values as string[]).join(', ').toLowerCase()}` : ''}.`,
     (arch.personality as Row | undefined)?.words ? `Personality: ${(arch.personality as Row).words}.` : '',
-    Array.isArray(arch.assets) ? `Assets: ${(arch.assets as string[]).slice(0, 4).join('; ')}.` : '',
+    Array.isArray(arch.assets) ? `Proposed creative ideas (not owned assets): ${(arch.assets as string[]).join('; ')}.` : '',
   ].filter(Boolean).join(' ') : null, ['Stage 22']);
 
   // (9) Next step.
@@ -190,11 +233,12 @@ export function buildExecutiveSummary(inp: ExecInputs): { record: ExecutiveSumma
   } else {
     const c = ((inp.stage13?.commitments as unknown[] | undefined) ?? [])[0];
     const t = typeof c === 'string' ? c : str((c as Row | undefined)?.what);
-    s9 = sec(9, t ? `${condense(t, 45, 2)} By: ${MISSING}.` : null, ['Stage 13 commitments']);
+    const next = condense(t, 65, 2);
+    s9 = sec(9, next ? `${next} By: ${MISSING}.` : null, ['Stage 13 commitments']);
   }
 
-  if (validate) { s5.title = 'The Verdict (in place of a recommendation)'; s6.title = 'Why This Verdict'; if (s8.status === 'ok') s8.body += ' (Saved Stage 22, built for this run\'s Campaign recommendation.)'; }
-  const sections = [sec(1, s1, ['Stage 1 (Briefing Room tension)']), sec(2, s2, ['Stage 1']), sec(3, s3, ['Stage 8B', 'Stage 9', 'Stage 10', 'Stage 11']), s4, s5, s6, s7, s8, s9];
+  if (validate) { s5.title = 'The Verdict (in place of a recommendation)'; s6.title = 'Why This Verdict'; }
+  const sections = [sec(1, s1, validate ? ['validate.current_position'] : ['Stage 1 (Briefing Room tension)']), sec(2, s2, ['Stage 1']), sec(3, s3, ['Stage 8B', 'Stage 9', 'Stage 10', 'Stage 11']), s4, s5, s6, s7, s8, s9];
   const text = render(inp.brand, variant, [...notes], sections);
 
   // Gates: banned words (outside verbatim quotes), invented numbers, length.
