@@ -214,7 +214,7 @@ function parseReport(c: Ctx): Record<string, unknown> | null | "bad" {
   }
 }
 
-const COMPARATOR_OUTPUT = /^stage(08|08b|09|10|11|12|13)\b/;
+const COMPARATOR_OUTPUT = /^stage(08b?|09|10|11|12|13)(?!\d)(?!_current_position)/;
 /** Validate runs: generated propositions are comparators only, never recommendations. */
 async function buildOutput(outputId: string, c: Ctx): Promise<Built> {
   const built = await buildOutputInner(outputId, c);
