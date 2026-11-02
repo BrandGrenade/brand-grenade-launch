@@ -2,7 +2,7 @@
 
 ## Executive Summary (register #41) — 2 Nov 2026
 - [x] Deterministic nine-section assembly, gates, Diagnostic/Validate variants, access contract, Deliverables export, tests.
-- [ ] Publish; live access-point reads for JLR v97 and Creative Engine test copy v3.
+- [x] Published; live access-point reads for JLR v97 (full, 574 words) and test copy v3 (validate, 479 words); Deliverables download checked live; JLR fingerprint unchanged.
 
 ## Validate mode v1 — 30 Oct 2026
 - [x] 2 Nov rule change: three proposition sources (Client-supplied / Owner-stated (public) with source+date+quote / BG-derived); only BG-derived or missing → INSUFFICIENT EVIDENCE; owner-stated carries client-confirmation gap and note on all four outputs. 529 tests; published; live test copy v3 → REFRESH.
