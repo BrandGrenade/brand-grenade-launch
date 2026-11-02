@@ -1,4 +1,6 @@
 import { furthestStageLabel, laterStageStatuses, type RunProgressFlags } from "@/lib/run-stage-progress";
+import { ValidateRunStatus } from "@/components/ValidatePanel";
+import { COMPARATOR_NOTE, VALIDATE_COMPARATOR_STAGES } from "@/lib/validate-run";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { tokens } from "@/styles/tokens";
@@ -2643,14 +2645,16 @@ function PipelineView() {
     }
     return null;
   })();
+  const [validateDone, setValidateDone] = useState(false);
   const nextStage = nextPipelineStage(selectedId, !!session?.stage_1b_required, session?.run_mode);
   const nextStageStatus: StageStatus | null = nextStage ? statuses[nextStage.id] : null;
   // Stage 15 is the persisted boundary between the Strategy Pipeline and Phase 2.
   // Do not gate this transition on every in-memory sidebar status: synthetic
   // rows such as 08B can remain pending after reload even when the database
   // proves the strategy and all Phase 2 work are complete.
+  // Validate runs complete only once the verdict and four validate.* outputs are saved.
   const pipelineComplete = session?.run_mode === "diagnostic"
-    ? selectedId === "13" && isPersistedStageComplete(session, "13", 13, session.stage_13_output)
+    ? selectedId === "13" && isPersistedStageComplete(session, "13", 13, session.stage_13_output) && (!session.validate_brief || validateDone)
     : selectedId === "15" && (
     (session !== null && isPersistedStageComplete(session, "15", 15, session.stage_15_output)) ||
     mainStages.every((s) => statuses[s.id] === "complete"));
@@ -3194,6 +3198,14 @@ function PipelineView() {
         ) : (
 
           <RightPanel
+            validateNotice={session?.validate_brief && sessionId ? (
+              <div className="border-b px-6 py-3 sm:px-12" style={{ borderColor: "var(--color-border)", backgroundColor: "var(--color-surface-2)" }}>
+                <p className="text-body-sm font-semibold">Validate run — verdict on the current strategy only</p>
+                {VALIDATE_COMPARATOR_STAGES.includes(selectedId) && <p className="text-body-sm" style={{ color: "var(--color-text-secondary)" }}>
+                  {selectedId === "12" ? "Choose the comparator to carry into Stage 13 as evidence. " : ""}{COMPARATOR_NOTE}</p>}
+                {selectedId === "13" && <div className="mt-3"><ValidateRunStatus sessionId={sessionId} onAssessment={setValidateDone} /></div>}
+              </div>
+            ) : null}
             stage={selected}
             status={selectedStatus}
             stage8KeepNames={stage8KeepNames}
@@ -4164,6 +4176,7 @@ function StageIndicator({
 // ────────────────────────────────────────────────────────────────────────────
 
 function RightPanel({
+  validateNotice,
   stage,
   status,
   fullOutput,
@@ -4239,6 +4252,7 @@ function RightPanel({
   onManualStage8Submit?: (line: string, label: string) => void | Promise<void>;
   onCheckpointNotesChange?: (notes: string[]) => void;
   sessionId?: string;
+  validateNotice?: ReactNode;
 }) {
   const isRunning = status === "running";
   const isCheckpoint = status === "checkpoint";
@@ -4248,6 +4262,7 @@ function RightPanel({
 
   return (
     <section className="relative flex min-w-0 flex-1 flex-col bg-background">
+      {validateNotice}
       {isViewingHistorical && (
         <div
           className="flex items-center justify-between border-b px-6 py-2.5 sm:px-12"

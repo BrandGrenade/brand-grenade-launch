@@ -6,6 +6,8 @@
 import { buildValidateOutputs, type ValidateBrief, type ValidateInputs } from './validate-mode';
 import { recoverSavedStage } from './saved-stage-records';
 
+/** Pipeline stages whose propositions are comparators on a Validate run. */
+export const VALIDATE_COMPARATOR_STAGES = ['08', '08B', '09', '10', '11', '12', '13'];
 export const COMPARATOR_ROLE = 'comparator' as const;
 export const COMPARATOR_NOTE = 'Comparator only — generated for the best-alternative test. Shown as evidence; not a recommendation. The verdict concerns the current strategy only.';
 

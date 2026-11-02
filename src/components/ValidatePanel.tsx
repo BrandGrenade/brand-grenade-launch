@@ -30,14 +30,14 @@ export function ValidateOutputs({ outputs }: { outputs: Assessment["outputs"] })
   );
 }
 
-export function ValidateRunStatus({ sessionId, poll = true }: { sessionId: string; poll?: boolean }) {
+export function ValidateRunStatus({ sessionId, poll = true, onAssessment }: { sessionId: string; poll?: boolean; onAssessment?: (done: boolean) => void }) {
   const read = useServerFn(getValidateJobs);
   const [state, setState] = useState<{ jobs: Job[]; assessments: Assessment[] } | null>(null);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
     let live = true;
     const tick = async () => {
-      try { const r = await read({ data: { sessionId } }); if (live) setState({ jobs: JSON.parse(r.jobs), assessments: JSON.parse(r.assessments) }); }
+      try { const r = await read({ data: { sessionId } }); if (live) { const a = JSON.parse(r.assessments) as Assessment[]; setState({ jobs: JSON.parse(r.jobs), assessments: a }); onAssessment?.(a.length > 0); } }
       catch (e) { if (live) setError(e instanceof Error ? e.message : String(e)); }
     };
     void tick();
