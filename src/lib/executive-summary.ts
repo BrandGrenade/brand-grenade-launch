@@ -75,7 +75,8 @@ export function isValidateVariant(row: Row, validateOutputs: Row | null): boolea
   if (row.validate_brief) return !!validateOutputs;
   // Same-brand add-on assessment at this version: the summary concerns the current strategy.
   const brand = str(validateOutputs?.__subject_brand);
-  return !!brand && brand.toLowerCase() === String(row.brand_name ?? '').trim().toLowerCase();
+  const names = [row.brand_name, ((row.brief_versions as { fields?: { brandName?: unknown } }[] | null)?.[0]?.fields?.brandName)].map(n => String(n ?? '').trim().toLowerCase()).filter(Boolean);
+  return !!brand && names.includes(brand.toLowerCase());
 }
 
 export function buildExecutiveSummary(inp: ExecInputs): { record: ExecutiveSummary; text: string } {
