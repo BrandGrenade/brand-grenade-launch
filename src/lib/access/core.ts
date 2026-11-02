@@ -459,7 +459,7 @@ async function executiveSummaryOutput(c: Ctx): Promise<Built> {
   const saved = c.db.validateOutputs ? await c.db.validateOutputs(c.run.id, c.v) : null;
   const useValidate = isValidateVariant(row, saved);
   let validate: Row | null = null;
-  if (useValidate && saved) { const { __subject_brand: _b, ...rest } = saved; void _b; validate = rest; }
+  if (useValidate && saved) { const { __subject_brand: _b, __strategy_owner: _o, ...rest } = saved; void _b; void _o; validate = rest; }
   const s9 = c.get('stage_9_structured') as Row | null; const loc = c.get('loc_engine_outputs');
   const rationale = c.get('selection_rationale');
   try {
@@ -469,7 +469,7 @@ async function executiveSummaryOutput(c: Ctx): Promise<Built> {
       locEngines: loc && typeof loc === 'object' && !Array.isArray(loc) ? Object.keys(loc as Row).length : null,
       stage10: await recordOf('stage10', c), stage11: await recordOf('stage11', c), stage12: await recordOf('stage12_propositions', c), stage13: await recordOf('stage13', c),
       selectedSmp: text(c.get('selected_smp')), selectionRationale: rationale && typeof rationale === 'object' ? rationale as Row : null,
-      stage22Architecture: await recordOf('stage22_architecture', c), stage22Assets: await recordOf('stage22_assets', c), validate,
+      stage22Architecture: await recordOf('stage22_architecture', c), stage22Assets: await recordOf('stage22_assets', c), validate, validateStrategyOwner: typeof saved?.__strategy_owner === 'string' ? saved.__strategy_owner : null,
     });
     return { content_status: 'structured', schema_version: EXEC_SUMMARY_SCHEMA, content: built, evidence: [], fields: ['stage_1_output', 'stage_10_output', 'stage_11_output', 'stage_12_output', 'stage_13_output', 'selected_smp', 'selection_rationale', 'stage_22_brand_architecture', 'stage_22_distinctive_assets', ...(validate ? ['validate_assessments.outputs'] : [])] };
   } catch (e) { throw new AccessError('unavailable', `EXEC_SUMMARY_ASSEMBLY_FAILED: ${e instanceof Error ? e.message : String(e)}`.slice(0, 300)); }

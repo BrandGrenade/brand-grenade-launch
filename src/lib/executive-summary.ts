@@ -27,6 +27,8 @@ export type ExecInputs = {
   stage22Architecture: Row | null; stage22Assets: Row | null;
   /** Saved validate.* outputs at this version, used when the summary is the Validate variant. */
   validate: Row | null;
+  /** Strategy owner recorded on the saved Validate brief. */
+  validateStrategyOwner?: string | null;
 };
 
 const SectionSchema = z.object({
@@ -119,7 +121,7 @@ export function buildExecutiveSummary(inp: ExecInputs): { record: ExecutiveSumma
     const items = ((gaps?.comparators as Row | undefined)?.items as Row[] | undefined) ?? [];
     const top = [...items].sort((a, b) => Number(b.composite) - Number(a.composite)).slice(0, 5);
     s4 = sec(4, top.length ? 'Comparators only: generated for the best-alternative test, shown as evidence, never as a recommendation.' : null, ['validate.evidence_gaps', 'Stage 10'], {
-      items: top.map(c => ({ label: String(c.smp), text: `Comparator. Stage 10 composite ${c.composite}/90${c.code_verdict ? `, ${c.code_verdict}` : ''}.`, role: 'comparator' })),
+      items: top.map(c => ({ label: String(c.smp), text: `Stage 10 composite ${c.composite}/90${c.code_verdict ? `, ${c.code_verdict}` : ''}.`, role: 'comparator' })),
     });
   } else {
     const pool = (cards.length ? cards : scores).slice(0, 5);
@@ -139,7 +141,7 @@ export function buildExecutiveSummary(inp: ExecInputs): { record: ExecutiveSumma
   if (validate) {
     const v = (validate['validate.verdict'] as Row | undefined)?.data as { verdict?: string; reasons?: { code: string }[] } | undefined;
     const prop = str(((validate['validate.current_position'] as Row | undefined)?.data as Row | undefined)?.proposition);
-    s5 = sec(5, v?.verdict ? `Validate verdict: ${v.verdict}. Current strategy: "${prop ?? MISSING}". Reason codes: ${(v.reasons ?? []).map(r => r.code).join('; ') || 'none recorded'}.` : null, ['validate.verdict', 'validate.current_position']);
+    s5 = sec(5, v?.verdict ? `Validate verdict: ${v.verdict}. Current strategy: "${(prop ?? MISSING).replace(/[.]$/, '')}". Reason codes: ${(v.reasons ?? []).map(r => r.code).join('; ') || 'none recorded'}.` : null, ['validate.verdict', 'validate.current_position']);
   } else {
     s5 = sec(5, winner ? `"${winner}"${str(cardW?.field_name) ? ` (${cardW!.field_name})` : ''}.` : null, ['Stage 12 selection']);
   }
@@ -183,7 +185,7 @@ export function buildExecutiveSummary(inp: ExecInputs): { record: ExecutiveSumma
   let s9: Section;
   if (validate) {
     const q = ((validate['validate.verdict'] as Row | undefined)?.decision_questions as string[] | undefined)?.[0];
-    const own = str(((validate['validate.current_position'] as Row | undefined)?.data as Row | undefined)?.supplied_by);
+    const own = str(inp.validateStrategyOwner);
     s9 = sec(9, q ? `Decision: ${q} By: ${own ?? MISSING}.${notes.size ? ` ${[...notes].join(' ')}.` : ''}` : null, ['validate.verdict', 'validate.current_position']);
   } else {
     const c = ((inp.stage13?.commitments as unknown[] | undefined) ?? [])[0];
@@ -191,6 +193,7 @@ export function buildExecutiveSummary(inp: ExecInputs): { record: ExecutiveSumma
     s9 = sec(9, t ? `${condense(t, 45, 2)} By: ${MISSING}.` : null, ['Stage 13 commitments']);
   }
 
+  if (validate) { s5.title = 'The Verdict (in place of a recommendation)'; s6.title = 'Why This Verdict'; if (s8.status === 'ok') s8.body += ' (Saved Stage 22, built for this run\'s Campaign recommendation.)'; }
   const sections = [sec(1, s1, ['Stage 1 (Briefing Room tension)']), sec(2, s2, ['Stage 1']), sec(3, s3, ['Stage 8B', 'Stage 9', 'Stage 10', 'Stage 11']), s4, s5, s6, s7, s8, s9];
   const text = render(inp.brand, variant, [...notes], sections);
 
