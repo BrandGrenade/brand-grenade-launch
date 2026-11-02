@@ -465,6 +465,7 @@ async function executiveSummaryOutput(c: Ctx): Promise<Built> {
   try {
     const built = buildExecutiveSummary({
       runId: c.run.id, version: c.v, brand: String(row.brand_name ?? ''), runMode: isDiagnostic(c.run) ? 'diagnostic' : 'full',
+      validateSubjectBrand: typeof saved?.__subject_brand === 'string' ? saved.__subject_brand : null, stage9: s9,
       stage1: text(c.get('stage_1_output')), stage9Ranking: Array.isArray(s9?.ranking) ? (s9!.ranking as unknown[]).length : null,
       locEngines: loc && typeof loc === 'object' && !Array.isArray(loc) ? Object.keys(loc as Row).length : null,
       stage10: await recordOf('stage10', c), stage11: await recordOf('stage11', c), stage12: await recordOf('stage12_propositions', c), stage13: await recordOf('stage13', c),
@@ -598,6 +599,9 @@ export async function handleAccess(
     room: c ? ROOM_OF[c.run.table] : null,
     run_mode: c ? (c.run.table === "sessions" ? (c.run.row.run_mode as string) ?? "full" : "full") : null,
     run_status: c ? runStatus(c.run) : null,
+    run_classification: c?.run.row.test_copy_of ? 'test' : 'production',
+    is_test: !!c?.run.row.test_copy_of,
+    eligible_for_default: c ? !c.run.row.test_copy_of : null,
     version: c?.v ?? null,
     locked: c ? !!c.run.row.locked_at : null,
     output_id: null as string | null,
@@ -629,10 +633,14 @@ export async function handleAccess(
       if (db.versionCounts) for (const [id, n] of await db.versionCounts(t, ids)) counts.set(`${t}:${id}`, n);
       else for (const id of ids) counts.set(`${t}:${id}`, versionCtx(await db.versions(t, id)).current);
     }
+    // Tests remain inspectable by explicit ID, but are never candidates for a
+    // client's latest/default run, including consumers taking runs[0].
     const items = [];
-    for (const r of runs) {
+    const testRuns = [];
+    const ordered = [...runs].sort((a, b) => String(b.row.created_at ?? '').localeCompare(String(a.row.created_at ?? '')));
+    for (const r of ordered) {
       const vc = { current: counts.get(`${r.table}:${r.id}`) ?? 1 };
-      items.push({
+      const item = {
         run_id: r.id,
         room: ROOM_OF[r.table],
         engagement_id: r.row.engagement_id ?? null,
@@ -643,9 +651,13 @@ export async function handleAccess(
         version: vc.current,
         locked: !!r.row.locked_at,
         created_at: r.row.created_at ?? null,
-      });
+        run_classification: r.row.test_copy_of ? 'test' : 'production',
+        is_test: !!r.row.test_copy_of,
+        eligible_for_default: !r.row.test_copy_of,
+      };
+      if (r.row.test_copy_of) testRuns.push(item); else items.push(item);
     }
-    return base(null, { engagement_id: eng, schema_version: "list_runs.v1", content: { runs: items } });
+    return base(null, { engagement_id: eng, schema_version: "list_runs.v1", content: { runs: items, test_runs: testRuns } });
   }
 
   if (name === "document_metadata") {
