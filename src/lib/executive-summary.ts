@@ -72,13 +72,10 @@ const sec = (number: number, body: string | null, sources: string[], extra: Part
 const scoreOf = (r: Row | undefined, k: string) => { const v = (r?.[k] as Row | undefined)?.score; return typeof v === 'number' ? v : null; };
 
 export function isValidateVariant(row: Row, validateOutputs: Row | null): boolean {
-  if (row.validate_brief) return true;
-  const cp = (validateOutputs?.['validate.current_position'] as Row | undefined);
-  const subject = str(((validateOutputs?.['validate.verdict'] as Row | undefined)?.provenance as unknown[] | undefined) ? null : null);
-  void subject;
+  if (row.validate_brief) return !!validateOutputs;
   // Same-brand add-on assessment at this version: the summary concerns the current strategy.
-  const brand = str((cp?.data as Row | undefined)?.subject_brand) ?? str(validateOutputs?.subject_brand);
-  return !!validateOutputs && !!brand && brand.toLowerCase() === String(row.brand_name ?? '').trim().toLowerCase();
+  const brand = str(validateOutputs?.__subject_brand);
+  return !!brand && brand.toLowerCase() === String(row.brand_name ?? '').trim().toLowerCase();
 }
 
 export function buildExecutiveSummary(inp: ExecInputs): { record: ExecutiveSummary; text: string } {
