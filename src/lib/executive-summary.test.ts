@@ -76,7 +76,7 @@ describe('Executive Summary (stage16.executive_summary)', () => {
     expect(ExecutiveSummarySchema.safeParse(built.record).success).toBe(true);
     const c = CONTRACTS.find(x => x.output_id === 'stage16.executive_summary')!;
     expect(c.schema_version).toBe('stage16.executive_summary.v1');
-    expect(c.content.safeParse(built).success).toBe(true);
+    expect(c.content!.safeParse(built).success).toBe(true);
     for (const f of ['agency', 'consulting', 'workshop', 'vision', 'valuation']) expect(CONTRACTS.find(x => x.output_id === `stage16.${f}`)!.schema_version).toBe('stage16.document.v1');
   });
 });
