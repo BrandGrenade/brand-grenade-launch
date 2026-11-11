@@ -336,3 +336,23 @@ describe("single-run reads skip version content", () => {
     expect((old.content as any).text).toBe("v1 text");
   });
 });
+
+describe("Phase 2 score outputs", () => {
+  const db = makeDb();
+  const g = (output_id: string, key: Key = HUB) => call(db, key, "get_output", { client_ref: "hub-c1", run_id: id(1), version: 1, output_id });
+  it("not produced with a named reason when the stage text is missing", async () => {
+    const r: any = await g("stage18");
+    expect(r.content_status).toBe("not_produced");
+    expect(r.content.reason).toContain("stage_18_output is empty");
+  });
+  it("second_brain and unauthorised keys are refused", async () => {
+    await expect(g("stage20", SB)).rejects.toMatchObject({ code: "forbidden_scope" });
+    await expect(g("stage17", ADM)).rejects.toBeInstanceOf(AccessError);
+  });
+  it("manifest lists them with status and field schema", async () => {
+    const m: any = await call(db, HUB, "run_manifest", { client_ref: "hub-c1", run_id: id(1) });
+    const o = m.content.outputs.filter((x: any) => /^stage(17|18|20)$/.test(x.output_id));
+    expect(o.map((x: any) => [x.output_id, x.status])).toEqual([["stage17", "not_produced"], ["stage18", "not_produced"], ["stage20", "not_produced"]]);
+    expect(o[0].field_schema).toBeDefined();
+  });
+});
