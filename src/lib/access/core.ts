@@ -1,5 +1,6 @@
 import { checkCurrentPosition, checkStageCurrentPosition } from "@/lib/structured-output";
 import { recoverSavedStage, recoverStage12 } from "../saved-stage-records";
+import { stage17Scores, stage18Scores, stage20Scores, PHASE2_FIELD_SCHEMA } from "./phase2-scores";
 import { parseStage22Architecture, parseStage22Assets } from "./stage22-parse";
 import { baselineAtVersion } from '../current-position-addon';
 import { uniqueClaims } from '../synthesiser/unique-claims';
@@ -79,14 +80,14 @@ export const OUTPUTS_BY_TABLE: Record<RunTable, string[]> = {
   sessions: [
     "stage02", "stage04b", "stage09", "stage09_loc", "stage10", "stage10_current_position", "stage11", "stage11_current_position",
     "stage12_propositions", "stage13", "stage13_current_position", ...STAGE16_FORMATS.map((f) => `stage16.${f}`), EXEC_SUMMARY_OUTPUT,
-    "stage21_channels", "stage22_architecture", "stage22_assets",
+    "stage17", "stage18", "stage20", "stage21_channels", "stage22_architecture", "stage22_assets",
     ...VALIDATE_OUTPUTS,
   ],
   stimulus_runs: ["room04.lenses", "room04.gates", "room04.final_prompts"],
 };
 const ALL_OUTPUTS = new Set(Object.values(OUTPUTS_BY_TABLE).flat());
 /** Creative and activation outputs — never part of a diagnostic run. */
-const NOT_IN_DIAGNOSTIC = (id: string) => (id.startsWith("stage16.") && id !== "stage16.valuation" && id !== EXEC_SUMMARY_OUTPUT) || id.startsWith("stage21") || id.startsWith("stage22");
+const NOT_IN_DIAGNOSTIC = (id: string) => (id.startsWith("stage16.") && id !== "stage16.valuation" && id !== EXEC_SUMMARY_OUTPUT) || /^stage(17|18|20)$/.test(id) || id.startsWith("stage21") || id.startsWith("stage22");
 
 const SECOND_BRAIN = (id: string) =>
   id === "room02.saved_brief" || id.startsWith("stage16.") || id === "room04.final_prompts" || id === "stage22_architecture";
@@ -276,6 +277,13 @@ async function buildOutputInner(outputId: string, c: Ctx): Promise<Built> {
       return recovered
         ? { content_status: "structured", schema_version: "stage12_propositions.v1", content: recovered, evidence: [], fields: ["stage_12_output"] }
         : { content_status: document ? "partial" : "not_produced", schema_version: "stage12_propositions.v1", content: document ? { platform_error: "Saved Stage 12 document could not be reconstructed safely" } : null, evidence: [], fields: ["stage_12_output"] };
+    }
+    case "stage17": case "stage18": case "stage20": {
+      const fields = outputId === "stage17" ? ["stage_17_output", "stage_17_selected_territory"] : outputId === "stage18" ? ["stage_18_output", "stage_18_selected_detonation", "stage_18_detonation_line"] : ["stage_20_output", "stage_20_approved"];
+      const rec = outputId === "stage17" ? stage17Scores(c.get(fields[0]), c.get(fields[1])) : outputId === "stage18" ? stage18Scores(c.get(fields[0]), c.get(fields[1]), c.get(fields[2])) : stage20Scores(c.get(fields[0]), c.get(fields[1]));
+      const sv = `${outputId}.scores.v1`;
+      if (!rec) return { content_status: "not_produced", schema_version: sv, content: { reason: `${fields[0]} is empty: Stage ${outputId.slice(5)} not produced for this version` }, evidence: [], fields };
+      return { content_status: "structured", schema_version: sv, content: { stage: outputId.slice(5), record: rec, field_schema: PHASE2_FIELD_SCHEMA[outputId as "stage17"] }, evidence: [], fields };
     }
     case "stage21_channels": return jsonOutput("stage_21_outputs", "stage21_channels.v1", c);
     case "stage09_loc": {
@@ -690,7 +698,7 @@ export async function handleAccess(
         continue;
       }
       const b2 = await buildOutput(id, c);
-      outputs.push({ output_id: id, included: "included", content_status: b2.content_status, schema_version: b2.schema_version });
+      outputs.push({ output_id: id, included: "included", content_status: b2.content_status, schema_version: b2.schema_version, ...(/^stage(17|18|20)$/.test(id) ? { status: b2.content_status === "not_produced" ? "not_produced" : "produced", field_schema: PHASE2_FIELD_SCHEMA[id as "stage17"] } : {}) });
     }
     if (isDiagnostic(run)) {
       outputs.push({ output_id: "room04.*", included: "not included", content_status: "not_produced" });

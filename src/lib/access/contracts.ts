@@ -222,6 +222,13 @@ export const CONTRACTS: OutputContract[] = [
     ),
     note: "Brand architecture parsed from the fixed Stage 22 line format.",
   },
+  ...(["stage17", "stage18", "stage20"] as const).map((id) => ({
+    output_id: id,
+    schema_version: `${id}.scores.v1`,
+    status: "structured" as const,
+    content: z.object({ stage: str, record: z.record(z.string(), z.unknown()), field_schema: z.record(z.string(), z.unknown()) }),
+    note: "Phase 2 scores copied verbatim from saved stage text/fields; unmatched values are not_produced with a reason.",
+  })),
   {
     output_id: "stage22_assets",
     schema_version: "stage22_assets.v1",
