@@ -57,7 +57,7 @@ export function stage17Scores(output: unknown, selected: unknown) {
     ? miss("17", "stage_17_selected_territory", "No territory selected")
     : matches.length !== 1
       ? miss("17", "stage_17_selected_territory", matches.length ? `Selected territory "${selName}" appears ${matches.length} times; ambiguous` : `Selected territory "${selName}" not found in saved Stage 17 text`)
-      : ({ status: "produced", value: selName, source: { stage: "17", field: "stage_17_selected_territory", text: firstLine! }, source_flag: SAVED_FIELD } as Found);
+      : ({ status: "produced", value: firstLine!.trim(), source: { stage: "17", field: "stage_17_selected_territory", text: firstLine!.trim() }, source_flag: PARSED } as Found);
   const selectedScores = matches.length === 1 ? matches[0].creative_share_of_voice
     : Object.fromEntries(CSOV_LABELS.map((l) => [l, miss("17", F, "Selected territory could not be matched unambiguously")]));
   return { scale: "HIGH / MEDIUM / LOW (as written)", selected_territory: selectedTerritory, selected_creative_share_of_voice: selectedScores, territories };

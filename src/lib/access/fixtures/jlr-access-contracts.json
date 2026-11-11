@@ -3217,13 +3217,13 @@
         "scale": "HIGH / MEDIUM / LOW (as written)",
         "selected_territory": {
           "status": "produced",
-          "value": "THE SPECIES TAKES FORM",
+          "value": "## THE SPECIES TAKES FORM",
           "source": {
             "stage": "17",
             "field": "stage_17_selected_territory",
             "text": "## THE SPECIES TAKES FORM"
           },
-          "source_flag": "saved field"
+          "source_flag": "parsed from stage text"
         },
         "selected_creative_share_of_voice": {
           "Emotional Weight": {

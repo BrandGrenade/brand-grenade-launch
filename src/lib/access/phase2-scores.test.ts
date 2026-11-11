@@ -12,7 +12,7 @@ const inText = (v: any, field: string) => {
 describe("JLR v97 Phase 2 scores are copied verbatim from saved text", () => {
   it("Stage 17: selected territory Creative Share of Voice labels", () => {
     const r = stage17Scores(s.stage_17_output, s.stage_17_selected_territory)!;
-    expect(r.selected_territory).toMatchObject({ status: "produced", value: "THE SPECIES TAKES FORM" });
+    expect(r.selected_territory).toMatchObject({ status: "produced", value: "## THE SPECIES TAKES FORM", source_flag: PARSED });
     for (const [label, v] of Object.entries(r.selected_creative_share_of_voice) as [string, any][]) {
       inText(v, "stage_17_output");
       expect(v.source.text).toBe(`${label}: HIGH`);
