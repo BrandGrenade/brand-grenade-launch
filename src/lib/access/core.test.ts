@@ -339,7 +339,7 @@ describe("single-run reads skip version content", () => {
 
 describe("Phase 2 score outputs", () => {
   const db = makeDb();
-  const g = (output_id: string, key: Key = HUB) => handleAccess(db, key, "get_output", { client_ref: "hub-c1", run_id: id(1), version: 1, output_id }, log());
+  const g = (output_id: string, key: Key = HUB) => call(db, key, "get_output", { client_ref: "hub-c1", run_id: id(1), version: 1, output_id });
   it("not produced with a named reason when the stage text is missing", async () => {
     const r: any = await g("stage18");
     expect(r.content_status).toBe("not_produced");
@@ -350,7 +350,7 @@ describe("Phase 2 score outputs", () => {
     await expect(g("stage17", ADM)).rejects.toBeInstanceOf(AccessError);
   });
   it("manifest lists them with status and field schema", async () => {
-    const m: any = await handleAccess(db, HUB, "run_manifest", { client_ref: "hub-c1", run_id: id(1) }, log());
+    const m: any = await call(db, HUB, "run_manifest", { client_ref: "hub-c1", run_id: id(1) });
     const o = m.content.outputs.filter((x: any) => /^stage(17|18|20)$/.test(x.output_id));
     expect(o.map((x: any) => [x.output_id, x.status])).toEqual([["stage17", "not_produced"], ["stage18", "not_produced"], ["stage20", "not_produced"]]);
     expect(o[0].field_schema).toBeDefined();
