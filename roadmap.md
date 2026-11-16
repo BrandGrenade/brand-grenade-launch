@@ -1,5 +1,11 @@
 # Roadmap — Partner Hub structured evidence (27 Oct 2026)
 
+## Canonical run links — 16 Nov 2026
+- [ ] Diagnose Creative Engine ID and Briefing Room loading; preserve run fingerprints.
+- [ ] Add canonical open_url and completed-stage URLs, legacy redirects and saved Synthesiser view.
+- [ ] Add admin-only per-client link checks and route/authorization regression tests.
+- [ ] Run all tests and authenticated JLR link checks; report causes, patterns, files and blockers.
+
 ## Executive Summary follow-up — 2 Nov 2026
 - [x] Audit: v1 has no Copy Nothing baseline; v2 saved 68/90, v3 saved 68.5/90; both assessments contain six comparators, prior summary capped at five.
 - [x] Correct Validate challenge/reasons/comparators/proposition-specific Brand World, full-run ordering, sentence integrity and proposed creative labels; eight new tests.
