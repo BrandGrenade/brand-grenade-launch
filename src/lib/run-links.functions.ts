@@ -21,12 +21,15 @@ export const readSavedRun = createServerFn({ method: 'POST' })
     if (roleError) throw new Error('Run access could not be checked. Try again.');
     const sb: any = isAdmin === true ? (await import('@/integrations/supabase/client.server')).supabaseAdmin : context.supabase;
     const hits = await Promise.all(TABLES.map(async table => {
-      const { data: row, error } = await sb.from(table).select('*').eq(idCol(table), data.id).maybeSingle();
+      const { data: row, error } = await sb.from(table).select(idCol(table)).eq(idCol(table), data.id).maybeSingle();
       if (error) throw new Error('Saved run could not be loaded. Try again.');
-      return row ? { table, id: data.id, row } as RunRec : null;
+      return row ? table : null;
     }));
-    const run = hits.find((r): r is RunRec => r !== null);
-    if (!run) throw new Error('Run not found, or you do not have access to it.');
+    const table = hits.find((r): r is RunTable => r !== null);
+    if (!table) throw new Error('Run not found, or you do not have access to it.');
+    const { data: row, error: readError } = await sb.from(table).select('*').eq(idCol(table), data.id).maybeSingle();
+    if (readError || !row) throw new Error('Saved run could not be loaded. Try again.');
+    const run: RunRec = { table, id: data.id, row };
     const stages = run.table === 'sessions' ? completedStages(run.row) : [];
     const selected = data.stage?.toUpperCase() ?? stages.at(-1);
     if (data.stage && !stages.includes(selected ?? '')) throw new Error(`Stage ${data.stage} has no saved output in this run.`);
@@ -45,7 +48,11 @@ export const readSavedRun = createServerFn({ method: 'POST' })
         sb.from('stimulus_prompts').select('channel_name,final_prompt,status').eq('run_id', run.id).order('sort_order'),
       ]);
       if (dirs.error || prompts.error) throw new Error('Saved creative work could not be loaded. Try again.');
-      sections = [...(dirs.data ?? []).map((d: any) => ({ title: d.lens_name ?? 'Direction', text: display(d) })), ...(prompts.data ?? []).map((p: any) => ({ title: p.channel_name, text: p.final_prompt ?? 'Final prompt not produced' }))];
+      sections = [...(dirs.data ?? []).map((d: any) => ({ title: d.lens_name ?? 'Direction', text: [d.direction, d.campaign_line, d.rationale].filter(Boolean).join('\n\n') })), ...(prompts.data ?? []).map((p: any) => ({ title: p.channel_name, text: p.final_prompt ?? 'Final prompt not produced' }))];
+      if (run.row.session_id) {
+        const { data: parent } = await sb.from('sessions').select('brand_name').eq('id', run.row.session_id).maybeSingle();
+        if (parent?.brand_name) run.row.brand_name = parent.brand_name;
+      }
     } else {
       const fields = run.table === 'saved_briefs' ? ['brief_text'] : run.table === 'intelligence_sessions' ? ['final_report'] : ['raw_brief','diagnosis','truths','relevance','tensions'];
       sections = fields.filter(c => run.row[c]).map(c => ({ title: c.replaceAll('_', ' '), text: display(run.row[c]) }));
