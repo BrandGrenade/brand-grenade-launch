@@ -11,6 +11,7 @@ import { TopNav } from "@/components/TopNav";
 import { supabase } from "@/integrations/supabase/client";
 import { LENS_COUNT } from "@/lib/stimulus/lenses";
 import { Spinner } from "@/components/ui/busy";
+import { runPath } from '@/lib/run-links';
 
 const AMBER = "#F2665F";
 const MUTED = "#A8A29A";
@@ -63,6 +64,11 @@ export function useCreativeSession(sessionId: string) {
         .eq("id", sessionId)
         .maybeSingle();
       if (cancelled) return;
+      if (!data) {
+        const { data: savedRun } = await supabase.from('stimulus_runs').select('id').eq('id', sessionId).maybeSingle();
+        if (cancelled) return;
+        if (savedRun) { window.location.replace(runPath(savedRun.id)); return; }
+      }
       setSession((data as CreativeSession | null) ?? null);
       setLoading(false);
     })();

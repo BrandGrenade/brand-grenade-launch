@@ -7,6 +7,7 @@ import { uniqueClaims } from '../synthesiser/unique-claims';
 import { VALIDATE_OUTPUTS, ValidateOutputSchema } from '../validate-mode';
 import { EXEC_SUMMARY_OUTPUT, EXEC_SUMMARY_SCHEMA, buildExecutiveSummary, isValidateVariant } from '../executive-summary';
 import { COMPARATOR_NOTE, COMPARATOR_ROLE } from '../validate-run';
+import { runLinks } from '../run-links';
 // Run access remains read-only. Only the separately scoped ensure_client
 // request may create a client and its Hub mapping; it cannot touch runs.
 import { z } from "zod";
@@ -650,6 +651,7 @@ export async function handleAccess(
       const vc = { current: counts.get(`${r.table}:${r.id}`) ?? 1 };
       const item = {
         run_id: r.id,
+        open_url: runLinks(r).open_url,
         room: ROOM_OF[r.table],
         engagement_id: r.row.engagement_id ?? null,
         brand_name: r.row.brand_name ?? null,
@@ -705,7 +707,8 @@ export async function handleAccess(
     }
     return base(c, {
       schema_version: "run_manifest.v1",
-      content: { ...briefInfo(run), outputs, current_version: c.vc.current, versions: Array.from({ length: c.vc.current }, (_, i) => i + 1) },
+      ...runLinks(run),
+      content: { ...briefInfo(run), ...runLinks(run), outputs, current_version: c.vc.current, versions: Array.from({ length: c.vc.current }, (_, i) => i + 1) },
       checkpoints: await checkpoints(c),
       documents: key.scope === "admin" ? [] : documents(c, clientRef),
     });

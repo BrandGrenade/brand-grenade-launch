@@ -51,6 +51,7 @@ import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe
 import { Route as IntelligenceIndexRouteImport } from './routes/intelligence.index'
 import { Route as IntelligenceIdRouteImport } from './routes/intelligence.$id'
 import { Route as IntelligenceNewRouteImport } from './routes/intelligence.new'
+import { Route as RunsRunIdRouteImport } from './routes/runs.$runId'
 import { Route as SynthesiserIndexRouteImport } from './routes/synthesiser.index'
 import { Route as WalkthroughIndexRouteImport } from './routes/walkthrough.index'
 import { Route as WalkthroughSessionIdRouteImport } from './routes/walkthrough.$sessionId'
@@ -290,6 +291,11 @@ const IntelligenceNewRoute = IntelligenceNewRouteImport.update({
   path: '/new',
   getParentRoute: () => IntelligenceRoute,
 } as any)
+const RunsRunIdRoute = RunsRunIdRouteImport.update({
+  id: '/runs/$runId',
+  path: '/runs/$runId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SynthesiserIndexRoute = SynthesiserIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -483,6 +489,7 @@ export interface FileRoutesByFullPath {
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/intelligence/$id': typeof IntelligenceIdRoute
   '/intelligence/new': typeof IntelligenceNewRoute
+  '/runs/$runId': typeof RunsRunIdRoute
   '/walkthrough/$sessionId': typeof WalkthroughSessionIdRoute
   '/brief/': typeof BriefIndexRoute
   '/briefing-room/': typeof BriefingRoomIndexRoute
@@ -548,6 +555,7 @@ export interface FileRoutesByTo {
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/intelligence/$id': typeof IntelligenceIdRoute
   '/intelligence/new': typeof IntelligenceNewRoute
+  '/runs/$runId': typeof RunsRunIdRoute
   '/walkthrough/$sessionId': typeof WalkthroughSessionIdRoute
   '/brief': typeof BriefIndexRoute
   '/briefing-room': typeof BriefingRoomIndexRoute
@@ -621,6 +629,7 @@ export interface FileRoutesById {
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/intelligence/$id': typeof IntelligenceIdRoute
   '/intelligence/new': typeof IntelligenceNewRoute
+  '/runs/$runId': typeof RunsRunIdRoute
   '/walkthrough/$sessionId': typeof WalkthroughSessionIdRoute
   '/brief/': typeof BriefIndexRoute
   '/briefing-room/': typeof BriefingRoomIndexRoute
@@ -695,6 +704,7 @@ export interface FileRouteTypes {
     | '/email/unsubscribe'
     | '/intelligence/$id'
     | '/intelligence/new'
+    | '/runs/$runId'
     | '/walkthrough/$sessionId'
     | '/brief/'
     | '/briefing-room/'
@@ -760,6 +770,7 @@ export interface FileRouteTypes {
     | '/email/unsubscribe'
     | '/intelligence/$id'
     | '/intelligence/new'
+    | '/runs/$runId'
     | '/walkthrough/$sessionId'
     | '/brief'
     | '/briefing-room'
@@ -832,6 +843,7 @@ export interface FileRouteTypes {
     | '/email/unsubscribe'
     | '/intelligence/$id'
     | '/intelligence/new'
+    | '/runs/$runId'
     | '/walkthrough/$sessionId'
     | '/brief/'
     | '/briefing-room/'
@@ -900,6 +912,7 @@ export interface RootRouteChildren {
   AdminTestsRoute: typeof AdminTestsRoute
   DetonationCanvasRoute: typeof DetonationCanvasRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
+  RunsRunIdRoute: typeof RunsRunIdRoute
   AdminPreviewSlugRoute: typeof AdminPreviewSlugRoute
   ApiPublicBgAccessRoute: typeof ApiPublicBgAccessRoute
   ApiPublicCurrentPositionAddonRoute: typeof ApiPublicCurrentPositionAddonRoute
@@ -1217,6 +1230,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/intelligence/new'
       preLoaderRoute: typeof IntelligenceNewRouteImport
       parentRoute: typeof IntelligenceRoute
+    }
+    '/runs/$runId': {
+      id: '/runs/$runId'
+      path: '/runs/$runId'
+      fullPath: '/runs/$runId'
+      preLoaderRoute: typeof RunsRunIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/synthesiser/': {
       id: '/synthesiser/'
@@ -1552,6 +1572,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminTestsRoute: AdminTestsRoute,
   DetonationCanvasRoute: DetonationCanvasRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
+  RunsRunIdRoute: RunsRunIdRoute,
   AdminPreviewSlugRoute: AdminPreviewSlugRoute,
   ApiPublicBgAccessRoute: ApiPublicBgAccessRoute,
   ApiPublicCurrentPositionAddonRoute: ApiPublicCurrentPositionAddonRoute,
