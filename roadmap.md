@@ -1,10 +1,10 @@
 # Roadmap — Partner Hub structured evidence (27 Oct 2026)
 
 ## Canonical run links — 16 Nov 2026
-- [ ] Diagnose Creative Engine ID and Briefing Room loading; preserve run fingerprints.
-- [ ] Add canonical open_url and completed-stage URLs, legacy redirects and saved Synthesiser view.
-- [ ] Add admin-only per-client link checks and route/authorization regression tests.
-- [ ] Run all tests and authenticated JLR link checks; report causes, patterns, files and blockers.
+- [x] Creative ID is an offline stimulus run linked to 3470f1ad, not a session. Briefing ID is a saved brief, not a workspace; unhandled load rejection caused spinner. JLR fingerprint unchanged.
+- [x] Canonical /runs/$runId read-only Room views, absolute access open_url and saved-stage URLs; legacy brief, creative, briefing and synthesiser redirects.
+- [x] Admin-only per-client browser link check: iframe confirms rendered run identity, not just HTTP 200; route and authorization tests.
+- [x] 577 tests / 81 files passed, build OK; authenticated preview check passed 36/36 JLR records, legacy redirects, latest Stage 22, direct Stage 18, missing workspace error and signed-out refusal. Not published; live deployment unverified.
 
 ## Executive Summary follow-up — 2 Nov 2026
 - [x] Audit: v1 has no Copy Nothing baseline; v2 saved 68/90, v3 saved 68.5/90; both assessments contain six comparators, prior summary capped at five.
