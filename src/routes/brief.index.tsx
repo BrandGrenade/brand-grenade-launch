@@ -474,7 +474,7 @@ function BriefIntake() {
     }
   }
 
-
+  if (legacySession) return <><TopNav /><main className="p-6"><p role={legacyError ? 'alert' : undefined}>{legacyError || 'Opening saved run…'}</p>{legacyError && <Link to="/dashboard" className="underline">Back to runs</Link>}</main></>;
   return (
     <div className="min-h-screen bg-background">
       <TopNav />

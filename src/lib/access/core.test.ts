@@ -356,3 +356,17 @@ describe("Phase 2 score outputs", () => {
     expect(o[0].field_schema).toBeDefined();
   });
 });
+
+describe('canonical links in access responses', () => {
+  it('adds absolute links without removing existing metadata', async () => {
+    const list: any = await call(makeDb(), HUB, 'list_runs', { client_ref: 'hub-c1' });
+    expect(list.content.runs.every((r: any) => r.open_url.startsWith('https://brandgrenade.app/runs/'))).toBe(true);
+    const manifest: any = await call(makeDb(), HUB, 'run_manifest', { client_ref: 'hub-c1', run_id: RUN });
+    expect(manifest.open_url).toBe(manifest.content.open_url);
+    expect(manifest.content.stage_urls['10']).toBe(`https://brandgrenade.app/runs/${RUN}?stage=10`);
+    expect(manifest.content.outputs).toBeDefined();
+  });
+  it('does not expose another client run link', async () => {
+    await expect(call(makeDb(), HUB, 'run_manifest', { client_ref: 'hub-c1', run_id: OTHER })).rejects.toMatchObject({ code: 'not_found' });
+  });
+});
