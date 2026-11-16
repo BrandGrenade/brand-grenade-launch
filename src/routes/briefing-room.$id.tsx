@@ -26,6 +26,9 @@ import type {
 } from "@/lib/briefing-room-prompts";
 import type { HandoffPayload } from "@/lib/briefing-room-handoff";
 import { Spinner } from "@/components/ui/busy";
+import { readSavedRun } from '@/lib/run-links.functions';
+import { runPath } from '@/lib/run-links';
+import { Button } from '@/components/ui/button';
 import {
   BRIEF_SECTIONS,
   composeBriefText,
@@ -46,7 +49,7 @@ function extractAnchorBlock(briefText: string): string {
 
 export const Route = createFileRoute("/briefing-room/$id")({
   component: WorkspacePage,
-  head: () => ({ meta: [{ title: "Briefing Workspace — Brand Grenade" }] }),
+  head: () => ({ meta: [{ title: "Briefing Workspace — Brand Grenade" }, { name: 'description', content: 'Saved Briefing Room workspace and evidence.' }, { property: 'og:title', content: 'Briefing Workspace — Brand Grenade' }, { property: 'og:description', content: 'Saved Briefing Room workspace and evidence.' }, { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary' }] }),
 });
 
 type Ws = Awaited<ReturnType<typeof getBriefingWorkspace>>;
@@ -54,6 +57,8 @@ type Ws = Awaited<ReturnType<typeof getBriefingWorkspace>>;
 function WorkspacePage() {
   const { id } = Route.useParams();
   const load = useServerFn(getBriefingWorkspace);
+  const readRun = useServerFn(readSavedRun);
+  const [loadError, setLoadError] = useState('');
   const saveIntake = useServerFn(updateBriefingIntake);
   const step1 = useServerFn(runBriefingStep1);
   const step2 = useServerFn(runBriefingStep2);
@@ -129,8 +134,17 @@ function WorkspacePage() {
   }, [load, id]);
 
   useEffect(() => {
-    void refresh();
-  }, [refresh]);
+    let active = true;
+    const timer = setTimeout(() => { if (active) setLoadError('Workspace is taking too long to load. Try again.'); }, 25000);
+    void refresh().catch(async e => {
+      try {
+        const saved = await readRun({ data: { id } });
+        if (active && saved.table === 'saved_briefs') { window.location.replace(runPath(id)); return; }
+      } catch { /* Preserve the named workspace failure. */ }
+      if (active) setLoadError(e instanceof Error ? e.message : 'Workspace could not be loaded.');
+    }).finally(() => clearTimeout(timer));
+    return () => { active = false; clearTimeout(timer); };
+  }, [refresh, readRun, id]);
 
   async function persistIntake() {
     setSavingIntake(true);
@@ -306,7 +320,8 @@ function WorkspacePage() {
       <div className="min-h-screen bg-background">
         <TopNav />
         <main className="mx-auto w-full max-w-[960px] px-5 pt-10">
-          <p className="text-body-sm text-text-tertiary">Loading workspace…</p>
+          <p className="text-body-sm text-text-tertiary" role={loadError ? 'alert' : undefined}>{loadError || 'Loading workspace…'}</p>
+          {loadError && <><Button className="mt-3" onClick={() => window.location.reload()}>Retry</Button><Link to="/briefing-room" className="ml-4 underline">Back to Briefing Room</Link></>}
         </main>
       </div>
     );

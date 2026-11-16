@@ -22,6 +22,7 @@ import {
 import { groupRuns, toRegisterRuns } from "@/lib/run-register";
 import { ClientRunRegister } from "@/components/ClientRunRegister";
 import { ClientRemoval } from "@/components/admin/ClientRemoval";
+import { RunLinkCheck } from '@/components/admin/RunLinkCheck';
 
 export const Route = createFileRoute("/admin/clients")({
   head: () => ({
@@ -105,6 +106,7 @@ function ClientsAdmin() {
           <p className="mt-4 text-text-secondary">Loading…</p>
         ) : (
           <>
+            <RunLinkCheck clients={d.clients} />
             <Card className="mt-6 overflow-x-auto p-6">
               <h2 className="text-h3 text-text-primary">Runs per Room</h2>
               <table className="mt-3 w-full text-body-sm text-text-primary">

@@ -1,4 +1,6 @@
 import { readHubContext } from "@/lib/hub/context";
+import { readSavedRun } from '@/lib/run-links.functions';
+import { runPath } from '@/lib/run-links';
 import { useHubBrand } from "@/hooks/use-hub-brand";
 import { ValidateBriefSchema, type ValidateBrief } from "@/lib/validate-mode";
 import { DealFieldsSchema, linesToList, TRANSACTION_TYPES, DEAL_DEPTHS, sessionFieldsFromMeta } from "@/lib/deal-brief";
@@ -39,6 +41,7 @@ export const PENDING_BRIEF_EDIT_STORAGE_KEY = "brand-grenade:pending-brief-edit"
 
 const BriefSearchSchema = z.object({
   edit: z.string().uuid().optional(),
+  session: z.string().optional(),
 }).partial();
 
 export const Route = createFileRoute("/brief/")({
@@ -88,7 +91,13 @@ function BriefIntake() {
   const navigate = useNavigate();
   const createSessionFn = useServerFn(createSession);
   const resubmitStructuredFn = useServerFn(resubmitBriefStructured);
-  const { edit: editSessionId } = Route.useSearch();
+  const { edit: editSessionId, session: legacySession } = Route.useSearch();
+  const readRun = useServerFn(readSavedRun);
+  const [legacyError, setLegacyError] = useState('');
+  useEffect(() => {
+    if (!legacySession) return;
+    void readRun({ data: { id: legacySession } }).then(() => window.location.replace(runPath(legacySession))).catch(e => setLegacyError(e instanceof Error ? e.message : 'Saved run could not be loaded.'));
+  }, [legacySession, readRun]);
   const isEditMode = !!editSessionId;
 
   // Header fields
@@ -465,7 +474,7 @@ function BriefIntake() {
     }
   }
 
-
+  if (legacySession) return <><TopNav /><main className="p-6"><p role={legacyError ? 'alert' : undefined}>{legacyError || 'Opening saved run…'}</p>{legacyError && <Link to="/dashboard" className="underline">Back to runs</Link>}</main></>;
   return (
     <div className="min-h-screen bg-background">
       <TopNav />

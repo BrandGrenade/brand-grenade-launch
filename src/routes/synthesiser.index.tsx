@@ -7,6 +7,8 @@
 // existed.
 
 import { useState } from "react";
+import { useEffect } from 'react';
+import { runPath } from '@/lib/run-links';
 import { useHubBrand } from "@/hooks/use-hub-brand";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
@@ -21,7 +23,7 @@ import { recordSynthesiserRun } from "@/lib/synthesiser/runs";
 import { ClientPicker, type ClientLink } from "@/components/ClientPicker";
 import type { SynthesiserCategory } from "@/lib/synthesiser/types";
 
-const searchSchema = z.object({ brand: z.string().optional() });
+const searchSchema = z.object({ brand: z.string().optional(), run: z.string().optional() });
 
 export const Route = createFileRoute("/synthesiser/")({
   validateSearch: (s) => searchSchema.parse(s),
@@ -47,6 +49,7 @@ export const Route = createFileRoute("/synthesiser/")({
 function SynthesiserRoom() {
   const navigate = useNavigate();
   const search = Route.useSearch();
+  useEffect(() => { if (search.run) window.location.replace(runPath(search.run)); }, [search.run]);
   const [brand, setBrand, hubBrand] = useHubBrand(search.brand ?? "");
   const [category, setCategory] = useState("");
   const [runId, setRunId] = useState<string | null>(null);
@@ -67,6 +70,7 @@ function SynthesiserRoom() {
     });
   }
 
+  if (search.run) return <><TopNav /><p className="p-6">Opening saved research…</p></>;
   return (
     <div className="min-h-screen bg-background">
       <TopNav />
