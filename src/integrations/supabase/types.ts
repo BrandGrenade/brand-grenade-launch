@@ -193,6 +193,80 @@ export type Database = {
           },
         ]
       }
+      bg_hub_batch_attempts: {
+        Row: {
+          attempt_no: number
+          batch_id: string
+          brand_id: string
+          created_at: string
+          error: string | null
+          id: string
+          kind: string
+          result: Json | null
+          status: string
+        }
+        Insert: {
+          attempt_no: number
+          batch_id: string
+          brand_id: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          kind: string
+          result?: Json | null
+          status: string
+        }
+        Update: {
+          attempt_no?: number
+          batch_id?: string
+          brand_id?: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          kind?: string
+          result?: Json | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bg_hub_batch_attempts_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "bg_hub_batches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bg_hub_batches: {
+        Row: {
+          analyses: string[]
+          bg_client_id: string
+          brands: string[]
+          created_at: string
+          id: string
+          key_id: string
+          market: string | null
+        }
+        Insert: {
+          analyses: string[]
+          bg_client_id: string
+          brands: string[]
+          created_at?: string
+          id?: string
+          key_id: string
+          market?: string | null
+        }
+        Update: {
+          analyses?: string[]
+          bg_client_id?: string
+          brands?: string[]
+          created_at?: string
+          id?: string
+          key_id?: string
+          market?: string | null
+        }
+        Relationships: []
+      }
       bg_link_events: {
         Row: {
           bg_client_id: string | null

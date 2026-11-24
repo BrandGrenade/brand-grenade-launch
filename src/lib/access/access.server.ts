@@ -159,6 +159,42 @@ export function supabaseDb(sb: any): Db {
       const {data}=await retryRead(() => sb.from('current_position_addon_jobs').select('id,status,published_version,results,source_manifest,error_code,error_message,valuation_document,valuation_document_error').eq('session_id',id).eq('status','complete'), 'BASELINE_EVIDENCE_READ_FAILED');
       return data ?? [];
     },
+    async brandSources(clientId) {
+      const { data: ss } = await retryRead(() => sb.from("sessions").select("id, brand_name, locked_at, created_at, validate_brief, test_copy_of").eq("bg_client_id", clientId).eq("link_status", "linked").limit(500), "BRAND_SOURCES_READ_FAILED");
+      const prod = (ss ?? []).filter((r: any) => !r.test_copy_of);
+      const ids = prod.map((r: any) => String(r.id));
+      const counts = await this.versionCounts!("sessions", ids);
+      const [briefs, jobs, vals] = await Promise.all([
+        retryRead(() => sb.from("saved_briefs").select("brand_name, brief_fields").eq("bg_client_id", clientId).eq("link_status", "linked").limit(500), "BRAND_SOURCES_READ_FAILED"),
+        ids.length ? retryRead(() => sb.from("current_position_addon_jobs").select("id, session_id, published_version, proposition, results, source_manifest, completed_at").in("session_id", ids).eq("status", "complete"), "BRAND_SOURCES_READ_FAILED") : Promise.resolve({ data: [] as any[] }),
+        ids.length ? retryRead(() => sb.from("validate_assessments").select("session_id, run_version, assessment_revision, subject_brand, outputs, created_at").in("session_id", ids), "BRAND_SOURCES_READ_FAILED") : Promise.resolve({ data: [] as any[] }),
+      ]);
+      return {
+        sessions: prod.map((r: any) => ({ id: String(r.id), brand_name: r.brand_name ?? null, version: counts.get(String(r.id)) ?? 1, locked_at: r.locked_at ?? null, created_at: r.created_at ?? null, validate_brief: r.validate_brief ?? null })),
+        briefs: (briefs.data ?? []).map((r: any) => ({ brand_name: r.brand_name ?? null, f1_brand: typeof r.brief_fields?.sections?.f1_brand === "string" ? r.brief_fields.sections.f1_brand : null })),
+        addonJobs: (jobs.data ?? []).map((j: any) => ({ id: j.id, session_id: j.session_id, subject_brand: j.source_manifest?.subject_brand ?? null, published_version: j.published_version ?? null, proposition: j.proposition ?? null, results: j.results ?? {}, completed_at: j.completed_at ?? null })),
+        validates: (vals.data ?? []).map((v: any) => ({ session_id: v.session_id, run_version: v.run_version, assessment_revision: v.assessment_revision, subject_brand: v.subject_brand ?? null, outputs: v.outputs ?? {}, created_at: v.created_at ?? null })),
+      };
+    },
+    async batchCreate(b) {
+      const { data, error } = await sb.from("bg_hub_batches").insert(b).select("id").single();
+      if (error || !data) throw new AccessError("unavailable", "BATCH_CREATE_FAILED");
+      return data.id;
+    },
+    async batchGet(id) {
+      const { data } = await retryRead(() => sb.from("bg_hub_batches").select("id, bg_client_id, brands, analyses, market").eq("id", id).maybeSingle(), "BATCH_READ_FAILED");
+      return data ?? null;
+    },
+    async batchAttempts(id) {
+      const { data } = await retryRead(() => sb.from("bg_hub_batch_attempts").select("brand_id, attempt_no, kind, status, result, error, created_at").eq("batch_id", id).order("attempt_no"), "BATCH_READ_FAILED");
+      return data ?? [];
+    },
+    async batchInsertAttempt(batchId, a) {
+      const { error } = await sb.from("bg_hub_batch_attempts").insert({ batch_id: batchId, ...a });
+      if (!error) return true;
+      if (error.code === "23505") return false; // already recorded: never duplicated
+      throw new AccessError("unavailable", "BATCH_WRITE_FAILED");
+    },
     async validateOutputs(id, version) {
       const {data}=await retryRead(()=>sb.from('validate_assessments').select('outputs,subject_brand,brief').eq('session_id',id).eq('run_version',version).order('assessment_revision',{ascending:false}).limit(1).maybeSingle(),'VALIDATE_OUTPUT_READ_FAILED');
       return data?.outputs ? {...data.outputs, __subject_brand: data.subject_brand, __strategy_owner: data.brief?.strategyOwner ?? null} : null;

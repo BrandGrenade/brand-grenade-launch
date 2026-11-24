@@ -330,6 +330,13 @@
       "when": 1793581178072,
       "tag": "0046_validate_owner_stated_source",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1795518219106,
+      "tag": "0047_hub_portfolio_batches",
+      "breakpoints": true
     }
   ]
 }

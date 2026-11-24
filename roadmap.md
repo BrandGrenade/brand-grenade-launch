@@ -1,5 +1,10 @@
 # Roadmap — Partner Hub structured evidence (27 Oct 2026)
 
+## Hub foundations v3 — 24 Nov 2026
+- [x] Metadata 1.0 on get_output and new requests; brand × market reads; portfolio batch with resume/explicit retry; change.*; stage10_selected; stage18 max (null, not set in code).
+- [x] 592 tests / 82 files; local before/after Hub reads identical apart from metadata; JLR fingerprints unchanged.
+- [ ] Publish and live-check; revoke temporary key.
+
 ## Canonical run links — 16 Nov 2026
 - [x] Creative ID is an offline stimulus run linked to 3470f1ad, not a session. Briefing ID is a saved brief, not a workspace; unhandled load rejection caused spinner. JLR fingerprint unchanged.
 - [x] Canonical /runs/$runId read-only Room views, absolute access open_url and saved-stage URLs; legacy brief, creative, briefing and synthesiser redirects.

@@ -1,0 +1,118 @@
+## Scoring Frame — What This Pass Is Actually Testing
+
+This pass scores the **six propositions carried out of the distinctiveness check**, not the earlier candidate set. Those six are the live field: the present-tense ambition line, the name-as-threshold line, the standing line, the composure line, the temperament line, and the instinct line.
+
+One calibration decision governs every Brand Permission judgement below. The combined house is assessed as it now exists — **a merged Jaguar with an electric, petrol and hybrid range** — which means the 2021 all-electric commitment is a superseded plan and no proposition is penalised for sitting outside it. What does remain live as permission evidence is anything that bears on how this house behaves toward customers after the sale: the documented dependability record of the group and the **September 2025 cyber incident** that halted production and disrupted retailer and customer systems. Those facts are applied only where a proposition makes an ownership or standing claim, and they are applied hard there.
+
+> The sharpest finding in this set is that the strongest lines draw their defensibility from the brand's own name rather than from a service promise the house cannot yet evidence.
+
+---
+
+## The Field Assessment
+
+Two propositions carry genuine structural locks. **The name-as-threshold line** converts the badge into a behavioural standard, and because no rival in premium automotive is named after a creature whose behaviour can be invoked, the sentence is close to unsayable by anyone else. **The composure line** attacks the one axis the category has left unguarded — not more capability, but the complete concealment of it — and it is underwritten by a competition record that is historical fact.
+
+The weakest links are the ownership-facing claims. Where a proposition asks to be judged on how customers are received and kept, the house has no published standard and a recent, highly visible operational failure. That is not a reason to eliminate those lines, but it is the reason their permission scores sit low and must be surfaced for human judgement rather than buried.
+
+> A claim about standing is only as strong as the most recent week in which the house was asked to deliver it.
+
+---
+
+SMPS SCORED: 6
+SELECTION RULE: Truth Strength ≥ 5 AND Competitive Impossibility ≥ 6 are hard floors. Below either eliminates. Fame, Brand Permission, Clean Air and Commercial Precedent surface human flags but do not eliminate. Weighted composite out of 90 (the six weights total 90) is computed in code.
+
+SMP: "One house. Every ambition. Including the one you have now." — FIELD: Present-Tense Ambition
+Fame: 7/10 — The third clause is a genuine turn and lands as a statement about the reader's life rather than the manufacturer's lineup, but at ten words across three beats it is a line people will notice and agree with rather than repeat verbatim, and the brand does not sit inside the sentence to travel with it.
+Truth Strength: 7/10 — Grounded in a verifiable range architecture organised by life stage rather than rank — three SUVs on sale now spanning a documented price ladder from roughly US$51,200 beneath a US$130,500 electric GT — which is a category truth this house can credibly access; it falls short of the top band because the "every ambition" breadth depends on 2027–2030 product that is client-supplied and unverified.
+Competitive Impossibility: 6/10 — Difficult but not impossible with repositioning. Mercedes-Benz has already run this move at model level with "Grow Up" (2018) for the A-Class, legitimising the entry buyer's present want, and could extend that argument to the house without contradicting "The Best or Nothing"; the deduction is named against that specific campaign and position rather than against general availability.
+Brand Permission: 8/10 — Strong standing from documented product fact: a single badge carrying a three-row family SUV, a style SUV, a presence SUV and an electric GT with no junior marque beneath it, which is the structural precondition for the claim. Deduction cited to the verified YouGov consideration and buzz movement following the November 2024 rebrand, which is named evidence that existing belief in the badge is currently unsettled rather than stable enough to extend effortlessly.
+Clean Air: 8/10 — Territory available with only weak and distant competitive presence. The nearest named activity is Mercedes-Benz "Grow Up" (2018), a single-model entry campaign that has long since ended and never claimed the house-wide present-tense position; no competitor currently occupies this territory as a brand platform.
+Commercial Precedent: 7/10 — Close structural precedent carried by two named post-2000 campaigns: IKEA "The Wonderful Everyday" (2014), which built an entire platform on dignifying the life being lived now rather than the life being saved for, and Mercedes-Benz "Grow Up" (2018), which commercially succeeded by addressing present-stage want in a premium automotive context. Both post-2000 precedents carry the score; no pre-1980 example is relied upon.
+CODE VERDICT: PASS — clears Stage 10 hard floors (Truth Strength ≥ 5, Competitive Impossibility ≥ 6).
+CODE COMPOSITE: 63.5/90 weighted (Fame 30% · Truth 20% · Competitive Impossibility 15% · Brand Permission 10% · Clean Air 10% · Commercial Precedent 5%).
+CODE FLAGS: none
+
+SMP: "The jaguar doesn't share its name lightly." — FIELD: The Name As Threshold
+Fame: 8/10 — People will notice and remember the brand because the brand is the subject of the sentence; the line is quotable, slightly severe, and carries its own mythology without requiring a supporting idea to explain it.
+Truth Strength: 7/10 — Grounded in a genuine owned asset, the literal behaviour and meaning of the brand's own name, combined with the real single-badge architecture that leaves nowhere to hide a weaker car. It sits below the top band because the threshold it implies — cars that qualify or are refused — is not yet documented brand behaviour with a published record.
+Competitive Impossibility: 9/10 — Possible only through fundamental contradiction. The closest named analogue is BMW's "The Most Powerful Letter in the World" (2016), which treats a conferred badge as a withheld honour, but that is a sub-brand letter inside a numeric hierarchy; the creature-name lock here is semantic ownership a rival cannot replicate, since Mercedes class letters, Audi rings and Lexus's invented word describe position rather than behaviour and have no temperament anything could fail to meet.
+Brand Permission: 7/10 — Credible standing from the name itself and from the founder-era "Copy Nothing" dictum the house has publicly revived. Deduction cited to a specific named product fact: the current volume entry model's documented specification — a 268 hp four-cylinder with no hybrid at 22/27 mpg — which is checkable in a showroom this weekend and sits in measurable tension with a claim that the name is granted only to cars that earn it.
+Clean Air: 8/10 — Territory available with weak and distant competitive presence. BMW's M-badge honour framing is adjacent but operates on a sub-brand letter, not on the house name as a behavioural standard; no competitor occupies the specific territory of the marque name functioning as a threshold a car must pass.
+Commercial Precedent: 8/10 — Close precedent. BMW M "The Most Powerful Letter in the World" (2016) is a named post-2000 campaign built on a badge conferred rather than distributed, and Mercedes-AMG "One Man, One Engine" (platform active through the 2010s) is a named post-2000 expression of a mark earned through a standard. The 2016 BMW campaign carries the score; Patek Philippe's 1996 generations line is noted as illustrative only and does not contribute.
+CODE VERDICT: PASS — clears Stage 10 hard floors (Truth Strength ≥ 5, Competitive Impossibility ≥ 6).
+CODE COMPOSITE: 70.5/90 weighted (Fame 30% · Truth 20% · Competitive Impossibility 15% · Brand Permission 10% · Clean Air 10% · Commercial Precedent 5%).
+CODE FLAGS: none
+
+SMP: "Change the car. Keep the standing." — FIELD: Standing Held By The Person
+Fame: 6/10 — Six words, two beats, clean enough to survive a boardroom and a billboard, but the sentence is abstract and brand-free, so people may register the promise without the badge travelling with it.
+Truth Strength: 6/10 — Grounded in a category truth the house can credibly access, with partial specific support from the register of more than 50,000 declared interests, roughly four in five from people who had never owned the brand — affiliation recorded before any car existed. It does not reach higher because standing conferred on persons has no operational mechanism behind it in the supplied evidence.
+Competitive Impossibility: 6/10 — Difficult but not impossible with repositioning. Nio's NIO House membership proposition is a named, live competitor claim that standing attaches to a member rather than to a transaction; it currently keys privileges to the vehicle and the app, but closing that gap is a programme redesign rather than a contradiction of its position, which makes the territory reachable for it.
+Brand Permission: 5/10 — Partial standing with documented tension. The affiliation register is real evidence that people joined before buying. Against it stand two named facts directly relevant to a standing claim: the absence of any defined, differentiated range-wide ownership or service standard in the supplied evidence, and the September 2025 cyber incident that halted production and disrupted retailer and customer systems — the most recent public test of whether this house keeps people when circumstances change.
+Clean Air: 7/10 — Adjacent competitive presence but the specific claim is available. Nio's NIO House membership platform occupies the neighbouring territory of belonging held by the person; it has not claimed the specific proposition that standing survives a move down the range, which remains open.
+Commercial Precedent: 7/10 — Close precedent carried by American Express "My Life. My Card." (2004), a named post-2000 campaign that relocated status from the product to the person and succeeded commercially in a comparable media environment. American Express "Membership Has Its Privileges" (1987) is cited at partial weight only and does not carry the score.
+CODE VERDICT: PASS — clears Stage 10 hard floors (Truth Strength ≥ 5, Competitive Impossibility ≥ 6).
+CODE COMPOSITE: 54.5/90 weighted (Fame 30% · Truth 20% · Competitive Impossibility 15% · Brand Permission 10% · Clean Air 10% · Commercial Precedent 5%).
+CODE FLAGS: none
+
+SMP: "You'll never see it try." — FIELD: Composure As The Product
+Fame: 8/10 — Five words containing their own reversal, built to be said aloud and repeated, and conspicuously quiet in the loudest aisle of the category. It sits below the top band only because the brand name is not inside the line and must be supplied by the work around it.
+Truth Strength: 6/10 — Grounded in a category truth the brand can credibly access, supported by a real competition record — seven Le Mans victories and the Formula E Teams' Championship — and by the long, low proportion of the design language. The deduction reflects a stretch the audience may test: the entry volume model's documented 268 hp four-cylinder specification makes effortless reserve harder to assert at the cheapest door.
+Competitive Impossibility: 7/10 — Difficult but not impossible with repositioning. Lexus is the named exception: "Experience Amazing" (2016) and its founding serenity argument put it within reach of composure as a claim, though it would have to reverse "The Relentless Pursuit of Perfection", which is visible effort codified. Porsche, BMW M, Mercedes-AMG and Tesla all sell the trying as the product and would contradict themselves outright.
+Brand Permission: 8/10 — Strong standing from documented history and product truth: a competition record that is historical fact, and a heritage line — "Grace, Space, Pace" — that already encodes effort held in reserve. Deduction cited to the named product specification of the current volume entry model (268 hp, 22/27 mpg, no hybrid), which is the one place the claim is immediately checkable and currently weakest.
+Clean Air: 8/10 — No competitor occupies this territory. Lexus's serenity is the absence of event rather than force withheld, and no named rival currently runs a positioning claim or campaign on concealed capability; the specific territory of effort proven elsewhere and never performed here is available.
+Commercial Precedent: 7/10 — Close precedent. Apple "Shot on iPhone" (2015) is a named post-2000 campaign built entirely on withholding the claim and letting the output stand, and Stella Artois "Reassuringly Expensive" (running into 2007) is a named post-2000 premium precedent for restraint as the desire mechanism. The Ogilvy Rolls-Royce line of 1958 is illustrative of the principle only and does not contribute to the score.
+CODE VERDICT: PASS — clears Stage 10 hard floors (Truth Strength ≥ 5, Competitive Impossibility ≥ 6).
+CODE COMPOSITE: 66/90 weighted (Fame 30% · Truth 20% · Competitive Impossibility 15% · Brand Permission 10% · Clean Air 10% · Commercial Precedent 5%).
+CODE FLAGS: none
+
+SMP: "Nothing timid about the car. Nothing careless about the ownership." — FIELD: One Temperament, Not Two Departments
+Fame: 6/10 — The paired negatives have rhythm and read as human speech, but at ten words the line argues a position rather than detonating one; people will notice the sentiment and may not carry the brand away with it.
+Truth Strength: 5/10 — Partially grounded. The first clause is supported by genuine, documented behaviour: the November 2024 rebrand and the Type 01's 1,015 hp specification provoked global argument, which is nerve on the record. The second clause requires a stretch the audience may not accept, because no defined, differentiated range-wide ownership or service standard exists in the supplied evidence to make "nothing careless" verifiable.
+Competitive Impossibility: 6/10 — Difficult but not impossible with repositioning. Genesis is the named route: its "Athletic Elegance" design language and its valet servicing proposition give it both halves with moderate work, and nothing in its position would have to be contradicted to say this. Lexus owns the care half outright but would have to disown the carefulness-for-nerve trade it made at launch in 1989.
+Brand Permission: 4/10 — Partial standing with direct, named tension on the second clause. The nerve half is well evidenced by the 2024 rebrand and the Type 01 specification. Against the care half stand three named facts: the absence of any defined range-wide ownership standard in the supplied evidence, the group's documented dependability ranking weakness, and the September 2025 cyber incident that halted production and disrupted retailer and customer systems. A line inviting audit on carelessness is at its most exposed in the year that audit was publicly failed. Flagged for human judgement.
+Clean Air: 6/10 — Adjacent competitive presence but the combined claim is available. Lexus occupies the care half through "The Relentless Pursuit of Perfection" and its Takumi craftsmanship platform; no named competitor holds both clauses simultaneously, which keeps the specific dual claim open.
+Commercial Precedent: 6/10 — Distant-to-close. Hyundai Assurance (2009) is a named post-2000 precedent for an ownership promise doing the selling work alongside the product and it succeeded commercially during the US downturn, but it is a single-clause move; no named campaign has successfully held audacity and care in one sentence. The Lexus Covenant (1989) carries partial weight only.
+CODE VERDICT: PASS — clears Stage 10 hard floors (Truth Strength ≥ 5, Competitive Impossibility ≥ 6).
+CODE COMPOSITE: 50/90 weighted (Fame 30% · Truth 20% · Competitive Impossibility 15% · Brand Permission 10% · Clean Air 10% · Commercial Precedent 5%).
+CODE FLAGS:
+  ⚠ BRAND PERMISSION: significant gap between this claim and demonstrated brand behaviour
+
+SMP: "Same instinct. New territory." — FIELD: Instinct Over Habitat
+Fame: 5/10 — People may notice the execution but are unlikely to remember the brand. Four words of corporate symmetry that read as an expansion announcement; without a supporting device the line does not identify whose instinct is being described. Flagged.
+Truth Strength: 6/10 — Grounded in a category truth the house can access, and supported by the genuine fact of a widened range entering unfamiliar segments under one badge with electric, petrol and hybrid alongside each other. It does not score higher because "instinct" is asserted rather than evidenced by any documented product or brand behaviour.
+Competitive Impossibility: 5/10 — Available to competitors with moderate effort. Lotus made precisely this argument at the Eletre launch in 2022, positioning a large SUV as the same driver's instinct carried onto new ground under the "For the Drivers" platform, and Porsche has run the same logic since the Cayenne entered the market. The word "instinct" is generic register rather than a name-derived lock, so the brand's own semantic ownership does not protect it here.
+Brand Permission: 8/10 — Strong standing from documented product fact: the combined range genuinely enters new segments and new powertrains concurrently, so the claim describes what the house is actually doing. Deduction cited to the verified YouGov consideration and buzz movement after the November 2024 rebrand, named evidence that the instinct the line asks audiences to recognise is itself currently contested.
+Clean Air: 5/10 — A named competitor has already moved toward this territory. Lotus "For the Drivers" (2022), launched with the Eletre, is an explicit claim that the brand's character travels intact into an unfamiliar segment, and Porsche has argued the same continuity since the Cayenne. Flagged.
+Commercial Precedent: 7/10 — Close precedent carried by two named examples. The Porsche Cayenne launch (2002) is the definitive post-2000 case of a marque's character carried into alien territory with extraordinary commercial success, and Lotus Eletre (2022) repeated the structure in a comparable media environment. Both post-2000 precedents carry the score.
+CODE VERDICT: ELIMINATED — Competitive Impossibility 5/10 below hard floor of 6.
+CODE COMPOSITE: 51/90 weighted (Fame 30% · Truth 20% · Competitive Impossibility 15% · Brand Permission 10% · Clean Air 10% · Commercial Precedent 5%).
+CODE FLAGS:
+  ⚠ FAME: this proposition may not cut through in market
+
+---
+
+## What The Scores Imply For Selection
+
+Five propositions clear both hard floors. **The instinct line falls below the competitive impossibility floor** because its central word is generic register rather than an owned asset, and because Lotus and Porsche have both demonstrably run the move — the proposition asks the brand to claim something it cannot hold.
+
+Two human flags require resolution before the next stage. The temperament line carries a permission flag that is not stylistic but factual: a sentence inviting audit on carelessness arrives in the same year as a production-halting operational failure, and it cannot be run without the published standard it presumes. The instinct line carries both a fame and a clean-air flag and should not be revived without a device that makes the instinct visible and brand-specific.
+
+> The strongest assets in this field are the two that borrow their defence from the brand's own name and its own competition record — the only two things in this house a rival cannot acquire, rebuild, or outspend.
+
+---
+
+SMPS SCORED: 6
+READY FOR STAGE 11: YES
+
+
+==== CODE-COMPUTED STAGE 10 SUMMARY (V6 UNIFIED SIX-DIMENSION FRAMEWORK — AUTHORITATIVE; OVERRIDES ANY LLM VERDICT) ====
+Selection rule: ELIMINATED if Truth Strength < 5 OR Competitive Impossibility < 6. Fame, Brand Permission, Clean Air and Commercial Precedent surface human flags but do not eliminate. Weighted composite /90 is for ranking and display.
+- PASS · weighted 70.5/90 · "The jaguar doesn't share its name lightly." — FIELD: The Name As Threshold
+- PASS · weighted 66/90 · "You'll never see it try." — FIELD: Composure As The Product
+- PASS · weighted 63.5/90 · "One house. Every ambition. Including the one you have now." — FIELD: Present-Tense Ambition
+- PASS · weighted 54.5/90 · "Change the car. Keep the standing." — FIELD: Standing Held By The Person
+- ELIMINATED · weighted 51/90 · "Same instinct. New territory." — FIELD: Instinct Over Habitat — Competitive Impossibility 5/10 below hard floor of 6
+    ⚠ FAME: this proposition may not cut through in market
+- PASS · weighted 50/90 · "Nothing timid about the car. Nothing careless about the ownership." — FIELD: One Temperament, Not Two Departments
+    ⚠ BRAND PERMISSION: significant gap between this claim and demonstrated brand behaviour
+

@@ -297,7 +297,9 @@ describe("BG access point", () => {
     expect(src).not.toMatch(/layer_\d+_output/);
     expect(src).not.toMatch(/initial_prompt|working_prompt/);
     const writes = [...src.matchAll(/\.(insert|update|upsert|delete)\(/g)];
-    expect(writes).toHaveLength(1); // the request log insert only
+    // The request log insert, plus Hub batch bookkeeping in its own tables (never run data).
+    expect(writes.filter((w) => !/bg_hub_batch/.test(src.slice(Math.max(0, (w.index ?? 0) - 80), w.index)))).toHaveLength(1);
+    expect(src).not.toMatch(/from\("(sessions|synthesiser_runs|intelligence_sessions|briefing_room_workspaces|saved_briefs|stimulus_runs|current_position_addon_jobs|validate_assessments)"\)\.(insert|update|upsert|delete)/);
     expect(src).toContain('from("bg_access_log").insert');
   });
 });

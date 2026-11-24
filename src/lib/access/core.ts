@@ -8,6 +8,7 @@ import { VALIDATE_OUTPUTS, ValidateOutputSchema } from '../validate-mode';
 import { EXEC_SUMMARY_OUTPUT, EXEC_SUMMARY_SCHEMA, buildExecutiveSummary, isValidateVariant } from '../executive-summary';
 import { COMPARATOR_NOTE, COMPARATOR_ROLE } from '../validate-run';
 import { runLinks } from '../run-links';
+import { BATCH_MAX, CHANGE_TYPES, META_STATUS, STAGE18_MAX, batchView, brandCatalogue, brandId, changeAssessment, confirmationEvent, isoUtc, metadata, profileFor, stage10Selected, validateVerdictFor, type Attempt, type BrandSources } from './foundations';
 // Run access remains read-only. Only the separately scoped ensure_client
 // request may create a client and its Hub mapping; it cannot touch runs.
 import { z } from "zod";
@@ -19,7 +20,9 @@ import { dealSummary } from "../deal-brief";
 /** T1: brief type + deal fields (Strategy Engine runs only; other Rooms have no brief type). */
 const briefInfo = (r: RunRec) => (r.table === "sessions" ? dealSummary(r.row) : { brief_type: null, deal: null });
 
-export const REQUESTS = ["list_clients", "ensure_client", "attach_client", "list_runs", "run_manifest", "get_output", "list_documents", "document_metadata", "provenance"] as const;
+export const REQUESTS = ["list_clients", "ensure_client", "attach_client", "list_runs", "run_manifest", "get_output", "list_documents", "document_metadata", "provenance", "brand_analysis", "portfolio_batch", "change_assessment", "stage10_selected"] as const;
+/** Hub foundations (contract 1.0) requests: Hub tools keys only. */
+const HUB_ONLY = new Set(["brand_analysis", "portfolio_batch", "change_assessment", "stage10_selected"]);
 export type RequestName = (typeof REQUESTS)[number];
 
 export const ACCESS_ROUTE = "/api/public/bg-access";
@@ -66,6 +69,13 @@ export interface Db {
   actorName(uid: string): Promise<string | null>;
   baselineJobs?(runId: string): Promise<Row[]>;
   validateOutputs?(runId: string, version: number): Promise<Row | null>;
+  /** Hub foundations: brand sources for one client (linked production records only). */
+  brandSources?(bgClientId: string): Promise<BrandSources>;
+  batchCreate?(b: { bg_client_id: string; key_id: string; brands: string[]; analyses: string[]; market: string | null }): Promise<string>;
+  batchGet?(id: string): Promise<{ id: string; bg_client_id: string; brands: string[]; analyses: string[]; market: string | null } | null>;
+  batchAttempts?(id: string): Promise<Attempt[]>;
+  /** Inserts one attempt; false when that (brand, attempt_no) already exists. */
+  batchInsertAttempt?(batchId: string, a: Omit<Attempt, "created_at">): Promise<boolean>;
 }
 
 export type Key = { id: string; scope: Scope };
@@ -94,7 +104,7 @@ const SECOND_BRAIN = (id: string) =>
   id === "room02.saved_brief" || id.startsWith("stage16.") || id === "room04.final_prompts" || id === "stage22_architecture";
 
 export function scopeAllowsRequest(scope: Scope, req: RequestName): boolean {
-  if (req === "list_clients" || req === "ensure_client" || req === "attach_client") return scope === "hub_tools";
+  if (req === "list_clients" || req === "ensure_client" || req === "attach_client" || HUB_ONLY.has(req)) return scope === "hub_tools";
   if (scope === "admin") return req === "list_runs" || req === "run_manifest";
   return true;
 }
@@ -149,6 +159,13 @@ const PARAMS = {
   list_documents: z.object({ client_ref: ref, run_id: uuid, version: ver }).strict(),
   document_metadata: z.object({ client_ref: ref, document_id: z.string().min(1).max(200) }).strict(),
   provenance: z.object({ client_ref: ref, run_id: uuid, version: ver, output_id: out }).strict(),
+  brand_analysis: z.object({ client_ref: ref, brand_id: ref, market: ref.optional(), analysis: z.enum(["profile", "validate_verdict"]) }).strict(),
+  portfolio_batch: z.object({
+    client_ref: ref, brands: z.array(ref).min(1).max(BATCH_MAX).optional(), analyses: z.array(z.enum(["profile", "validate_verdict"])).min(1).max(2).optional(),
+    market: ref.optional(), batch_id: uuid.optional(), retry_brand: ref.optional(), limit: z.number().int().min(1).max(BATCH_MAX).optional(),
+  }).strict().refine((p) => !!p.brands !== !!p.batch_id, "Provide brands to start or batch_id to resume").refine((p) => !p.retry_brand || !!p.batch_id, "retry_brand needs batch_id"),
+  change_assessment: z.object({ client_ref: ref, brand_id: ref, market: ref.optional(), change_type: z.enum(CHANGE_TYPES), change_description: z.string().trim().min(1).max(1000) }).strict(),
+  stage10_selected: z.object({ client_ref: ref, run_id: uuid, version: ver.optional() }).strict(),
 } as const;
 
 export const BodySchema = z.object({ request: z.string(), params: z.record(z.string(), z.unknown()).default({}) }).strict();
@@ -670,6 +687,8 @@ export async function handleAccess(
     return base(null, { engagement_id: eng, schema_version: "list_runs.v1", content: { runs: items, test_runs: testRuns } });
   }
 
+  if (HUB_ONLY.has(name)) return foundations(name, params, db, key, bgClientId, base);
+
   if (name === "document_metadata") {
     const d = parseDocumentId(String(params.document_id));
     if (!d) throw NOT_FOUND();
@@ -736,5 +755,101 @@ export async function handleAccess(
     checkpoints: await checkpoints(c),
     documents: documents(c, clientRef),
     provenance: prov,
+    metadata: outputMetadata(c, outputId, built),
   });
+}
+
+/** Start of version v: run creation for v1, else the history batch that opened it. */
+function versionStart(c: Ctx): string | null {
+  return isoUtc(c.v <= 1 ? c.run.row.created_at : (c.vc.batches[c.v - 2] ?? c.run.row.created_at));
+}
+function outputMetadata(c: Ctx, outputId: string, built: Built) {
+  const ct = built.content && typeof built.content === "object" ? (built.content as Row) : null;
+  const reason = typeof ct?.reason === "string" ? ct.reason : typeof ct?.note === "string" ? ct.note : null;
+  const status = META_STATUS[built.content_status] ?? "unavailable";
+  return metadata({
+    brand_id: typeof c.run.row.brand_name === "string" ? brandId(c.run.row.brand_name) : null,
+    requested_market: null, market: "global", analysis_type: outputId,
+    strategy_version: c.run.table === "sessions" ? c.v : null, method_version: built.schema_version,
+    run_id: c.run.id, run_version: c.v, produced_at: versionStart(c),
+    confidence: (ct?.confidence ?? (ct?.record as Row | undefined)?.confidence ?? null) as unknown,
+    evidence_refs: built.fields.map((f) => (f.includes(".") ? f : `${c.run.table}.${f}`)),
+    missing_inputs: status === "complete" ? [] : [reason ?? `${outputId} not available at version ${c.v}`],
+    status,
+  });
+}
+
+// ── Hub foundations requests ───────────────────────────────────────────────
+async function catalogue(db: Db, bgClientId: string) {
+  if (!db.brandSources) throw new AccessError("unavailable", "BRAND_SOURCES_UNAVAILABLE");
+  const src = await db.brandSources(bgClientId);
+  return { src, brands: brandCatalogue(src) };
+}
+/** Fail closed: a brand is served only when stored records tie it to this client. */
+function verifiedBrand(brands: ReturnType<typeof brandCatalogue>, raw: string) {
+  const b = brands.get(brandId(raw));
+  if (!b) throw new AccessError("not_found", `Brand not found for this client: ${raw.slice(0, 80)}`);
+  return b;
+}
+async function foundations(name: string, params: Record<string, unknown>, db: Db, key: Key, bgClientId: string, base: (c: Ctx | null, extra: Record<string, unknown>) => Record<string, unknown>): Promise<Success> {
+  if (name === "stage10_selected") {
+    const run = await scopedRun(db, bgClientId, String(params.run_id));
+    if (run.table !== "sessions") throw NOT_FOUND();
+    const c = await ctxFor(db, run, params.version as number | undefined);
+    const ratRow = c.vc.rows.filter((r) => /^Checkpoint C: saved human selection rationale/.test(r.reason ?? "") && c.vc.batches.indexOf(r.created_at) + 1 < c.v).map((r) => r.created_at).sort().pop() ?? null;
+    const conf = confirmationEvent({ selected_smp: c.get("selected_smp"), selection_rationale: c.get("selection_rationale"), checkpoint_c_confirmed: run.row.checkpoint_c_confirmed, checkpoint_c_confirmed_at: run.row.checkpoint_c_confirmed_at, rationale_version_at: ratRow });
+    const sel = stage10Selected(run.id, c.v, await recordOf("stage10", c), conf, c.get("selected_smp"));
+    const content = { stage10_selected: sel.value, reason: sel.reason, confirmation: { authority: "stored Stage 12 confirmation (selected_smp + saved selection_rationale)", confirmed: conf.confirmed, discrepancy: conf.discrepancy }, stage18: STAGE18_MAX };
+    return base(c, { schema_version: "stage10_selected.v1", content_status: sel.value ? "structured" : "not_produced", content,
+      metadata: metadata({ brand_id: typeof run.row.brand_name === "string" ? brandId(run.row.brand_name) : null, market: "global", analysis_type: "stage10_selected", strategy_version: c.v, method_version: "stage10_selected.v1", run_id: run.id, run_version: c.v, produced_at: isoUtc(conf.at), evidence_refs: ["sessions.stage_10_output", "sessions.selected_smp", "sessions.selection_rationale"], missing_inputs: sel.reason ? [sel.reason] : [], status: sel.value ? "complete" : "not_produced" }) });
+  }
+  const { src, brands } = await catalogue(db, bgClientId);
+  if (name === "brand_analysis" || name === "change_assessment") {
+    const b = verifiedBrand(brands, String(params.brand_id));
+    const market = (params.market as string | undefined) ?? null;
+    const a = name === "change_assessment"
+      ? changeAssessment(src, b, market, { type: String(params.change_type), description: String(params.change_description) })
+      : params.analysis === "profile" ? profileFor(src, b, market) : validateVerdictFor(src, b, market);
+    return base(null, { schema_version: `${name}.v1`, content_status: a.content_status, content: a.content, metadata: a.metadata });
+  }
+  // portfolio_batch
+  if (!db.batchCreate || !db.batchGet || !db.batchAttempts || !db.batchInsertAttempt) throw new AccessError("unavailable", "BATCH_STORE_UNAVAILABLE");
+  let batch;
+  if (params.brands) {
+    const ids = [...new Set((params.brands as string[]).map((x) => verifiedBrand(brands, x).brand_id))];
+    const analyses = (params.analyses as string[] | undefined) ?? ["profile", "validate_verdict"];
+    const id = await db.batchCreate({ bg_client_id: bgClientId, key_id: key.id, brands: ids, analyses, market: (params.market as string | undefined) ?? null });
+    batch = { id, bg_client_id: bgClientId, brands: ids, analyses, market: (params.market as string | undefined) ?? null };
+  } else {
+    batch = await db.batchGet(String(params.batch_id));
+    if (!batch || batch.bg_client_id !== bgClientId) throw NOT_FOUND();
+  }
+  const run = (brand: string) => {
+    const b = brands.get(brand);
+    if (!b) throw new Error("Brand could not be verified for this client");
+    return Object.fromEntries(batch.analyses.map((a) => [a, a === "profile" ? profileFor(src, b, batch.market) : validateVerdictFor(src, b, batch.market)]));
+  };
+  const attempt = async (brand: string, attempt_no: number, kind: "initial" | "retry") => {
+    try { await db.batchInsertAttempt!(batch.id, { brand_id: brand, attempt_no, kind, status: "done", result: run(brand), error: null }); }
+    catch (e) {
+      if (e instanceof AccessError) throw e;
+      await db.batchInsertAttempt!(batch.id, { brand_id: brand, attempt_no, kind, status: "failed", result: null, error: (e instanceof Error ? e.message : String(e)).slice(0, 300) });
+    }
+  };
+  let view = batchView(batch.brands, await db.batchAttempts(batch.id));
+  if (params.retry_brand) {
+    const rb = brandId(String(params.retry_brand));
+    const item = view.find((v) => v.brand_id === rb);
+    if (!item) throw NOT_FOUND();
+    if (item.status !== "failed") throw new AccessError("invalid_request", `Only a failed brand can be retried; ${rb} is ${item.status}.`);
+    await attempt(rb, item.attempts.length + 1, "retry");
+  } else {
+    const todo = view.filter((v) => v.status === "not_started").slice(0, (params.limit as number | undefined) ?? BATCH_MAX);
+    for (const v of todo) await attempt(v.brand_id, 1, "initial");
+  }
+  view = batchView(batch.brands, await db.batchAttempts(batch.id));
+  const counts = { done: 0, failed: 0, not_started: 0 } as Record<string, number>;
+  for (const v of view) counts[v.status] = (counts[v.status] ?? 0) + 1;
+  return base(null, { schema_version: "portfolio_batch.v1", content_status: counts.done === view.length ? "structured" : "partial",
+    content: { batch_id: batch.id, market: batch.market, analyses: batch.analyses, counts, brands: view } });
 }
