@@ -84,9 +84,10 @@ export function stage18Scores(output: unknown, detonation: unknown, line: unknow
       : miss("18", F, `Expected 8 distinct "<dimension>, <score>." lines; found ${hits.length}`);
   }
   return {
-    scale: { dimension: "as written per dimension", composite: "/90" },
+    // Runs scored before 25 Nov 2026 wrote "/90"; the corrected prompt writes "/80". Report the scale as written.
+    scale: { dimension: "as written per dimension", composite: /\/80\b/.test(output) && !/\/90\b/.test(output) ? "/80" : "/90" },
     dimensions,
-    composite: labelled(output, "COMPOSITE", /^\d+(?:\.\d+)?\/90$/, "18", F),
+    composite: labelled(output, "COMPOSITE", /^\d+(?:\.\d+)?\/(?:80|90)$/, "18", F),
     status: labelled(output, "STATUS", /^\S.*$/, "18", F),
     selected_detonation: savedField(detonation, "18", "stage_18_selected_detonation"),
     detonation_line: savedField(line, "18", "stage_18_detonation_line"),

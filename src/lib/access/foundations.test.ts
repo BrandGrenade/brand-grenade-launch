@@ -69,7 +69,7 @@ describe("stage10_selected (JLR v97)", () => {
     expect(v.hard_floors).toEqual([{ dimension: "truth_strength", floor: 5, score: 7, passed: true }, { dimension: "competitive_impossibility", floor: 6, score: 9, passed: true }]);
     expect(v.selection_timestamp).toBe(STORED.confirmed_at);
     expect(r.metadata.contract_version).toBe("1.0");
-    expect(r.content.stage18.max).toBeNull();
+    expect(r.content.stage18.max).toBe(80);
   });
   it("returns null before a confirmation exists, even if Checkpoint C is set", async () => {
     const db = makeDb();

@@ -1,3 +1,4 @@
+import { STAGE_18_MAX } from "../stage18-scale";
 // Hub foundations (contract 1.0): metadata envelope, brand × market reads,
 // portfolio batches, selected-proposition score and change assessment.
 // Everything here READS saved records; it never writes run data, scores,
@@ -129,15 +130,17 @@ export const DIMENSIONS = [
 ] as const;
 export const STAGE10_SOURCE = "src/lib/stage12-filter.ts: STAGE_10_WEIGHTS, STAGE_10_FLOORS, computeWeightedComposite, evaluateStage10Verdict";
 
-export type ConfirmationInput = { selected_smp: unknown; selection_rationale: unknown; checkpoint_c_confirmed: unknown; checkpoint_c_confirmed_at: unknown; rationale_version_at: string | null };
+export type ConfirmationInput = { selected_smp: unknown; selection_rationale: unknown; checkpoint_c_confirmed: unknown; checkpoint_c_confirmed_at: unknown; rationale_version_at: string | null; record?: { confirmed_by: string; confirmed_at: string } | null };
 /** Authority: the stored Stage 12 confirmation write — saved human rationale for the saved selection. */
-export function confirmationEvent(c: ConfirmationInput): { confirmed: boolean; at: string | null; at_source: string | null; discrepancy: string | null } {
+export function confirmationEvent(c: ConfirmationInput): { confirmed: boolean; at: string | null; at_source: string | null; discrepancy: string | null; confirmed_by?: string } {
   const rat = c.selection_rationale && typeof c.selection_rationale === "object" && Object.values(c.selection_rationale as R).some((v) => typeof v === "string" && v.trim());
   const sel = typeof c.selected_smp === "string" && c.selected_smp.trim();
   const confirmed = !!(rat && sel);
   const at = typeof c.checkpoint_c_confirmed_at === "string" && c.checkpoint_c_confirmed_at ? c.checkpoint_c_confirmed_at : c.rationale_version_at;
   const at_source = typeof c.checkpoint_c_confirmed_at === "string" && c.checkpoint_c_confirmed_at ? "sessions.checkpoint_c_confirmed_at" : c.rationale_version_at ? "run_output_versions (Checkpoint C: saved human selection rationale)" : null;
   const discrepancy = confirmed !== !!c.checkpoint_c_confirmed ? `Stage 12 confirmation ${confirmed ? "present" : "absent"} but checkpoint_c_confirmed is ${!!c.checkpoint_c_confirmed}` : null;
+  // From 25 Nov 2026 each confirmation is also appended to checkpoint_confirmations (person + time); prefer it when present.
+  if (confirmed && c.record) return { confirmed, at: c.record.confirmed_at, at_source: "checkpoint_confirmations", discrepancy, confirmed_by: c.record.confirmed_by };
   return { confirmed, at: confirmed ? at : null, at_source: confirmed ? at_source : null, discrepancy };
 }
 
@@ -167,11 +170,11 @@ export function stage10Selected(runId: string, version: number, record: R | null
   };
 }
 
-/** Stage 18 maximum: the code sets no variable; its prompt template conflicts with eight 1–10 dimensions. */
+/** Stage 18 maximum: one code constant (eight dimensions × 10). Pass or fail is still the STATUS line written by the model. */
 export const STAGE18_MAX = {
-  max: null as number | null,
-  reason: "No Stage 18 maximum variable exists in code. The only values are prompt text in src/lib/stage18-the-detonation-prompt.ts (\"COMPOSITE: [n]/90\" and \"72 or above out of 90\"), which conflict with its eight dimensions each scored 1 to 10 (maximum 80). Not settled by code, so null.",
-  source: "src/lib/stage18-the-detonation-prompt.ts (prompt template text, not a variable)",
+  max: STAGE_18_MAX as number | null,
+  reason: null as string | null,
+  source: "src/lib/stage18-scale.ts (STAGE_18_MAX)",
 };
 
 // ── Change assessment ──────────────────────────────────────────────────────

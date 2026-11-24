@@ -3455,6 +3455,14 @@ function PipelineView() {
                   console.error("[Checkpoint] failed to persist", error);
                   return;
                 }
+                if (letter === "C") {
+                  // Append-only record of who confirmed Checkpoint C and when.
+                  const { data: u } = await supabase.auth.getUser();
+                  if (u.user) {
+                    const { error: logError } = await supabase.from("checkpoint_confirmations").insert({ session_id: sessionId, checkpoint: "c", confirmed_by: u.user.id, confirmed_at: nowIso, selected_smp: session?.selected_smp ?? null });
+                    if (logError) console.error("[Checkpoint] confirmation record failed", logError);
+                  }
+                }
                 setSession((prev) => (prev ? ({ ...prev, ...update } as SessionData) : prev));
               }
               // Checkpoint A with 1B required → route to Stage 1B instead of Stage 2.

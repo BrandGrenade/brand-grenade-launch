@@ -1,6 +1,6 @@
 import { beforeEach, expect, it, vi } from "vitest";
 import { jlrRationale, jlrSelection } from "./selection-rationale.fixture";
-const state = vi.hoisted(() => ({ updates: [] as Record<string, unknown>[], error: null as { message: string } | null }));
+const state = vi.hoisted(() => ({ updates: [] as Record<string, unknown>[], inserts: [] as Record<string, unknown>[], error: null as { message: string } | null }));
 vi.mock("@tanstack/react-start", () => ({ createServerFn: () => {
   const chain = { middleware: () => chain, inputValidator: () => chain, handler: (fn: unknown) => fn }; return chain;
 } }));
@@ -13,12 +13,13 @@ import { saveSelectionRationale } from "./stage12.functions";
 const invoke = async () => {
   const client = { from: () => ({
     select: () => ({ eq: () => ({ single: async () => ({ data: { selected_smp: jlrSelection, selection_source: "CORE", stage_12_output: "Core\n==== DELIVERABLE 3 — SELECTION RATIONALE STUB ====\nUnfilled" }, error: null }) }) }),
+    insert: async (value: Record<string, unknown>) => { state.inserts.push(value); return { error: null }; },
     update: (value: Record<string, unknown>) => { state.updates.push(value); return { eq: async () => ({ error: state.error }) }; },
   }) };
   const handler = saveSelectionRationale as unknown as (args: unknown) => Promise<unknown>;
   return handler({ data: { sessionId: "jlr", rationale: jlrRationale }, context: { userId: "actor", supabase: client } });
 };
-beforeEach(() => { state.updates = []; state.error = null; });
+beforeEach(() => { state.updates = []; state.inserts = []; state.error = null; });
 it("saves all six answers and filled output in the same write as confirmation, without later-stage writes", async () => {
   await invoke();
   expect(state.updates).toHaveLength(1);
@@ -29,4 +30,9 @@ it("saves all six answers and filled output in the same write as confirmation, w
 it("does not report confirmation success when the answer write fails", async () => {
   state.error = { message: "write rejected" };
   await expect(invoke()).rejects.toThrow("Failed to save selection rationale: write rejected");
+});it("appends who confirmed Checkpoint C and when", async () => {
+  await invoke();
+  expect(state.inserts).toHaveLength(1);
+  expect(state.inserts[0]).toMatchObject({ session_id: "jlr", checkpoint: "c", confirmed_by: "actor", selected_smp: jlrSelection });
+  expect(typeof state.inserts[0].confirmed_at).toBe("string");
 });

@@ -377,5 +377,9 @@ export const saveSelectionRationale = createServerFn({ method: "POST" })
       })
       .eq("id", data.sessionId);
     if (error) throw new Error(`Failed to save selection rationale: ${error.message}`);
+    // Append-only record of who confirmed Checkpoint C and when.
+    const { error: logError } = await context.supabase.from("checkpoint_confirmations")
+      .insert({ session_id: data.sessionId, checkpoint: "c", confirmed_by: context.userId, confirmed_at: new Date().toISOString(), selected_smp: session.selected_smp });
+    if (logError) throw new Error(`Rationale saved, but the Checkpoint C confirmation record failed: ${logError.message}`);
     return { ok: true, rationale, output };
   });

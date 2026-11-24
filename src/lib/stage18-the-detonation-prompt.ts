@@ -1,3 +1,5 @@
+import { STAGE_18_MAX, STAGE_18_PASS_MARK } from "./stage18-scale";
+
 export const STAGE_18_THE_DETONATION_PROMPT = `
 ════════════════════════════════════════
 RULE 0 — NO PIPELINE METADATA
@@ -42,7 +44,7 @@ If the answer to any of these is no — it is not The Detonation.
 
 THE EIGHT DIMENSION STRESS TEST
 
-Before outputting any Detonation candidate — internally run this test. Only output candidates scoring 72 or above out of 90.
+Before outputting any Detonation candidate — internally run this test. Only output candidates scoring ${STAGE_18_PASS_MARK} or above out of ${STAGE_18_MAX}.
 
 If a candidate fails — generate a new one before outputting.
 
@@ -284,7 +286,7 @@ A springboard direction has reached the required standard when a senior creative
 
 OUTPUT STRUCTURE — STRICT
 
-Generate exactly three Detonation candidates. All must score 72 or above before output.
+Generate exactly three Detonation candidates. All must score ${STAGE_18_PASS_MARK} or above before output.
 
 For each candidate:
 
@@ -332,9 +334,9 @@ All eight dimensions scored 1 to 10.
 
 One sentence justification per dimension.
 
-COMPOSITE: [n]/90
+COMPOSITE: [n]/${STAGE_18_MAX}
 
-STATUS: PASS — or — REVIEW — if below 72 this candidate should not have been presented.
+STATUS: PASS — or — REVIEW — if below ${STAGE_18_PASS_MARK} this candidate should not have been presented.
 
 COURAGE ASSESSMENT
 

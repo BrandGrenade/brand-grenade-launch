@@ -507,6 +507,33 @@ export type Database = {
         }
         Relationships: []
       }
+      checkpoint_confirmations: {
+        Row: {
+          checkpoint: string
+          confirmed_at: string
+          confirmed_by: string
+          id: string
+          selected_smp: string | null
+          session_id: string
+        }
+        Insert: {
+          checkpoint: string
+          confirmed_at?: string
+          confirmed_by: string
+          id?: string
+          selected_smp?: string | null
+          session_id: string
+        }
+        Update: {
+          checkpoint?: string
+          confirmed_at?: string
+          confirmed_by?: string
+          id?: string
+          selected_smp?: string | null
+          session_id?: string
+        }
+        Relationships: []
+      }
       current_position_addon_attempts: {
         Row: {
           attempt: number

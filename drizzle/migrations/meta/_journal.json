@@ -344,6 +344,13 @@
       "when": 1795519330498,
       "tag": "0048_revoke_temp_hub_key",
       "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "7",
+      "when": 1795564244062,
+      "tag": "0049_checkpoint_c_confirmations",
+      "breakpoints": true
     }
   ]
 }
