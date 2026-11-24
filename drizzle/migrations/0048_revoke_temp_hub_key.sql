@@ -1,0 +1,1 @@
+UPDATE public.bg_access_keys SET revoked_at = now() WHERE id = '62dd1d79-093d-4471-acfe-24de9f39e408' AND revoked_at IS NULL;
