@@ -3,7 +3,7 @@
 ## Hub foundations v3 — 24 Nov 2026
 - [x] Metadata 1.0 on get_output and new requests; brand × market reads; portfolio batch with resume/explicit retry; change.*; stage10_selected; stage18 max (null, not set in code).
 - [x] 592 tests / 82 files; local before/after Hub reads identical apart from metadata; JLR fingerprints unchanged.
-- [ ] Publish and live-check; revoke temporary key.
+- [x] Published; live Hub reads identical apart from metadata (one of six live run_manifest calls hit the 20s deadline, then 5/5 identical at 10–18s); new requests verified live; temporary key revoked.
 
 ## Canonical run links — 16 Nov 2026
 - [x] Creative ID is an offline stimulus run linked to 3470f1ad, not a session. Briefing ID is a saved brief, not a workspace; unhandled load rejection caused spinner. JLR fingerprint unchanged.
