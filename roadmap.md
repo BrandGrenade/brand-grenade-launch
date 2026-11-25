@@ -2,7 +2,7 @@
 
 ## Mode-aware run links — 25 Nov 2026
 - [x] Correct all-mode landings and exclude unavailable stages; add opt-in test-run listing without changing reports. Checked Pipeline, legacy Detonation, canonical/access links, register links, Creative steps and existing worker/database mode guards; no record or permission changes.
-- [ ] Run landing/regression tests, publish if passing, and verify both existing test checkpoints live without approving or running stages.
+- [x] 708 tests / 86 files passed, compilation clean; published and authenticated live checks confirmed both legacy links open Stage 1 “Awaiting review”. Test switch off by default, both test records visible when on; no approvals or stage executions.
 
 ## Headroom / Turnaround / modelled change — 25 Nov 2026
 - [x] Durable supervisor recovery, atomic publication and child-job reuse; two real append-only Infiniti projections read back, Jaguar named missing-baseline response; baseline unchanged.
