@@ -4,6 +4,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { createSession } from "@/lib/stage1.functions";
+import { POSITION_DIMS, positionTableRows } from "@/lib/current-position-table";
 
 type Row = {
   run_mode: string;
@@ -14,12 +15,7 @@ type Row = {
   stage_10_structured: { current_position?: Record<string, unknown> } | null;
 };
 
-const DIMS: [string, string][] = [
-  ["fame", "Fame"], ["truth_strength", "Truth"], ["competitive_impossibility", "Comp. Imp."],
-  ["brand_permission", "Permission"], ["clean_air", "Clean Air"], ["commercial_precedent", "Precedent"],
-];
-
-/** Diagnostic status + "continue as full run", and the Stage 10 current-position baseline row. */
+/** Diagnostic status + "continue as full run". The score table lives in stage output only. */
 export function RunModePanel({ sessionId, refreshKey }: { sessionId: string; refreshKey?: unknown }) {
   const [row, setRow] = useState<Row | null>(null);
   const [busy, setBusy] = useState(false);
@@ -36,11 +32,8 @@ export function RunModePanel({ sessionId, refreshKey }: { sessionId: string; ref
   }, [sessionId, refreshKey]);
 
   if (!row) return null;
-  const cp = row.stage_10_structured?.current_position as
-    | (Record<string, any> & { status: string })
-    | undefined;
   const isDiag = row.run_mode === "diagnostic";
-  if (!isDiag && !cp) return null;
+  if (!isDiag) return null;
 
   return (
     <div className="mx-5 mt-3 space-y-3 rounded-md border p-4 text-body-sm" style={{ borderColor: "var(--color-border)" }}>
@@ -84,39 +77,49 @@ export function RunModePanel({ sessionId, refreshKey }: { sessionId: string; ref
           )}
         </div>
       )}
-      {cp && (
-        <div>
-          <strong>Current position (baseline — not selectable)</strong>
-          {cp.status !== "scored" ? (
-            <p className="mt-1" style={{ color: "var(--color-text-secondary)" }}>{String(cp.reason ?? "Not scored.")}</p>
-          ) : (
-            <div className="mt-2 overflow-x-auto">
-              <p>
-                “{String(cp.line)}” — <em>{String(cp.evidence_label)}</em>
-                {cp.source ? `, ${cp.source}` : ""}
-                {cp.source_date ? `, ${cp.source_date}` : ""}
-              </p>
-              <table className="mt-2 w-full text-left">
-                <thead>
-                  <tr><th className="pr-3">Proposition</th>{DIMS.map(([, l]) => <th key={l} className="pr-3">{l}</th>)}<th>/90</th></tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td className="pr-3">Current (baseline)</td>
-                    {DIMS.map(([k]) => <td key={k} className="pr-3">{cp[k]?.score}</td>)}
-                    <td>{cp.composite}</td>
-                  </tr>
-                  {(cp.deltas ?? []).map((d: Record<string, any>) => (
-                    <tr key={d.smp}>
-                      <td className="pr-3">{d.smp} (difference)</td>
-                      {DIMS.map(([k]) => <td key={k} className="pr-3">{d[k] > 0 ? `+${d[k]}` : d[k]}</td>)}
-                      <td>{d.composite > 0 ? `+${d.composite}` : d.composite}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+    </div>
+  );
+}
+
+
+/** In-page current-position table for a stage's output (never pinned). */
+export function CurrentPositionTable({ sessionId, refreshKey }: { sessionId: string; refreshKey?: unknown }) {
+  const [cp, setCp] = useState<(Record<string, any> & { status?: string }) | null>(null);
+  useEffect(() => {
+    supabase
+      .from("sessions")
+      .select("stage_10_structured")
+      .eq("id", sessionId)
+      .single()
+      .then(({ data }) => setCp(((data as unknown as Row | null)?.stage_10_structured?.current_position as Record<string, any>) ?? null));
+  }, [sessionId, refreshKey]);
+  if (!cp) return null;
+  return (
+    <div className="mt-8 rounded-md border p-4 text-body-sm" style={{ borderColor: "var(--color-border)" }}>
+      <strong>Current position and alternatives</strong>
+      {cp.status !== "scored" ? (
+        <p className="mt-1" style={{ color: "var(--color-text-secondary)" }}>{String(cp.reason ?? "Not scored.")}</p>
+      ) : (
+        <div className="mt-2 overflow-x-auto">
+          <p>
+            “{String(cp.line)}” — <em>{String(cp.evidence_label)}</em>
+            {cp.source ? `, ${cp.source}` : ""}
+            {cp.source_date ? `, ${cp.source_date}` : ""}
+          </p>
+          <table className="mt-2 w-full text-left">
+            <thead>
+              <tr><th className="pr-3">Proposition</th><th className="pr-3">Basis</th>{POSITION_DIMS.map(([, l]) => <th key={l} className="pr-3">{l}</th>)}<th>/90</th></tr>
+            </thead>
+            <tbody>
+              {positionTableRows(cp).map((r) => (
+                <tr key={r.label}>
+                  <td className="pr-3">{r.label}</td>
+                  <td className="pr-3"><em>{r.basis}</em></td>
+                  {r.cells.map((c, i) => <td key={i} className="pr-3 whitespace-nowrap">{c}</td>)}
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>

@@ -12,7 +12,8 @@ import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } 
 import { z } from "zod";
 import { TopNav } from "@/components/TopNav";
 import { SessionSharePopover } from "@/components/SessionSharePopover";
-import { RunModePanel } from "@/components/RunModePanel";
+import { RunModePanel, CurrentPositionTable } from "@/components/RunModePanel";
+import { positionTableStages } from "@/lib/current-position-table";
 import { RequireAuth } from "@/components/RequireAuth";
 import { LocControls } from "@/components/LocControls";
 import { Checkpoint, buildRevisionInstruction } from "@/components/Checkpoint";
@@ -3202,6 +3203,7 @@ function PipelineView() {
         ) : (
 
           <RightPanel
+            outputExtra={sessionId && positionTableStages(session?.exploration_brief ? String(session.exploration_brief['mode']) : null).includes(selectedId) ? <CurrentPositionTable sessionId={sessionId} refreshKey={`${statuses["10"]}-${statuses["13"]}`} /> : null}
             validateNotice={session?.validate_brief && sessionId ? (
               <div className="border-b px-6 py-3 sm:px-12" style={{ borderColor: "var(--color-border)", backgroundColor: "var(--color-surface-2)" }}>
                 <p className="text-body-sm font-semibold">Validate run — verdict on the current strategy only</p>
@@ -4192,6 +4194,7 @@ function StageIndicator({
 
 function RightPanel({
   validateNotice,
+  outputExtra,
   stage,
   status,
   fullOutput,
@@ -4268,6 +4271,7 @@ function RightPanel({
   onCheckpointNotesChange?: (notes: string[]) => void;
   sessionId?: string;
   validateNotice?: ReactNode;
+  outputExtra?: ReactNode;
 }) {
   const isRunning = status === "running";
   const isCheckpoint = status === "checkpoint";
@@ -4436,6 +4440,7 @@ function RightPanel({
                     <StreamedOutput text={text} streaming={isRunning} />
                   )}
                   {isRunning ? <StallWatcher stageKey={stage.id} onRetry={onRetry} /> : null}
+                  {outputExtra}
                 </>
               )}
             </article>

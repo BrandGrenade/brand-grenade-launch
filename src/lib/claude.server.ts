@@ -13,6 +13,7 @@ const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
 // 5+ minutes). We now abort only when no SSE chunk has arrived within this
 // window — the read loop resets the timer on every successful read.
 const IDLE_TIMEOUT_MS = 180_000;
+export const STREAM_KEEPALIVE_MS = 15_000;
 const RETRY_DELAY_MS = 3_000;
 
 type IdleAbort = {
@@ -464,9 +465,13 @@ export async function* streamClaude(args: CallClaudeArgs): AsyncGenerator<string
     let chars = 0;
     let stopReason: string | null = null;
     let sawMessageStop = false;
+    let lastYieldAt = Date.now();
     try {
       while (true) {
         const { done, value } = await reader.read();
+        // Keep-alive: long thinking sends no text, and a silent client stream is
+        // cut by the edge after ~100s, killing the worker. An empty delta keeps it open.
+        if (Date.now() - lastYieldAt > STREAM_KEEPALIVE_MS) { lastYieldAt = Date.now(); yield ""; }
         // A successful read (chunk or clean EOF) means the upstream is alive.
         // Reset the inactivity timer so long-but-progressing streams (Stage 20B,
         // ~5+ min) are not killed by a flat wall-clock abort.
@@ -510,6 +515,7 @@ export async function* streamClaude(args: CallClaudeArgs): AsyncGenerator<string
             }
             if (evt.type === "content_block_delta" && evt.delta?.type === "text_delta" && evt.delta.text) {
               chars += evt.delta.text.length;
+              lastYieldAt = Date.now();
               yield evt.delta.text;
             } else if (evt.type === "message_delta" && evt.delta?.stop_reason) {
               stopReason = evt.delta.stop_reason;

@@ -29,9 +29,16 @@ export async function* filterStructuredStream(
 ): AsyncGenerator<string> {
   let buf = "";
   let inBlock = false;
+  let lastYieldAt = Date.now();
   for await (const delta of src) {
     sink.raw += delta;
-    if (inBlock) continue;
+    // Pass keep-alives through, and keep the client stream open while the
+    // hidden structured block is generated (no visible text for minutes).
+    if (delta === "" || inBlock) {
+      if (delta === "" || Date.now() - lastYieldAt > 15_000) { lastYieldAt = Date.now(); yield ""; }
+      continue;
+    }
+    lastYieldAt = Date.now();
     buf += delta;
     const idx = buf.indexOf(STRUCTURED_OPEN);
     if (idx >= 0) {
