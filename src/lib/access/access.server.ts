@@ -172,7 +172,7 @@ export function supabaseDb(sb: any): Db {
       return {
         sessions: prod.map((r: any) => ({ id: String(r.id), brand_name: r.brand_name ?? null, version: counts.get(String(r.id)) ?? 1, locked_at: r.locked_at ?? null, created_at: r.created_at ?? null, validate_brief: r.validate_brief ?? null })),
         briefs: (briefs.data ?? []).map((r: any) => ({ brand_name: r.brand_name ?? null, f1_brand: typeof r.brief_fields?.sections?.f1_brand === "string" ? r.brief_fields.sections.f1_brand : null })),
-        addonJobs: (jobs.data ?? []).map((j: any) => ({ id: j.id, session_id: j.session_id, subject_brand: j.source_manifest?.subject_brand ?? null, published_version: j.published_version ?? null, proposition: j.proposition ?? null, results: j.results ?? {}, completed_at: j.completed_at ?? null })),
+        addonJobs: (jobs.data ?? []).map((j: any) => ({ id: j.id, session_id: j.session_id, subject_brand: j.source_manifest?.subject_brand ?? null, published_version: j.published_version ?? null, proposition: j.proposition ?? null, results: j.results ?? {}, completed_at: j.completed_at ?? null, market: j.source_manifest?.market ?? 'global', manifest: j.source_manifest ?? {} })),
         validates: (vals.data ?? []).map((v: any) => ({ session_id: v.session_id, run_version: v.run_version, assessment_revision: v.assessment_revision, subject_brand: v.subject_brand ?? null, outputs: v.outputs ?? {}, created_at: v.created_at ?? null })),
       };
     },
@@ -180,6 +180,14 @@ export function supabaseDb(sb: any): Db {
       const { data, error } = await sb.from("bg_hub_batches").insert(b).select("id").single();
       if (error || !data) throw new AccessError("unavailable", "BATCH_CREATE_FAILED");
       return data.id;
+    },
+    async projectChange(clientId,baseline,change) {
+      const { queueProjection } = await import('../exploration/projection.server');
+      return queueProjection(clientId,baseline,change);
+    },
+    async readProjection(id,clientId) {
+      const { readProjection } = await import('../exploration/projection.server');
+      try { return await readProjection(id,clientId); } catch { throw new AccessError('not_found','Projection not found for this client'); }
     },
     async batchGet(id) {
       const { data } = await retryRead(() => sb.from("bg_hub_batches").select("id, bg_client_id, brands, analyses, market").eq("id", id).maybeSingle(), "BATCH_READ_FAILED");
@@ -202,6 +210,10 @@ export function supabaseDb(sb: any): Db {
     async validateOutputs(id, version) {
       const {data}=await retryRead(()=>sb.from('validate_assessments').select('outputs,subject_brand,brief').eq('session_id',id).eq('run_version',version).order('assessment_revision',{ascending:false}).limit(1).maybeSingle(),'VALIDATE_OUTPUT_READ_FAILED');
       return data?.outputs ? {...data.outputs, __subject_brand: data.subject_brand, __strategy_owner: data.brief?.strategyOwner ?? null} : null;
+    },
+    async explorationOutputs(id,version){
+      const {data}=await retryRead(()=>sb.from('bg_exploration_assessments').select('outputs').eq('session_id',id).eq('run_version',version).order('created_at',{ascending:false}).limit(1).maybeSingle(),'EXPLORATION_OUTPUT_READ_FAILED');
+      return data?.outputs??null;
     },
   };
 }

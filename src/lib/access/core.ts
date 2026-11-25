@@ -8,6 +8,8 @@ import { VALIDATE_OUTPUTS, ValidateOutputSchema } from '../validate-mode';
 import { EXEC_SUMMARY_OUTPUT, EXEC_SUMMARY_SCHEMA, buildExecutiveSummary, isValidateVariant } from '../executive-summary';
 import { COMPARATOR_NOTE, COMPARATOR_ROLE } from '../validate-run';
 import { runLinks } from '../run-links';
+import { resolveBaseline } from '../exploration/projection';
+import {EXPLORATION_OUTPUTS} from '../exploration/modes';
 import { BATCH_MAX, CHANGE_TYPES, META_STATUS, STAGE18_MAX, batchView, brandCatalogue, brandId, changeAssessment, confirmationEvent, isoUtc, metadata, profileFor, stage10Selected, validateVerdictFor, type Attempt, type BrandSources } from './foundations';
 // Run access remains read-only. Only the separately scoped ensure_client
 // request may create a client and its Hub mapping; it cannot touch runs.
@@ -20,9 +22,9 @@ import { dealSummary } from "../deal-brief";
 /** T1: brief type + deal fields (Strategy Engine runs only; other Rooms have no brief type). */
 const briefInfo = (r: RunRec) => (r.table === "sessions" ? dealSummary(r.row) : { brief_type: null, deal: null });
 
-export const REQUESTS = ["list_clients", "ensure_client", "attach_client", "list_runs", "run_manifest", "get_output", "list_documents", "document_metadata", "provenance", "brand_analysis", "portfolio_batch", "change_assessment", "stage10_selected"] as const;
+export const REQUESTS = ["list_clients", "ensure_client", "attach_client", "list_runs", "run_manifest", "get_output", "list_documents", "document_metadata", "provenance", "brand_analysis", "portfolio_batch", "change_assessment", "stage10_selected", "change_projection"] as const;
 /** Hub foundations (contract 1.0) requests: Hub tools keys only. */
-const HUB_ONLY = new Set(["brand_analysis", "portfolio_batch", "change_assessment", "stage10_selected"]);
+const HUB_ONLY = new Set(["brand_analysis", "portfolio_batch", "change_assessment", "stage10_selected", "change_projection"]);
 export type RequestName = (typeof REQUESTS)[number];
 
 export const ACCESS_ROUTE = "/api/public/bg-access";
@@ -78,6 +80,9 @@ export interface Db {
   batchAttempts?(id: string): Promise<Attempt[]>;
   /** Inserts one attempt; false when that (brand, attempt_no) already exists. */
   batchInsertAttempt?(batchId: string, a: Omit<Attempt, "created_at">): Promise<boolean>;
+  projectChange?(clientId: string, baseline: import('../exploration/projection').Baseline, change: { type: string; description: string }): Promise<string>;
+  readProjection?(id: string, clientId: string): Promise<{ job: { status: string; error: string | null }; result: { output: unknown } | null }>;
+  explorationOutputs?(runId:string,version:number):Promise<Row|null>;
 }
 
 export type Key = { id: string; scope: Scope };
@@ -95,6 +100,7 @@ export const OUTPUTS_BY_TABLE: Record<RunTable, string[]> = {
     "stage12_propositions", "stage13", "stage13_current_position", ...STAGE16_FORMATS.map((f) => `stage16.${f}`), EXEC_SUMMARY_OUTPUT,
     "stage17", "stage18", "stage20", "stage21_channels", "stage22_architecture", "stage22_assets",
     ...VALIDATE_OUTPUTS,
+    ...EXPLORATION_OUTPUTS,
   ],
   stimulus_runs: ["room04.lenses", "room04.gates", "room04.final_prompts"],
 };
@@ -167,6 +173,7 @@ const PARAMS = {
     market: ref.optional(), batch_id: uuid.optional(), retry_brand: ref.optional(), limit: z.number().int().min(1).max(BATCH_MAX).optional(),
   }).strict().refine((p) => !!p.brands !== !!p.batch_id, "Provide brands to start or batch_id to resume").refine((p) => !p.retry_brand || !!p.batch_id, "retry_brand needs batch_id"),
   change_assessment: z.object({ client_ref: ref, brand_id: ref, market: ref.optional(), change_type: z.enum(CHANGE_TYPES), change_description: z.string().trim().min(1).max(1000) }).strict(),
+  change_projection: z.object({ client_ref: ref, projection_job_id: uuid }).strict(),
   stage10_selected: z.object({ client_ref: ref, run_id: uuid, version: ver.optional() }).strict(),
 } as const;
 
@@ -240,6 +247,7 @@ const COMPARATOR_OUTPUT = /^stage(08b?|09|10|11|12|13)(?!\d)(?!_current_position
 /** Validate runs: generated propositions are comparators only, never recommendations. */
 async function buildOutput(outputId: string, c: Ctx): Promise<Built> {
   const built = await buildOutputInner(outputId, c);
+  if(c.run.row.exploration_brief&&COMPARATOR_OUTPUT.test(outputId)&&built.content&&typeof built.content==='object')return {...built,content:{...(built.content as Row),exploration_role:'exploratory alternative',is_recommendation:false,is_approved_position:false}};
   if (c.run.table !== "sessions" || !c.run.row.validate_brief || !COMPARATOR_OUTPUT.test(outputId) || !built.content || typeof built.content !== "object") return built;
   return { ...built, content: { ...(built.content as Record<string, unknown>), validate_role: COMPARATOR_ROLE, is_recommendation: false, validate_note: COMPARATOR_NOTE } };
 }
@@ -255,6 +263,11 @@ function buildOutputInner(outputId: string, c: Ctx): Promise<Built> {
 async function buildOutputUncached(outputId: string, c: Ctx): Promise<Built> {
   const { run } = c;
   if (!OUTPUTS_BY_TABLE[run.table].includes(outputId)) throw NOT_FOUND();
+  if((EXPLORATION_OUTPUTS as readonly string[]).includes(outputId)) {
+    const outputs=run.row.exploration_brief&&c.db.explorationOutputs?await c.db.explorationOutputs(run.id,c.v):null;
+    const value=outputs?.[outputId];
+    return {content_status:value?'structured':'not_produced',schema_version:`${outputId}.v1`,content:value??null,evidence:[],fields:value?['bg_exploration_assessments.outputs']:[]};
+  }
   if ((VALIDATE_OUTPUTS as readonly string[]).includes(outputId)) {
     const saved = c.db.validateOutputs ? await c.db.validateOutputs(run.id,c.v) : null;
     const value = saved?.[outputId];
@@ -744,7 +757,7 @@ export async function handleAccess(
 
   if (name === "run_manifest") {
     // Outputs are built in parallel; order and content are as before.
-    const ids = OUTPUTS_BY_TABLE[run.table].filter((id) => !(key.scope === "second_brain" && !scopeAllowsOutput("second_brain", id)));
+    const ids = OUTPUTS_BY_TABLE[run.table].filter((id) => !(key.scope === "second_brain" && !scopeAllowsOutput("second_brain", id))&&(!(EXPLORATION_OUTPUTS as readonly string[]).includes(id)||!!run.row.exploration_brief));
     const [settled, cps] = await Promise.all([
       Promise.allSettled(ids.map(async (id): Promise<Record<string, unknown>> => {
         if (isDiagnostic(run) && NOT_IN_DIAGNOSTIC(id)) return { output_id: id, included: "not included", content_status: "not_produced" };
@@ -799,6 +812,7 @@ function versionStart(c: Ctx): string | null {
 }
 function outputMetadata(c: Ctx, outputId: string, built: Built) {
   const ct = built.content && typeof built.content === "object" ? (built.content as Row) : null;
+  if((EXPLORATION_OUTPUTS as readonly string[]).includes(outputId)&&ct?.metadata)return ct.metadata;
   const reason = typeof ct?.reason === "string" ? ct.reason : typeof ct?.note === "string" ? ct.note : null;
   const status = META_STATUS[built.content_status] ?? "unavailable";
   return metadata({
@@ -826,9 +840,16 @@ function verifiedBrand(brands: ReturnType<typeof brandCatalogue>, raw: string) {
   return b;
 }
 async function foundations(name: string, params: Record<string, unknown>, db: Db, key: Key, bgClientId: string, base: (c: Ctx | null, extra: Record<string, unknown>) => Record<string, unknown>): Promise<Success> {
+  if (name === 'change_projection') {
+    if (!db.readProjection) throw new AccessError('unavailable','PROJECTION_STORE_UNAVAILABLE');
+    const r = await db.readProjection(String(params.projection_job_id),bgClientId);
+    const output=r.result?.output as {content_status?:string;metadata?:unknown}|undefined;
+    return base(null,{schema_version:'change_projection.v1',content_status:output?.content_status??'not_produced',content:{projection_job_id:params.projection_job_id,status:r.job.status,error:r.job.error,output:r.result?.output ?? null},metadata:output?.metadata??metadata({analysis_type:'change_projection',status:r.job.status==='failed'?'failed':'not_produced',missing_inputs:[r.job.error??'Modelled projection pending']})});
+  }
   if (name === "stage10_selected") {
     const run = await scopedRun(db, bgClientId, String(params.run_id));
     if (run.table !== "sessions") throw NOT_FOUND();
+    if(run.row.exploration_brief)return base(null,{schema_version:'stage10_selected.v1',content_status:'not_produced',content:{stage10_selected:null,reason:'Exploratory alternatives are never approved positions'},metadata:metadata({analysis_type:'stage10_selected',status:'not_produced',run_id:run.id,missing_inputs:['No approved position in an exploratory run']})});
     const c = await ctxFor(db, run, params.version as number | undefined);
     const ratRow = c.vc.rows.filter((r) => /^Checkpoint C: saved human selection rationale/.test(r.reason ?? "") && c.vc.batches.indexOf(r.created_at) + 1 < c.v).map((r) => r.created_at).sort().pop() ?? null;
     const conf = confirmationEvent({ selected_smp: c.get("selected_smp"), selection_rationale: c.get("selection_rationale"), checkpoint_c_confirmed: run.row.checkpoint_c_confirmed, checkpoint_c_confirmed_at: run.row.checkpoint_c_confirmed_at, rationale_version_at: ratRow, record: c.v === c.vc.current && db.checkpointC ? await db.checkpointC(run.id) : null });
@@ -844,6 +865,15 @@ async function foundations(name: string, params: Record<string, unknown>, db: Db
     const a = name === "change_assessment"
       ? changeAssessment(src, b, market, { type: String(params.change_type), description: String(params.change_description) })
       : params.analysis === "profile" ? profileFor(src, b, market) : validateVerdictFor(src, b, market);
+    if (name === 'change_assessment' && db.projectChange) {
+      const baseline = resolveBaseline(src,b.brand_id,market);
+      if (baseline) {
+        const id = await db.projectChange(bgClientId,baseline,{type:String(params.change_type),description:String(params.change_description)});
+        const old=a.content as Row;
+        const dimensions=Object.fromEntries(Object.entries((old['dimensions']??{}) as Row).map(([k,d])=>[k,{...(d as Row),null_reason:'Modelled projection pending',finding_basis:{baseline:'evidence-supported',projected:'modelled'}}]));
+        return base(null,{schema_version:`${name}.v1`,content_status:a.content_status,content:{...old,dimensions,projection_job_id:id,projection_status:'queued'},metadata:{...a.metadata,requested_market:baseline.requested_market,market:baseline.market,missing_inputs:[...baseline.missing_inputs,'Modelled projection pending']}});
+      }
+    }
     return base(null, { schema_version: `${name}.v1`, content_status: a.content_status, content: a.content, metadata: a.metadata });
   }
   // portfolio_batch

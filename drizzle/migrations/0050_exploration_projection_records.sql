@@ -1,0 +1,36 @@
+ALTER TABLE public.sessions ADD COLUMN exploration_brief jsonb;
+CREATE TABLE public.bg_projection_jobs (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), bg_client_id uuid NOT NULL, baseline_job_id uuid NOT NULL REFERENCES public.current_position_addon_jobs(id), baseline_snapshot jsonb NOT NULL, proposed_change jsonb NOT NULL, status text NOT NULL DEFAULT 'queued' CHECK(status IN ('queued','running','complete','failed')), wake_token uuid NOT NULL DEFAULT gen_random_uuid(), lease_token uuid, lease_until timestamptz, error text, created_at timestamptz NOT NULL DEFAULT now());
+GRANT SELECT ON public.bg_projection_jobs TO authenticated; GRANT ALL ON public.bg_projection_jobs TO service_role;
+ALTER TABLE public.bg_projection_jobs ENABLE ROW LEVEL SECURITY;
+CREATE POLICY projection_job_read ON public.bg_projection_jobs FOR SELECT TO authenticated USING (EXISTS(SELECT 1 FROM public.current_position_addon_jobs b JOIN public.sessions s ON s.id=b.session_id WHERE b.id=baseline_job_id AND (s.user_id=auth.uid() OR public.bg_is_admin(auth.uid()))));
+CREATE TABLE public.bg_modelled_projections (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), job_id uuid NOT NULL UNIQUE REFERENCES public.bg_projection_jobs(id), baseline_job_id uuid NOT NULL REFERENCES public.current_position_addon_jobs(id), baseline_version integer NOT NULL, output jsonb NOT NULL, method_version text NOT NULL, scorer_prompt_version text NOT NULL, created_at timestamptz NOT NULL DEFAULT now());
+GRANT SELECT ON public.bg_modelled_projections TO authenticated; GRANT SELECT,INSERT ON public.bg_modelled_projections TO service_role;
+ALTER TABLE public.bg_modelled_projections ENABLE ROW LEVEL SECURITY;
+CREATE POLICY projection_read ON public.bg_modelled_projections FOR SELECT TO authenticated USING (EXISTS(SELECT 1 FROM public.bg_projection_jobs j WHERE j.id=job_id));
+CREATE TABLE public.bg_projection_attempts (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), job_id uuid NOT NULL REFERENCES public.bg_projection_jobs(id), attempt integer NOT NULL, raw_output text, error text, usage jsonb, created_at timestamptz NOT NULL DEFAULT now(), UNIQUE(job_id,attempt));
+GRANT SELECT ON public.bg_projection_attempts TO authenticated; GRANT SELECT,INSERT ON public.bg_projection_attempts TO service_role;
+ALTER TABLE public.bg_projection_attempts ENABLE ROW LEVEL SECURITY;
+CREATE POLICY projection_attempt_read ON public.bg_projection_attempts FOR SELECT TO authenticated USING(EXISTS(SELECT 1 FROM public.bg_projection_jobs j WHERE j.id=job_id));
+CREATE TABLE public.bg_exploration_assessments (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), session_id uuid NOT NULL REFERENCES public.sessions(id), baseline_job_id uuid NOT NULL REFERENCES public.current_position_addon_jobs(id), run_version integer NOT NULL, outputs jsonb NOT NULL, created_at timestamptz NOT NULL DEFAULT now());
+GRANT SELECT ON public.bg_exploration_assessments TO authenticated; GRANT SELECT,INSERT ON public.bg_exploration_assessments TO service_role;
+ALTER TABLE public.bg_exploration_assessments ENABLE ROW LEVEL SECURITY;
+CREATE POLICY exploration_read ON public.bg_exploration_assessments FOR SELECT TO authenticated USING(EXISTS(SELECT 1 FROM public.sessions s WHERE s.id=session_id AND (s.user_id=auth.uid() OR public.bg_is_admin(auth.uid()))));
+CREATE FUNCTION public.bg_exploration_brief_guard() RETURNS trigger LANGUAGE plpgsql SET search_path=public AS $$ DECLARE b public.current_position_addon_jobs; BEGIN
+ IF TG_OP='UPDATE' AND NEW.exploration_brief IS DISTINCT FROM OLD.exploration_brief THEN RAISE EXCEPTION 'EXPLORATION_MODE_IMMUTABLE'; END IF;
+ IF NEW.exploration_brief IS NULL THEN RETURN NEW; END IF;
+ IF NEW.run_mode<>'diagnostic' OR NEW.brief_type<>'campaign' OR NEW.validate_brief IS NOT NULL OR NEW.exploration_brief->>'mode' NOT IN ('headroom','turnaround') THEN RAISE EXCEPTION 'EXPLORATION_DIAGNOSTIC_REQUIRED'; END IF;
+ IF TG_OP='INSERT' THEN
+ SELECT * INTO b FROM public.current_position_addon_jobs WHERE id=(NEW.exploration_brief->>'baselineJobId')::uuid AND status='complete' AND published_version IS NOT NULL;
+ IF b.id IS NULL OR b.results->'10'->>'status'<>'scored' THEN RAISE EXCEPTION 'No current position for brand × market'; END IF;
+ IF lower(b.source_manifest->>'subject_brand') IS DISTINCT FROM lower(NEW.brand_name) THEN RAISE EXCEPTION 'EXPLORATION_BASELINE_BRAND_MISMATCH'; END IF;
+ IF NOT EXISTS(SELECT 1 FROM public.sessions s WHERE s.id=b.session_id AND s.bg_client_id IS NOT DISTINCT FROM NEW.bg_client_id) THEN RAISE EXCEPTION 'EXPLORATION_BASELINE_CLIENT_MISMATCH'; END IF;
+ IF coalesce(b.source_manifest->>'market','global')<>'global' AND lower(b.source_manifest->>'market') IS DISTINCT FROM lower(NEW.exploration_brief->>'market') THEN RAISE EXCEPTION 'No current position for brand × market'; END IF;
+ END IF;
+ IF NEW.current_stage>13 THEN RAISE EXCEPTION 'EXPLORATION_ENDS_AT_STAGE13'; END IF;
+ RETURN NEW;
+END $$;
+CREATE TRIGGER bg_exploration_brief_guard BEFORE INSERT OR UPDATE ON public.sessions FOR EACH ROW EXECUTE FUNCTION public.bg_exploration_brief_guard();
+CREATE FUNCTION public.bg_projection_append_only() RETURNS trigger LANGUAGE plpgsql SET search_path=public AS $$ BEGIN RAISE EXCEPTION 'MODELLED_RECORD_APPEND_ONLY'; END $$;
+CREATE TRIGGER bg_projection_immutable BEFORE UPDATE OR DELETE ON public.bg_modelled_projections FOR EACH ROW EXECUTE FUNCTION public.bg_projection_append_only();
+CREATE TRIGGER bg_projection_attempt_immutable BEFORE UPDATE OR DELETE ON public.bg_projection_attempts FOR EACH ROW EXECUTE FUNCTION public.bg_projection_append_only();
+CREATE TRIGGER bg_exploration_assessment_immutable BEFORE UPDATE OR DELETE ON public.bg_exploration_assessments FOR EACH ROW EXECUTE FUNCTION public.bg_projection_append_only();

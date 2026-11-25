@@ -1,4 +1,6 @@
 import { readHubContext } from "@/lib/hub/context";
+import {ExplorationBriefFields} from '@/components/ExplorationBriefFields';
+import {type ExplorationBrief} from '@/lib/exploration/modes';
 import { readSavedRun } from '@/lib/run-links.functions';
 import { runPath } from '@/lib/run-links';
 import { useHubBrand } from "@/hooks/use-hub-brand";
@@ -49,8 +51,8 @@ export const Route = createFileRoute("/brief/")({
   validateSearch: (search) => BriefSearchSchema.parse(search),
   head: () => ({
     meta: [
-      { title: "Strategy Pipeline — Brand Grenade" },
-      { property: "og:title", content: "Strategy Pipeline — Brand Grenade" },
+      { title: "Strategy Brief — Brand Grenade" },
+      { property: "og:title", content: "Strategy Brief — Brand Grenade" },
       { property: "og:description", content: "Submit a strategy brief. Nine sections covering challenge, audience, brand truths, category and constraints." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -134,6 +136,10 @@ function BriefIntake() {
   const [runMode, setRunMode] = useState<"full" | "diagnostic">("full");
   const [briefType, setBriefType] = useState<"campaign" | "deal">("campaign");
   const [validateMode, setValidateMode] = useState(false);
+  const [explorationMode,setExplorationMode]=useState<'headroom'|'turnaround'|null>(null);
+  const [exploration,setExploration]=useState<ExplorationBrief|null>(null);
+  const [explorationTest,setExplorationTest]=useState(false);
+  const [explorationValues,setExplorationValues]=useState<Record<string,string>>({});
   const [vf, setVf] = useState({ suppliedBy: "", derivationLabel: "Client-supplied" as "Client-supplied" | "Owner-stated (public)" | "BG-derived", sourceQuote: "", currentTerritory: "", strategyOwner: "", strategyDate: "", priorDecisions: "", knownThreats: "", decisionQuestions: "", evidenceStandard: "" });
   const [dealTx, setDealTx] = useState("");
   const [dealTargets, setDealTargets] = useState("");
@@ -172,6 +178,9 @@ function BriefIntake() {
     if (m) {
       setBriefType(m.briefType === "deal" ? "deal" : "campaign");
       setValidateMode(!!m.validate);
+      setExplorationMode(m.exploration?.mode??null);
+      setExploration(m.exploration??null);
+      setExplorationValues(m.exploration?Object.fromEntries(Object.entries(m.exploration)):{});
       if (m.validate) setVf({ suppliedBy: m.validate.suppliedBy, derivationLabel: m.validate.derivationLabel ?? "Client-supplied", sourceQuote: m.validate.sourceQuote ?? "", currentTerritory: m.validate.currentTerritory, strategyOwner: m.validate.strategyOwner, strategyDate: m.validate.strategyDate ?? "", priorDecisions: m.validate.priorDecisions, knownThreats: m.validate.knownThreats, decisionQuestions: m.validate.decisionQuestions.join("\n"), evidenceStandard: m.validate.evidenceStandard });
       setRunMode(m.runMode ?? (m.briefType === "deal" ? "diagnostic" : "full"));
       setDealTx(m.deal?.transactionType ?? "");
@@ -259,6 +268,7 @@ function BriefIntake() {
         : null,
       currentProposition: cp,
       validate: validateMode ? validateBriefOrNull() : null,
+      exploration:explorationMode?exploration:null,
     };
   }
 
@@ -374,9 +384,9 @@ function BriefIntake() {
   });
   const dealValid = briefType !== "deal" || (dealParsed.success && !!currentProp.trim() && !!currentPropSource.trim() && !!currentPropDate);
   const validateValid = !validateMode || !!validateBriefOrNull();
-  const canSubmitSections = brand.trim().length >= 2 && validateValid && (briefType === "deal" ? dealValid : objectiveSelected);
+  const canSubmitSections = brand.trim().length >= 2 && validateValid && (explorationMode ? !!exploration : briefType === "deal" ? dealValid : objectiveSelected);
 
-  const canSubmitAlt = !!altFile && brand.trim().length >= 2 && dealValid && validateValid;
+  const canSubmitAlt = !!altFile && brand.trim().length >= 2 && dealValid && validateValid && (!explorationMode||!!exploration);
 
   function addFiles(incoming: FileList | File[], target: "support" | "alt") {
     const list = Array.from(incoming).filter((f) => {
@@ -427,6 +437,8 @@ function BriefIntake() {
           currentPropositionSource: currentPropSource.trim() || undefined,
           currentPropositionDate: currentPropDate || undefined,
           validate: validateMode ? validateBriefOrNull() ?? undefined : undefined,
+          exploration:explorationMode?exploration??undefined:undefined,
+          explorationTest:!!explorationMode&&explorationTest,
         },
       });
       navigate({ to: "/pipeline", search: { session: sessionId } });
@@ -465,6 +477,8 @@ function BriefIntake() {
           currentPropositionSource: currentPropSource.trim() || undefined,
           currentPropositionDate: currentPropDate || undefined,
           validate: validateMode ? validateBriefOrNull() ?? undefined : undefined,
+          exploration:explorationMode?exploration??undefined:undefined,
+          explorationTest:!!explorationMode&&explorationTest,
         },
       });
       navigate({ to: "/pipeline", search: { session: sessionId } });
@@ -688,20 +702,22 @@ function BriefIntake() {
                 <legend className="text-body-sm font-semibold">Mode</legend>
                 <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:gap-6">
                   <label className="flex items-start gap-2 text-body-sm">
-                    <input type="radio" name="brief_type" checked={briefType === "campaign" && !validateMode} onChange={() => { setValidateMode(false); setBriefType("campaign"); setRunMode("full"); }} />
+                    <input type="radio" name="brief_type" checked={briefType === "campaign" && !validateMode&&!explorationMode} onChange={() => { setExplorationMode(null); setValidateMode(false); setBriefType("campaign"); setRunMode("full"); }} />
                     <span>Campaign — framed by the strategic objective.</span>
                   </label>
                   <label className="flex items-start gap-2 text-body-sm">
-                    <input type="radio" name="brief_type" checked={briefType === "deal"} onChange={() => { setValidateMode(false); setBriefType("deal"); setRunMode("diagnostic"); }} />
+                    <input type="radio" name="brief_type" checked={briefType === "deal"} onChange={() => { setExplorationMode(null); setValidateMode(false); setBriefType("deal"); setRunMode("diagnostic"); }} />
                     <span>Deal — diligence or exit, framed by the decision questions. Defaults to a diagnostic run.</span>
                   </label>
                   <label className="flex items-start gap-2 text-body-sm">
-                    <input type="radio" name="brief_type" checked={validateMode} onChange={() => { setValidateMode(true); setBriefType("campaign"); setRunMode("diagnostic"); }} />
+                    <input type="radio" name="brief_type" checked={validateMode} onChange={() => { setExplorationMode(null); setValidateMode(true); setBriefType("campaign"); setRunMode("diagnostic"); }} />
                     <span>Validate — keep, refresh or replace the current strategy. Diagnostic path; generated propositions are comparators only.</span>
                   </label>
+                  {(['headroom','turnaround'] as const).map(mode=><label key={mode} className="flex items-start gap-2 text-body-sm"><input type="radio" name="brief_type" checked={explorationMode===mode} onChange={()=>{setExplorationMode(mode);setExploration(null);setExplorationValues({});setValidateMode(false);setBriefType('campaign');setRunMode('diagnostic');}}/><span>{mode==='headroom'?'Headroom — How big could this brand get?':'Turnaround — Why is it underperforming, and is it brand?'}</span></label>)}
                 </div>
               </fieldset>
               <p className="text-body-sm" style={{ color: "var(--color-text-secondary)" }}>Mode is fixed once the run starts.</p>
+              {explorationMode&&<><ExplorationBriefFields mode={explorationMode} brand={brand} value={explorationValues} onChange={(v,b)=>{setExplorationValues(v);setExploration(b);}}/><label className="mt-3 flex gap-2 text-sm"><input type="checkbox" checked={explorationTest} onChange={e=>setExplorationTest(e.target.checked)}/>Test run — excluded from production lists and current positions</label></>}
               {validateMode && (
                 <div className="grid gap-3 sm:grid-cols-2">
                   {([["suppliedBy","Supplied by"],["currentTerritory","Current territory"],["strategyOwner","Strategy owner"],["priorDecisions","Prior decisions"],["knownThreats","Known threats"],["evidenceStandard","Evidence standard required"]] as const).map(([k, l]) => (
@@ -773,7 +789,7 @@ function BriefIntake() {
                 <legend className="text-body-sm font-semibold">Run type</legend>
                 <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:gap-6">
                   <label className="flex items-start gap-2 text-body-sm">
-                    <input type="radio" name="run_mode" disabled={validateMode} checked={runMode === "full"} onChange={() => setRunMode("full")} />
+                    <input type="radio" name="run_mode" disabled={validateMode||!!explorationMode} checked={runMode === "full"} onChange={() => setRunMode("full")} />
                     <span>Full run — every stage and document.</span>
                   </label>
                   <label className="flex items-start gap-2 text-body-sm">

@@ -283,6 +283,16 @@ async function prepareCall(
   }
 
   const effectiveModel = resolveModel(args.stageNumber, args.model);
+  if (args.sessionId) {
+    const {data:r,error} = await supabaseAdmin.from('sessions').select('exploration_brief,checkpoint_a_confirmed,checkpoint_b_confirmed,checkpoint_c_confirmed').eq('id',args.sessionId).maybeSingle();
+    if (error) throw new Error(`Mode framing unavailable: ${error.message}`);
+    if (r?.exploration_brief) {
+      if (args.stageNumber && Number.parseInt(args.stageNumber,10)>13) throw new Error('EXPLORATION_ENDS_AT_STAGE13');
+      const {modeFraming,requireExplorationDecisions} = await import('./exploration/modes');
+      if(args.stageNumber)requireExplorationDecisions(args.stageNumber,{A:r.checkpoint_a_confirmed===true,B:r.checkpoint_b_confirmed===true,C:r.checkpoint_c_confirmed===true});
+      effectiveUserMessage += modeFraming(r.exploration_brief,args.stageNumber);
+    }
+  }
 
   return {
     apiKey,

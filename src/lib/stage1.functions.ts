@@ -9,6 +9,7 @@ import { assertSessionAccess } from "@/lib/auth-helpers.server";
 import { findBannedWordHits, generateWithBannedWordGate, type OutputGateMode } from "./output-banned-word-gate";
 import { BRIEF_TYPES, DealFieldsSchema } from "./deal-brief";
 import { ValidateBriefSchema } from "./validate-mode";
+import { ExplorationBriefSchema } from './exploration/modes';
 
 const BriefFieldsSchema = z
   .object({
@@ -40,7 +41,11 @@ const CreateSessionInput = z.object({
   deal: DealFieldsSchema.optional(),
   /** Validate mode: Diagnostic path, Campaign brief type, details fixed at start. */
   validate: ValidateBriefSchema.optional(),
+  exploration: ExplorationBriefSchema.optional(),
+  explorationTest:z.boolean().optional(),
 }).superRefine((d, ctx) => {
+  if (d.exploration && (d.validate || d.deal || d.briefType !== 'campaign' || d.runMode !== 'diagnostic' || d.continuesDiagnosticId)) ctx.addIssue({code:'custom',message:'Headroom and Turnaround require their own Diagnostic run.'});
+  if(d.explorationTest&&!d.exploration)ctx.addIssue({code:'custom',message:'Exploration test marker requires Headroom or Turnaround.'});
   if (d.validate) {
     if (d.briefType !== "campaign" || d.runMode !== "diagnostic" || d.deal) ctx.addIssue({ code: "custom", message: "Validate runs follow the Diagnostic path and cannot carry Deal fields." });
     if (d.continuesDiagnosticId) ctx.addIssue({ code: "custom", message: "A Validate run cannot continue another run." });
@@ -59,6 +64,20 @@ export const createSession = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { checkedHubColumns } = await import("./hub/client.server");
     const hub = await checkedHubColumns(context.supabase, data.hub);
+    let explorationBaseline: { proposition: string; source_manifest: unknown;session_id:string } | null = null;
+    if (data.exploration) {
+      const {data:b,error} = await context.supabase.from('current_position_addon_jobs').select('proposition,source_manifest,status,published_version,results,session_id').eq('id',data.exploration.baselineJobId).single();
+      if (error || !b || b.status !== 'complete' || !b.published_version || (b.results as Record<string,any>)['10']?.status !== 'scored') throw new Error('No current position for brand × market');
+      const m = b.source_manifest as Record<string,unknown>;
+      if (String(m['subject_brand']).toLowerCase() !== data.brandName.trim().toLowerCase()) throw new Error('EXPLORATION_BASELINE_BRAND_MISMATCH');
+      const market=String(m['market']??'global');
+      if(market.toLowerCase()!=='global'&&market.toLowerCase()!==data.exploration.market.trim().toLowerCase())throw new Error('No current position for brand × market');
+      const scores=(b.results as Record<string,Record<string,unknown>>)['10'];
+      const {DIMENSIONS}=await import('./access/foundations');
+      if(!scores||!DIMENSIONS.every(([k])=>{const n=(scores[k] as Record<string,unknown>|undefined)?.['score'];return typeof n==='number'&&Number.isFinite(n)&&n>=1&&n<=10;}))throw new Error('No current position for brand × market');
+      if(data.explorationTest)await assertSessionAccess(b.session_id,context.userId);
+      explorationBaseline = b;
+    }
     const briefVersions = data.briefFields
       ? [
           {
@@ -76,11 +95,12 @@ export const createSession = createServerFn({ method: "POST" })
       await check(data.continuesDiagnosticId, context.userId);
       const { data: src } = await supabaseAdmin
         .from("sessions")
-        .select("validate_brief, run_mode, bg_source_id, brief_type, deal_transaction_type, deal_target_brands, deal_decision_questions, deal_competitors, deal_decision_date, deal_depth, current_proposition, current_proposition_source, current_proposition_date")
+        .select("exploration_brief, validate_brief, run_mode, bg_source_id, brief_type, deal_transaction_type, deal_target_brands, deal_decision_questions, deal_competitors, deal_decision_date, deal_depth, current_proposition, current_proposition_source, current_proposition_date")
         .eq("id", data.continuesDiagnosticId).single();
       if ((src as { run_mode?: string } | null)?.run_mode !== "diagnostic") throw new Error("Source run is not a diagnostic run");
       // Validate comparators must never become a recommendation through a full-run continuation.
       if ((src as { validate_brief?: unknown }).validate_brief) throw new Error("A Validate run cannot be continued as a full run: its propositions are comparators only");
+      if (src?.exploration_brief) throw new Error('Exploratory alternatives cannot continue as approved positions');
       if (data.runMode !== "full") throw new Error("A run continuing a diagnostic must be a full run");
       inheritedSource = (src as { bg_source_id?: string | null }).bg_source_id ?? null;
       const s = src as Record<string, unknown>;
@@ -95,7 +115,7 @@ export const createSession = createServerFn({ method: "POST" })
         };
       }
     }
-    const cp = data.validate ? data.validate.currentProposition : data.currentProposition?.trim() || null;
+    const cp = explorationBaseline?.proposition ?? (data.validate ? data.validate.currentProposition : data.currentProposition?.trim() || null);
     const validateCols = data.validate
       ? { validate_brief: data.validate as never, current_proposition_source: data.validate.source, current_proposition_date: data.validate.sourceDate }
       : {};
@@ -122,6 +142,8 @@ export const createSession = createServerFn({ method: "POST" })
         continues_diagnostic_id: data.continuesDiagnosticId ?? null,
         ...(inheritedDeal ?? {}),
         ...validateCols,
+        ...(data.exploration ? {exploration_brief:data.exploration as never} : {}),
+        ...(data.explorationTest&&explorationBaseline?{test_copy_of:explorationBaseline.session_id}:{}),
         brand_name: data.brandName,
         category: data.category,
         brief_text: data.briefText,
@@ -129,7 +151,7 @@ export const createSession = createServerFn({ method: "POST" })
         status: "running",
         current_stage: 1,
         user_id: context.userId,
-        bg_source_id: data.sourceBriefId ?? inheritedSource,
+        bg_source_id: data.sourceBriefId ?? inheritedSource ?? (data.explorationTest?explorationBaseline?.session_id:null),
       })
       .select("id")
       .single();

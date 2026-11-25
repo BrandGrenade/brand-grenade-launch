@@ -1,0 +1,2 @@
+- Projections use the existing Stage 10 rubric/arithmetic but separate append-only records, never position writes; why: modelled potential cannot replace saved evidence.
+- Exploration modes are Diagnostic-only, retain every human checkpoint and keep Stage 12 alternatives exploratory; why: output approval must not promote a position.

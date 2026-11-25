@@ -1,5 +1,12 @@
 # Roadmap — Partner Hub structured evidence (27 Oct 2026)
 
+## Headroom / Turnaround / modelled change — 25 Nov 2026
+- [ ] Finish projection worker recovery and real Infiniti double-projection verification; pure scorer/null/market tests pass.
+- [ ] Finish general mode workers, saved-evidence validation, test-baseline exclusion and append-only assessment retry lifecycle; brief and checkpoint scaffolding exists.
+- [x] Twelve existing Hub reads identical without metadata; 670 tests / 84 files passed; compilation clean. Not published.
+- [ ] Create isolated test briefs and stop at Checkpoint A for Adrian.
+- [ ] Full end-to-end mode and Hub review — blocked on Adrian's checkpoint decisions; modes stay Built, not Live.
+
 ## Hub foundations v3 — 24 Nov 2026
 - [x] Metadata 1.0 on get_output and new requests; brand × market reads; portfolio batch with resume/explicit retry; change.*; stage10_selected; stage18 max (null, not set in code).
 - [x] 592 tests / 82 files; local before/after Hub reads identical apart from metadata; JLR fingerprints unchanged.

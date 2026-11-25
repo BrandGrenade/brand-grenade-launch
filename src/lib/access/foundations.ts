@@ -49,7 +49,7 @@ export type BrandSources = {
   sessions: { id: string; brand_name: string | null; version: number; locked_at: string | null; created_at: string | null; validate_brief: unknown }[];
   /** Saved briefs: brand name and the brief's own brand field. */
   briefs: { brand_name: string | null; f1_brand: string | null }[];
-  addonJobs: { id: string; session_id: string; subject_brand: string | null; published_version: number | null; proposition: string | null; results: R; completed_at: string | null }[];
+  addonJobs: { id: string; session_id: string; subject_brand: string | null; published_version: number | null; proposition: string | null; results: R; completed_at: string | null; market?: string; manifest?: R }[];
   validates: { session_id: string; run_version: number; assessment_revision: number; subject_brand: string | null; outputs: R; created_at: string | null }[];
 };
 export type Brand = { brand_id: string; name: string; basis: string[]; session_ids: string[] };

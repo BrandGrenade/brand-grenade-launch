@@ -1,0 +1,58 @@
+[
+  {
+    "run": "pipeline",
+    "output_id": "headroom.current",
+    "content_status": "not_produced",
+    "schema_version": "headroom.current.v1",
+    "content": null
+  },
+  {
+    "run": "pipeline",
+    "output_id": "headroom.potential",
+    "content_status": "not_produced",
+    "schema_version": "headroom.potential.v1",
+    "content": null
+  },
+  {
+    "run": "pipeline",
+    "output_id": "headroom.conditions",
+    "content_status": "not_produced",
+    "schema_version": "headroom.conditions.v1",
+    "content": null
+  },
+  {
+    "run": "pipeline",
+    "output_id": "headroom.risks",
+    "content_status": "not_produced",
+    "schema_version": "headroom.risks.v1",
+    "content": null
+  },
+  {
+    "run": "pipeline",
+    "output_id": "turnaround.classification",
+    "content_status": "not_produced",
+    "schema_version": "turnaround.classification.v1",
+    "content": null
+  },
+  {
+    "run": "pipeline",
+    "output_id": "turnaround.root_causes",
+    "content_status": "not_produced",
+    "schema_version": "turnaround.root_causes.v1",
+    "content": null
+  },
+  {
+    "run": "pipeline",
+    "output_id": "turnaround.fix_first",
+    "content_status": "not_produced",
+    "schema_version": "turnaround.fix_first.v1",
+    "content": null
+  },
+  {
+    "run": "pipeline",
+    "output_id": "turnaround.non_brand_factors",
+    "content_status": "not_produced",
+    "schema_version": "turnaround.non_brand_factors.v1",
+    "content": null
+  }
+]

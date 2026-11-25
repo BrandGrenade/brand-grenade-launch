@@ -135,7 +135,7 @@ export function toRegisterRuns(
   /** Creative Stimulus run ids that have at least one saved direction. */
   stimulusWithDocs?: Set<string>,
 ): RegisterRun[] {
-  const live = (r: AnyRow) => !r.archived_at;
+  const live = (r: AnyRow) => !r.archived_at && !(r.exploration_brief && r.test_copy_of);
   const out: RegisterRun[] = [];
   const sessionBrand = new Map<string, string>();
   for (const s of rows.sessions) sessionBrand.set(s.id, s.brand_name ?? "");

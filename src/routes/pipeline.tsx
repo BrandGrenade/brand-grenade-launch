@@ -1,5 +1,6 @@
 import { furthestStageLabel, laterStageStatuses, type RunProgressFlags } from "@/lib/run-stage-progress";
 import { ValidateRunStatus } from "@/components/ValidatePanel";
+import {ExplorationStatus} from '@/components/ExplorationStatus';
 import { COMPARATOR_NOTE, VALIDATE_COMPARATOR_STAGES } from "@/lib/validate-run";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
@@ -572,6 +573,7 @@ function formatSubmittedBriefForStageOutput(text: string): string {
 interface SessionData {
   run_mode: string;
   validate_brief?: Record<string, unknown> | null;
+  exploration_brief?:Record<string,unknown>|null;
   id: string;
   brand_name: string;
   category: string;
@@ -1037,7 +1039,7 @@ function PipelineView() {
     supabase
       .from("sessions")
       .select(
-        "id, run_mode, validate_brief, brand_name, category, updated_at, brief_text, brief_versions, current_stage, status, stage_status, phase_2_status, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_4b_output, stage_4b_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error, stage_7_output, stage_7_error, stage_8_output, stage_8_error, stage_9_output, stage_9_leftofcentre_output, stage_9_error, loc_status, loc_error, loc_decision_packages, loc_retry_count, loc_generated_at, stage_10_output, stage_10_error, stage_11_output, stage_11_error, stage_12_output, stage_12_error, stage_13_output, stage_13_error, stage_13b_output, stage_13b_error, stage_14_output, stage_14_error, stage_14b_output, stage_14b_error, stage_14c_output, stage_14c_error, stage_15_output, stage_15_error, stage_16_consulting_output, stage_16_error, brand_intelligence, selected_smp, selected_smp_field_name, selection_rationale, selection_source, selection_engine, selected_loc_expression, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, strategy_signoff_confirmed, strategy_signoff_stop, retry_status",
+        "id, run_mode, validate_brief, exploration_brief, brand_name, category, updated_at, brief_text, brief_versions, current_stage, status, stage_status, phase_2_status, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_4b_output, stage_4b_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error, stage_7_output, stage_7_error, stage_8_output, stage_8_error, stage_9_output, stage_9_leftofcentre_output, stage_9_error, loc_status, loc_error, loc_decision_packages, loc_retry_count, loc_generated_at, stage_10_output, stage_10_error, stage_11_output, stage_11_error, stage_12_output, stage_12_error, stage_13_output, stage_13_error, stage_13b_output, stage_13b_error, stage_14_output, stage_14_error, stage_14b_output, stage_14b_error, stage_14c_output, stage_14c_error, stage_15_output, stage_15_error, stage_16_consulting_output, stage_16_error, brand_intelligence, selected_smp, selected_smp_field_name, selection_rationale, selection_source, selection_engine, selected_loc_expression, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, strategy_signoff_confirmed, strategy_signoff_stop, retry_status",
       )
 
       .eq("id", sessionId)
@@ -1372,7 +1374,7 @@ function PipelineView() {
       const { data } = await supabase
         .from("sessions")
         .select(
-          "id, run_mode, validate_brief, brand_name, category, updated_at, brief_text, brief_versions, current_stage, status, stage_status, phase_2_status, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_4b_output, stage_4b_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error, stage_7_output, stage_7_error, stage_8_output, stage_8_error, stage_9_output, stage_9_leftofcentre_output, stage_9_error, loc_status, loc_error, loc_decision_packages, loc_retry_count, loc_generated_at, stage_10_output, stage_10_error, stage_11_output, stage_11_error, stage_12_output, stage_12_error, stage_13_output, stage_13_error, stage_13b_output, stage_13b_error, stage_14_output, stage_14_error, stage_14b_output, stage_14b_error, stage_14c_output, stage_14c_error, stage_15_output, stage_15_error, stage_16_consulting_output, stage_16_error, brand_intelligence, selected_smp, selected_smp_field_name, selection_rationale, selection_source, selection_engine, selected_loc_expression, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, retry_status",
+          "id, run_mode, validate_brief, exploration_brief, brand_name, category, updated_at, brief_text, brief_versions, current_stage, status, stage_status, phase_2_status, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_4b_output, stage_4b_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error, stage_7_output, stage_7_error, stage_8_output, stage_8_error, stage_9_output, stage_9_leftofcentre_output, stage_9_error, loc_status, loc_error, loc_decision_packages, loc_retry_count, loc_generated_at, stage_10_output, stage_10_error, stage_11_output, stage_11_error, stage_12_output, stage_12_error, stage_13_output, stage_13_error, stage_13b_output, stage_13b_error, stage_14_output, stage_14_error, stage_14b_output, stage_14b_error, stage_14c_output, stage_14c_error, stage_15_output, stage_15_error, stage_16_consulting_output, stage_16_error, brand_intelligence, selected_smp, selected_smp_field_name, selection_rationale, selection_source, selection_engine, selected_loc_expression, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, retry_status",
         )
         .eq("id", sessionId)
         .single();
@@ -2646,6 +2648,7 @@ function PipelineView() {
     return null;
   })();
   const [validateDone, setValidateDone] = useState(false);
+  const [explorationDone,setExplorationDone]=useState(false);
   const nextStage = nextPipelineStage(selectedId, !!session?.stage_1b_required, session?.run_mode);
   const nextStageStatus: StageStatus | null = nextStage ? statuses[nextStage.id] : null;
   // Stage 15 is the persisted boundary between the Strategy Pipeline and Phase 2.
@@ -2654,7 +2657,7 @@ function PipelineView() {
   // proves the strategy and all Phase 2 work are complete.
   // Validate runs complete only once the verdict and four validate.* outputs are saved.
   const pipelineComplete = session?.run_mode === "diagnostic"
-    ? selectedId === "13" && isPersistedStageComplete(session, "13", 13, session.stage_13_output) && (!session.validate_brief || validateDone)
+    ? selectedId === "13" && isPersistedStageComplete(session, "13", 13, session.stage_13_output) && (!session.validate_brief || validateDone) && (!session.exploration_brief||(explorationDone&&session.strategy_signoff_confirmed===true))
     : selectedId === "15" && (
     (session !== null && isPersistedStageComplete(session, "15", 15, session.stage_15_output)) ||
     mainStages.every((s) => statuses[s.id] === "complete"));
@@ -3205,7 +3208,7 @@ function PipelineView() {
                   {selectedId === "12" ? "Choose the comparator to carry into Stage 13 as evidence. " : ""}{COMPARATOR_NOTE}</p>}
                 {selectedId === "13" && <div className="mt-3"><ValidateRunStatus sessionId={sessionId} onAssessment={setValidateDone} /></div>}
               </div>
-            ) : null}
+            ) : session?.exploration_brief&&sessionId?<div className="border-b border-border px-6 py-3"><p className="text-sm font-semibold">{String(session.exploration_brief['mode'])} — exploratory analysis, not an approved position</p>{selectedId==='13'&&<><ExplorationStatus sessionId={sessionId} onReady={setExplorationDone}/>{explorationDone&&!session.strategy_signoff_confirmed&&<Button className="mt-3" onClick={()=>void confirmStrategySignoff(true)}>Approve exploratory assessment</Button>}</>}</div>:null}
             stage={selected}
             status={selectedStatus}
             stage8KeepNames={stage8KeepNames}

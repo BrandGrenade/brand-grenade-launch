@@ -148,6 +148,138 @@ export type Database = {
           },
         ]
       }
+      bg_exploration_assessments: {
+        Row: {
+          baseline_job_id: string
+          created_at: string
+          id: string
+          outputs: Json
+          run_version: number
+          session_id: string
+        }
+        Insert: {
+          baseline_job_id: string
+          created_at?: string
+          id?: string
+          outputs: Json
+          run_version: number
+          session_id: string
+        }
+        Update: {
+          baseline_job_id?: string
+          created_at?: string
+          id?: string
+          outputs?: Json
+          run_version?: number
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bg_exploration_assessments_baseline_job_id_fkey"
+            columns: ["baseline_job_id"]
+            isOneToOne: false
+            referencedRelation: "current_position_addon_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bg_exploration_assessments_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "brand_register_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bg_exploration_assessments_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bg_exploration_attempts: {
+        Row: {
+          attempt: number
+          created_at: string
+          error: string | null
+          id: string
+          job_id: string
+          raw_output: string | null
+        }
+        Insert: {
+          attempt: number
+          created_at?: string
+          error?: string | null
+          id?: string
+          job_id: string
+          raw_output?: string | null
+        }
+        Update: {
+          attempt?: number
+          created_at?: string
+          error?: string | null
+          id?: string
+          job_id?: string
+          raw_output?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bg_exploration_attempts_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "bg_exploration_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bg_exploration_jobs: {
+        Row: {
+          created_at: string
+          error: string | null
+          id: string
+          lease_token: string | null
+          lease_until: string | null
+          session_id: string
+          status: string
+          wake_token: string
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          lease_token?: string | null
+          lease_until?: string | null
+          session_id: string
+          status?: string
+          wake_token?: string
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          lease_token?: string | null
+          lease_until?: string | null
+          session_id?: string
+          status?: string
+          wake_token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bg_exploration_jobs_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: true
+            referencedRelation: "brand_register_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bg_exploration_jobs_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: true
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bg_external_ids: {
         Row: {
           bg_client_id: string
@@ -305,6 +437,142 @@ export type Database = {
           to_status?: string
         }
         Relationships: []
+      }
+      bg_modelled_projections: {
+        Row: {
+          baseline_job_id: string
+          baseline_version: number
+          created_at: string
+          id: string
+          job_id: string
+          method_version: string
+          output: Json
+          scorer_prompt_version: string
+        }
+        Insert: {
+          baseline_job_id: string
+          baseline_version: number
+          created_at?: string
+          id?: string
+          job_id: string
+          method_version: string
+          output: Json
+          scorer_prompt_version: string
+        }
+        Update: {
+          baseline_job_id?: string
+          baseline_version?: number
+          created_at?: string
+          id?: string
+          job_id?: string
+          method_version?: string
+          output?: Json
+          scorer_prompt_version?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bg_modelled_projections_baseline_job_id_fkey"
+            columns: ["baseline_job_id"]
+            isOneToOne: false
+            referencedRelation: "current_position_addon_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bg_modelled_projections_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: true
+            referencedRelation: "bg_projection_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bg_projection_attempts: {
+        Row: {
+          attempt: number
+          created_at: string
+          error: string | null
+          id: string
+          job_id: string
+          raw_output: string | null
+          usage: Json | null
+        }
+        Insert: {
+          attempt: number
+          created_at?: string
+          error?: string | null
+          id?: string
+          job_id: string
+          raw_output?: string | null
+          usage?: Json | null
+        }
+        Update: {
+          attempt?: number
+          created_at?: string
+          error?: string | null
+          id?: string
+          job_id?: string
+          raw_output?: string | null
+          usage?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bg_projection_attempts_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "bg_projection_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bg_projection_jobs: {
+        Row: {
+          baseline_job_id: string
+          baseline_snapshot: Json
+          bg_client_id: string
+          created_at: string
+          error: string | null
+          id: string
+          lease_token: string | null
+          lease_until: string | null
+          proposed_change: Json
+          status: string
+          wake_token: string
+        }
+        Insert: {
+          baseline_job_id: string
+          baseline_snapshot: Json
+          bg_client_id: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          lease_token?: string | null
+          lease_until?: string | null
+          proposed_change: Json
+          status?: string
+          wake_token?: string
+        }
+        Update: {
+          baseline_job_id?: string
+          baseline_snapshot?: Json
+          bg_client_id?: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          lease_token?: string | null
+          lease_until?: string | null
+          proposed_change?: Json
+          status?: string
+          wake_token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bg_projection_jobs_baseline_job_id_fkey"
+            columns: ["baseline_job_id"]
+            isOneToOne: false
+            referencedRelation: "current_position_addon_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       brand_asset_rules: {
         Row: {
@@ -1604,6 +1872,7 @@ export type Database = {
           doc_workshop_url: string | null
           earlier_versions_kept: boolean
           engagement_id: string | null
+          exploration_brief: Json | null
           hub_client: string | null
           hub_ctx: string | null
           hub_job: string | null
@@ -1839,6 +2108,7 @@ export type Database = {
           doc_workshop_url?: string | null
           earlier_versions_kept?: boolean
           engagement_id?: string | null
+          exploration_brief?: Json | null
           hub_client?: string | null
           hub_ctx?: string | null
           hub_job?: string | null
@@ -2074,6 +2344,7 @@ export type Database = {
           doc_workshop_url?: string | null
           earlier_versions_kept?: boolean
           engagement_id?: string | null
+          exploration_brief?: Json | null
           hub_client?: string | null
           hub_ctx?: string | null
           hub_job?: string | null

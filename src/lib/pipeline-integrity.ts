@@ -54,6 +54,12 @@ export async function assertUpstreamStageOutput(
   stageNumber: number,
 ): Promise<void> {
   if (stageNumber < 2) return;
+  if (stageNumber >= 13) {
+    const {data:r,error} = await supabaseAdmin.from('sessions').select('exploration_brief').eq('id',sessionId).single();
+    if (error) throw new Error(`Mode boundary unavailable: ${error.message}`);
+    if (r.exploration_brief && stageNumber>13) throw new Error('EXPLORATION_ENDS_AT_STAGE13');
+    if (r.exploration_brief) { await assertStageOutput(sessionId,stageNumber-1,`Stage ${stageNumber}`); return; }
+  }
   // Stage 16 (document assembly) intentionally runs AFTER Phase 2 completes,
   // not between Stage 15 and Stage 17. So Stage 17's upstream is Stage 15.
   const upstream = stageNumber === 17 ? 15 : stageNumber - 1;

@@ -2,6 +2,7 @@
 // createSession validation, the Stage 1–13 framing block and the access point.
 import { z } from "zod";
 import { ValidateBriefSchema, type ValidateBrief } from "./validate-mode";
+import { ExplorationBriefSchema } from './exploration/modes';
 
 export const BRIEF_TYPES = ["campaign", "deal"] as const;
 export type BriefType = (typeof BRIEF_TYPES)[number];
@@ -90,6 +91,7 @@ export function sessionFieldsFromMeta(meta: {
   deal?: unknown;
   currentProposition?: { line?: string; source?: string; date?: string } | null;
   validate?: unknown;
+  exploration?: unknown;
 } | null | undefined): {
   ok: boolean;
   fields: {
@@ -100,6 +102,7 @@ export function sessionFieldsFromMeta(meta: {
     currentPropositionSource?: string;
     currentPropositionDate?: string;
     validate?: ValidateBrief;
+    exploration?: import('./exploration/modes').ExplorationBrief;
   };
 } {
   const cp = meta?.currentProposition;
@@ -111,6 +114,10 @@ export function sessionFieldsFromMeta(meta: {
       }
     : {};
   const runMode = meta?.runMode === "diagnostic" || meta?.runMode === "full" ? meta.runMode : undefined;
+  if (meta?.exploration) {
+    const e = ExplorationBriefSchema.safeParse(meta.exploration);
+    return {ok:e.success,fields:{briefType:'campaign',runMode:'diagnostic',...(e.success ? {exploration:e.data} : {})}};
+  }
   if (meta?.validate) {
     const v = ValidateBriefSchema.safeParse(meta.validate);
     return { ok: v.success, fields: { briefType: "campaign", runMode: "diagnostic", ...(v.success ? { validate: v.data } : {}) } };

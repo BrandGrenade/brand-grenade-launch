@@ -25,7 +25,7 @@ export const runStage11 = createServerFn({ method: "POST" })
     await assertUpstreamStageOutput(data.sessionId, 11);
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
-      .select("brand_name, category, stage_2_output, stage_8_output, stage_10_output, stage_11_output, is_preflight_test, stage_10_structured, brief_type, current_proposition, current_proposition_source, current_proposition_date, brand_positioning")
+      .select("exploration_brief, brand_name, category, stage_2_output, stage_8_output, stage_10_output, stage_11_output, is_preflight_test, stage_10_structured, brief_type, current_proposition, current_proposition_source, current_proposition_date, brand_positioning")
       .eq("id", data.sessionId)
       .single();
     if (error || !session) throw new Error(`Session not found: ${error?.message ?? "no row"}`);
@@ -54,7 +54,7 @@ export const runStage11 = createServerFn({ method: "POST" })
 
     const s10 = (session as { stage_10_structured?: { scores?: { smp: string; code_verdict?: string }[] } | null }).stage_10_structured;
     // T1: Deal briefs also test the current proposition (baseline only) in this same call.
-    const current = (session as { brief_type?: string | null }).brief_type === "deal" ? resolveCurrentProposition(session) : undefined;
+    const current = session.brief_type === 'deal' || session.exploration_brief ? resolveCurrentProposition(session) : undefined;
     const sink = { raw: "" };
     let output = "";
     for await (const delta of withStreamSafety(

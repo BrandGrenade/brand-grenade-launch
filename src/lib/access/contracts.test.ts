@@ -6,6 +6,8 @@ import { describe, expect, it } from "vitest";
 import { CONTRACTS, CONTRACT_BY_ID } from "./contracts";
 import { OUTPUTS_BY_TABLE } from "./core";
 import fixtures from "./fixtures/jlr-access-contracts.json";
+import explorationFixtures from './fixtures/jlr-exploration-not-produced.json';
+const allFixtures=[...fixtures,...explorationFixtures];
 
 describe("access contracts", () => {
   it("covers every allow-list output exactly once", () => {
@@ -25,7 +27,7 @@ describe("access contracts", () => {
 });
 
 describe("JLR payloads satisfy their contracts", () => {
-  const byId = new Map(fixtures.map((f) => [`${f.run}:${f.output_id}`, f]));
+  const byId = new Map(allFixtures.map((f) => [`${f.run}:${f.output_id}`, f]));
 
   it("has a captured payload for every output of the three JLR runs", () => {
     const expected: [string, string[]][] = [
@@ -36,7 +38,7 @@ describe("JLR payloads satisfy their contracts", () => {
     for (const [run, outputs] of expected) for (const oid of outputs) expect(byId.has(`${run}:${oid}`), `${run}:${oid}`).toBe(true);
   });
 
-  for (const f of fixtures) {
+  for (const f of allFixtures) {
     it(`${f.run} ${f.output_id} → ${f.content_status}`, () => {
       const c = CONTRACT_BY_ID.get(f.output_id);
       expect(c, `no contract for ${f.output_id}`).toBeDefined();

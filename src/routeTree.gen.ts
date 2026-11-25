@@ -59,10 +59,12 @@ import { Route as AdminPreviewSlugRouteImport } from './routes/admin.preview.$sl
 import { Route as ApiPublicBgAccessRouteImport } from './routes/api/public/bg-access'
 import { Route as ApiPublicCurrentPositionAddonRouteImport } from './routes/api/public/current-position-addon'
 import { Route as ApiPublicCurrentPositionTickRouteImport } from './routes/api/public/current-position-tick'
+import { Route as ApiPublicExplorationTickRouteImport } from './routes/api/public/exploration-tick'
 import { Route as ApiPublicHubTickRouteImport } from './routes/api/public/hub-tick'
 import { Route as ApiPublicIntelligenceTickRouteImport } from './routes/api/public/intelligence-tick'
 import { Route as ApiPublicJlrMandateRecoveryRouteImport } from './routes/api/public/jlr-mandate-recovery'
 import { Route as ApiPublicOrchestrationTickRouteImport } from './routes/api/public/orchestration-tick'
+import { Route as ApiPublicProjectionTickRouteImport } from './routes/api/public/projection-tick'
 import { Route as ApiPublicReliabilityTickRouteImport } from './routes/api/public/reliability-tick'
 import { Route as ApiPublicSmpScoreTickRouteImport } from './routes/api/public/smp-score-tick'
 import { Route as ApiPublicStage16TickRouteImport } from './routes/api/public/stage16-tick'
@@ -333,6 +335,12 @@ const ApiPublicCurrentPositionTickRoute =
     path: '/api/public/current-position-tick',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicExplorationTickRoute =
+  ApiPublicExplorationTickRouteImport.update({
+    id: '/api/public/exploration-tick',
+    path: '/api/public/exploration-tick',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHubTickRoute = ApiPublicHubTickRouteImport.update({
   id: '/api/public/hub-tick',
   path: '/api/public/hub-tick',
@@ -356,6 +364,11 @@ const ApiPublicOrchestrationTickRoute =
     path: '/api/public/orchestration-tick',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicProjectionTickRoute = ApiPublicProjectionTickRouteImport.update({
+  id: '/api/public/projection-tick',
+  path: '/api/public/projection-tick',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicReliabilityTickRoute =
   ApiPublicReliabilityTickRouteImport.update({
     id: '/api/public/reliability-tick',
@@ -501,10 +514,12 @@ export interface FileRoutesByFullPath {
   '/api/public/bg-access': typeof ApiPublicBgAccessRoute
   '/api/public/current-position-addon': typeof ApiPublicCurrentPositionAddonRoute
   '/api/public/current-position-tick': typeof ApiPublicCurrentPositionTickRoute
+  '/api/public/exploration-tick': typeof ApiPublicExplorationTickRoute
   '/api/public/hub-tick': typeof ApiPublicHubTickRoute
   '/api/public/intelligence-tick': typeof ApiPublicIntelligenceTickRoute
   '/api/public/jlr-mandate-recovery': typeof ApiPublicJlrMandateRecoveryRoute
   '/api/public/orchestration-tick': typeof ApiPublicOrchestrationTickRoute
+  '/api/public/projection-tick': typeof ApiPublicProjectionTickRoute
   '/api/public/reliability-tick': typeof ApiPublicReliabilityTickRoute
   '/api/public/smp-score-tick': typeof ApiPublicSmpScoreTickRoute
   '/api/public/stage16-tick': typeof ApiPublicStage16TickRoute
@@ -567,10 +582,12 @@ export interface FileRoutesByTo {
   '/api/public/bg-access': typeof ApiPublicBgAccessRoute
   '/api/public/current-position-addon': typeof ApiPublicCurrentPositionAddonRoute
   '/api/public/current-position-tick': typeof ApiPublicCurrentPositionTickRoute
+  '/api/public/exploration-tick': typeof ApiPublicExplorationTickRoute
   '/api/public/hub-tick': typeof ApiPublicHubTickRoute
   '/api/public/intelligence-tick': typeof ApiPublicIntelligenceTickRoute
   '/api/public/jlr-mandate-recovery': typeof ApiPublicJlrMandateRecoveryRoute
   '/api/public/orchestration-tick': typeof ApiPublicOrchestrationTickRoute
+  '/api/public/projection-tick': typeof ApiPublicProjectionTickRoute
   '/api/public/reliability-tick': typeof ApiPublicReliabilityTickRoute
   '/api/public/smp-score-tick': typeof ApiPublicSmpScoreTickRoute
   '/api/public/stage16-tick': typeof ApiPublicStage16TickRoute
@@ -641,10 +658,12 @@ export interface FileRoutesById {
   '/api/public/bg-access': typeof ApiPublicBgAccessRoute
   '/api/public/current-position-addon': typeof ApiPublicCurrentPositionAddonRoute
   '/api/public/current-position-tick': typeof ApiPublicCurrentPositionTickRoute
+  '/api/public/exploration-tick': typeof ApiPublicExplorationTickRoute
   '/api/public/hub-tick': typeof ApiPublicHubTickRoute
   '/api/public/intelligence-tick': typeof ApiPublicIntelligenceTickRoute
   '/api/public/jlr-mandate-recovery': typeof ApiPublicJlrMandateRecoveryRoute
   '/api/public/orchestration-tick': typeof ApiPublicOrchestrationTickRoute
+  '/api/public/projection-tick': typeof ApiPublicProjectionTickRoute
   '/api/public/reliability-tick': typeof ApiPublicReliabilityTickRoute
   '/api/public/smp-score-tick': typeof ApiPublicSmpScoreTickRoute
   '/api/public/stage16-tick': typeof ApiPublicStage16TickRoute
@@ -716,10 +735,12 @@ export interface FileRouteTypes {
     | '/api/public/bg-access'
     | '/api/public/current-position-addon'
     | '/api/public/current-position-tick'
+    | '/api/public/exploration-tick'
     | '/api/public/hub-tick'
     | '/api/public/intelligence-tick'
     | '/api/public/jlr-mandate-recovery'
     | '/api/public/orchestration-tick'
+    | '/api/public/projection-tick'
     | '/api/public/reliability-tick'
     | '/api/public/smp-score-tick'
     | '/api/public/stage16-tick'
@@ -782,10 +803,12 @@ export interface FileRouteTypes {
     | '/api/public/bg-access'
     | '/api/public/current-position-addon'
     | '/api/public/current-position-tick'
+    | '/api/public/exploration-tick'
     | '/api/public/hub-tick'
     | '/api/public/intelligence-tick'
     | '/api/public/jlr-mandate-recovery'
     | '/api/public/orchestration-tick'
+    | '/api/public/projection-tick'
     | '/api/public/reliability-tick'
     | '/api/public/smp-score-tick'
     | '/api/public/stage16-tick'
@@ -855,10 +878,12 @@ export interface FileRouteTypes {
     | '/api/public/bg-access'
     | '/api/public/current-position-addon'
     | '/api/public/current-position-tick'
+    | '/api/public/exploration-tick'
     | '/api/public/hub-tick'
     | '/api/public/intelligence-tick'
     | '/api/public/jlr-mandate-recovery'
     | '/api/public/orchestration-tick'
+    | '/api/public/projection-tick'
     | '/api/public/reliability-tick'
     | '/api/public/smp-score-tick'
     | '/api/public/stage16-tick'
@@ -917,10 +942,12 @@ export interface RootRouteChildren {
   ApiPublicBgAccessRoute: typeof ApiPublicBgAccessRoute
   ApiPublicCurrentPositionAddonRoute: typeof ApiPublicCurrentPositionAddonRoute
   ApiPublicCurrentPositionTickRoute: typeof ApiPublicCurrentPositionTickRoute
+  ApiPublicExplorationTickRoute: typeof ApiPublicExplorationTickRoute
   ApiPublicHubTickRoute: typeof ApiPublicHubTickRoute
   ApiPublicIntelligenceTickRoute: typeof ApiPublicIntelligenceTickRoute
   ApiPublicJlrMandateRecoveryRoute: typeof ApiPublicJlrMandateRecoveryRoute
   ApiPublicOrchestrationTickRoute: typeof ApiPublicOrchestrationTickRoute
+  ApiPublicProjectionTickRoute: typeof ApiPublicProjectionTickRoute
   ApiPublicReliabilityTickRoute: typeof ApiPublicReliabilityTickRoute
   ApiPublicSmpScoreTickRoute: typeof ApiPublicSmpScoreTickRoute
   ApiPublicStage16TickRoute: typeof ApiPublicStage16TickRoute
@@ -1287,6 +1314,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCurrentPositionTickRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/exploration-tick': {
+      id: '/api/public/exploration-tick'
+      path: '/api/public/exploration-tick'
+      fullPath: '/api/public/exploration-tick'
+      preLoaderRoute: typeof ApiPublicExplorationTickRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hub-tick': {
       id: '/api/public/hub-tick'
       path: '/api/public/hub-tick'
@@ -1313,6 +1347,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/orchestration-tick'
       fullPath: '/api/public/orchestration-tick'
       preLoaderRoute: typeof ApiPublicOrchestrationTickRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/projection-tick': {
+      id: '/api/public/projection-tick'
+      path: '/api/public/projection-tick'
+      fullPath: '/api/public/projection-tick'
+      preLoaderRoute: typeof ApiPublicProjectionTickRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/reliability-tick': {
@@ -1577,10 +1618,12 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicBgAccessRoute: ApiPublicBgAccessRoute,
   ApiPublicCurrentPositionAddonRoute: ApiPublicCurrentPositionAddonRoute,
   ApiPublicCurrentPositionTickRoute: ApiPublicCurrentPositionTickRoute,
+  ApiPublicExplorationTickRoute: ApiPublicExplorationTickRoute,
   ApiPublicHubTickRoute: ApiPublicHubTickRoute,
   ApiPublicIntelligenceTickRoute: ApiPublicIntelligenceTickRoute,
   ApiPublicJlrMandateRecoveryRoute: ApiPublicJlrMandateRecoveryRoute,
   ApiPublicOrchestrationTickRoute: ApiPublicOrchestrationTickRoute,
+  ApiPublicProjectionTickRoute: ApiPublicProjectionTickRoute,
   ApiPublicReliabilityTickRoute: ApiPublicReliabilityTickRoute,
   ApiPublicSmpScoreTickRoute: ApiPublicSmpScoreTickRoute,
   ApiPublicStage16TickRoute: ApiPublicStage16TickRoute,

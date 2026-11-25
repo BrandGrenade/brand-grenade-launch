@@ -9,6 +9,7 @@ import { z } from "zod";
 import { Stage9Schema, Stage10CurrentPositionSchema, Stage11CurrentPositionSchema, Stage13CurrentPositionSchema } from "../structured-output";
 import { Stage12PropositionsSchema } from "../saved-stage-records";
 import { VALIDATE_OUTPUTS, ValidateOutputSchema } from '../validate-mode';
+import {EXPLORATION_OUTPUTS} from '../exploration/modes';
 
 export type ContractStatus = "structured" | "text_only" | "unavailable" | "conditional";
 export interface OutputContract {
@@ -89,6 +90,7 @@ const withText = (record: z.ZodTypeAny) => z.object({ record, text: str }).passt
 
 
 export const CONTRACTS: OutputContract[] = [
+  ...EXPLORATION_OUTPUTS.map(output_id=>({output_id,schema_version:`${output_id}.v1`,status:'conditional' as const,content:z.object({data:z.record(z.unknown()),provenance:z.array(z.string()),confidence:z.string(),limitations:z.array(z.string()),checkpoint_status:z.object({A:z.literal(true),B:z.literal(true),C:z.literal(true)}),metadata:z.object({contract_version:z.literal('1.0'),analysis_type:z.literal(output_id),brand_id:z.string(),market:z.string(),requested_market:z.string(),run_id:z.string(),run_version:z.number(),strategy_version:z.number(),method_version:z.string(),produced_at:z.string(),confidence:z.unknown(),evidence_refs:z.array(z.string()),missing_inputs:z.array(z.string()),status:z.enum(['complete','partial'])})}),note:'Only explicit version-bound Headroom/Turnaround assessments; never produced on existing Campaign, Deal or Validate runs.'})),
   ...VALIDATE_OUTPUTS.map(output_id => ({output_id,schema_version:`${output_id}.v1`,status:'conditional' as const,content:ValidateOutputSchema,note:'Explicit version-bound Validate assessment only; Campaign and Deal output contracts unchanged.'})),
   // ── Room 00 · Research Synthesiser ─────────────────────────────────────
   {
