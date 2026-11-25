@@ -366,20 +366,32 @@ export const saveSelectionRationale = createServerFn({ method: "POST" })
     }
     const rationale = Object.fromEntries(Object.entries(data.rationale).filter((entry): entry is [string, string] => typeof entry[1] === "string"));
     const output = fillSelectionDeliverable(session.stage_12_output ?? "", session.selected_smp, rationale);
-    const { error } = await context.supabase
-      .from("sessions")
-      .update({
-        selection_rationale: rationale,
-        stage_12_output: output,
-        version_reason: "Checkpoint C: saved human selection rationale",
-        version_actor: context.userId,
-        checkpoint_c_confirmed: true,
-      })
-      .eq("id", data.sessionId);
+    // Checkpoint C confirmation and its append-only record are saved in one database transaction.
+    const { error } = await context.supabase.rpc("bg_confirm_checkpoint_c" as never, { p_session_id: data.sessionId, p_rationale: rationale, p_output: output } as never);
     if (error) throw new Error(`Failed to save selection rationale: ${error.message}`);
-    // Append-only record of who confirmed Checkpoint C and when.
-    const { error: logError } = await context.supabase.from("checkpoint_confirmations")
-      .insert({ session_id: data.sessionId, checkpoint: "c", confirmed_by: context.userId, confirmed_at: new Date().toISOString(), selected_smp: session.selected_smp });
-    if (logError) throw new Error(`Rationale saved, but the Checkpoint C confirmation record failed: ${logError.message}`);
     return { ok: true, rationale, output };
+  });
+
+const Reselect = z.object({
+  sessionId: z.string().uuid(),
+  smpLine: z.string().min(1).max(1000),
+  fieldName: z.string().min(1).max(500),
+  selectionSource: z.enum(["CORE", "LOC"]),
+  selectionEngine: z.string().max(100).nullable().optional(),
+});
+
+/** Choose again before the final checkpoint: the earlier selection and its Stage 13 verdict are kept as a version. */
+export const reselectProposition = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => Reselect.parse(i))
+  .handler(async ({ data, context }) => {
+    await assertSessionAccess(data.sessionId, context.userId);
+    const { data: version, error } = await context.supabase.rpc("bg_reselect_proposition" as never, {
+      p_session_id: data.sessionId, p_smp: data.smpLine, p_field: data.fieldName, p_loc_expression: null,
+      p_source: data.selectionSource, p_engine: data.selectionEngine ?? null,
+    } as never);
+    if (error) throw new Error(error.message.replace(/^RESELECT_[A-Z_]+:\s*/, ""));
+    const { ensureSmpScoredInBackground } = await import("./rescore-smp.server");
+    ensureSmpScoredInBackground(data.sessionId);
+    return { ok: true, version: version as unknown as number };
   });

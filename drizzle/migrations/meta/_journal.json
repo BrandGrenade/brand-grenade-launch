@@ -393,6 +393,13 @@
       "when": 1795568885096,
       "tag": "0055_exploration_baseline_client_inheritance",
       "breakpoints": true
+    },
+    {
+      "idx": 56,
+      "version": "7",
+      "when": 1795603293995,
+      "tag": "0056_final_checkpoint_lock_and_reselection",
+      "breakpoints": true
     }
   ]
 }

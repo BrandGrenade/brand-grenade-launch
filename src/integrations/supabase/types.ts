@@ -1755,6 +1755,75 @@ export type Database = {
           },
         ]
       }
+      selection_versions: {
+        Row: {
+          checkpoint_c_confirmed_at: string | null
+          id: string
+          reason: string
+          selected_loc_expression: string | null
+          selected_smp: string | null
+          selected_smp_field_name: string | null
+          selection_engine: string | null
+          selection_rationale: Json | null
+          selection_source: string | null
+          session_id: string
+          stage_13_output: string | null
+          stage_13_verdict: string | null
+          superseded_at: string
+          superseded_by: string | null
+          version_no: number
+        }
+        Insert: {
+          checkpoint_c_confirmed_at?: string | null
+          id?: string
+          reason: string
+          selected_loc_expression?: string | null
+          selected_smp?: string | null
+          selected_smp_field_name?: string | null
+          selection_engine?: string | null
+          selection_rationale?: Json | null
+          selection_source?: string | null
+          session_id: string
+          stage_13_output?: string | null
+          stage_13_verdict?: string | null
+          superseded_at?: string
+          superseded_by?: string | null
+          version_no: number
+        }
+        Update: {
+          checkpoint_c_confirmed_at?: string | null
+          id?: string
+          reason?: string
+          selected_loc_expression?: string | null
+          selected_smp?: string | null
+          selected_smp_field_name?: string | null
+          selection_engine?: string | null
+          selection_rationale?: Json | null
+          selection_source?: string | null
+          session_id?: string
+          stage_13_output?: string | null
+          stage_13_verdict?: string | null
+          superseded_at?: string
+          superseded_by?: string | null
+          version_no?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "selection_versions_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "brand_register_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "selection_versions_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       session_collaborators: {
         Row: {
           claimed_at: string | null
@@ -3937,6 +4006,10 @@ export type Database = {
           engagement_name: string
         }[]
       }
+      bg_confirm_checkpoint_c: {
+        Args: { p_output: string; p_rationale: Json; p_session_id: string }
+        Returns: string
+      }
       bg_diagnostic_complete: { Args: { n: Json }; Returns: boolean }
       bg_effective_derivation: {
         Args: { _date: string; _label: string; _quote: string; _source: string }
@@ -4025,6 +4098,17 @@ export type Database = {
       bg_rebind_validate_job: {
         Args: { _job: string; _manifest: Json }
         Returns: undefined
+      }
+      bg_reselect_proposition: {
+        Args: {
+          p_engine: string
+          p_field: string
+          p_loc_expression: string
+          p_session_id: string
+          p_smp: string
+          p_source: string
+        }
+        Returns: number
       }
       bg_resolve_hub: {
         Args: { _client: string; _job: string }

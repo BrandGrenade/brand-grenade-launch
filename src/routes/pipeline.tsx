@@ -646,6 +646,9 @@ interface SessionData {
   strategy_signoff_confirmed?: boolean | null;
   strategy_signoff_stop?: boolean | null;
   retry_status: string | null;
+  locked_at?: string | null;
+  lock_reason?: string | null;
+  validate_brief?: unknown;
 }
 
 function isPersistedStageComplete(
@@ -723,6 +726,9 @@ function PipelineView() {
   const runStage12Fn = useServerFn(runStage12);
   const saveSelectedSMPFn = useServerFn(saveSelectedSMP);
   const saveSelectionRationaleFn = useServerFn(saveSelectionRationale);
+  const reselectPropositionFn = useServerFn(reselectProposition);
+  const [reselecting, setReselecting] = useState(false);
+  const [selectionHistory, setSelectionHistory] = useState<SelectionVersion[]>([]);
   const saveBrandIntelligenceFn = useServerFn(saveBrandIntelligence);
   const runStage13Fn = useServerFn(runStage13);
   const runStage13bFn = useServerFn(runStage13b);
@@ -1043,7 +1049,7 @@ function PipelineView() {
     supabase
       .from("sessions")
       .select(
-        "id, run_mode, validate_brief, exploration_brief, brand_name, category, updated_at, brief_text, brief_versions, current_stage, status, stage_status, phase_2_status, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_4b_output, stage_4b_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error, stage_7_output, stage_7_error, stage_8_output, stage_8_error, stage_9_output, stage_9_leftofcentre_output, stage_9_error, loc_status, loc_error, loc_decision_packages, loc_retry_count, loc_generated_at, stage_10_output, stage_10_error, stage_11_output, stage_11_error, stage_12_output, stage_12_error, stage_13_output, stage_13_error, stage_13b_output, stage_13b_error, stage_14_output, stage_14_error, stage_14b_output, stage_14b_error, stage_14c_output, stage_14c_error, stage_15_output, stage_15_error, stage_16_consulting_output, stage_16_error, brand_intelligence, selected_smp, selected_smp_field_name, selection_rationale, selection_source, selection_engine, selected_loc_expression, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, strategy_signoff_confirmed, strategy_signoff_stop, retry_status",
+        "id, run_mode, validate_brief, exploration_brief, brand_name, category, updated_at, brief_text, brief_versions, current_stage, status, stage_status, phase_2_status, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_4b_output, stage_4b_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error, stage_7_output, stage_7_error, stage_8_output, stage_8_error, stage_9_output, stage_9_leftofcentre_output, stage_9_error, loc_status, loc_error, loc_decision_packages, loc_retry_count, loc_generated_at, stage_10_output, stage_10_error, stage_11_output, stage_11_error, stage_12_output, stage_12_error, stage_13_output, stage_13_error, stage_13b_output, stage_13b_error, stage_14_output, stage_14_error, stage_14b_output, stage_14b_error, stage_14c_output, stage_14c_error, stage_15_output, stage_15_error, stage_16_consulting_output, stage_16_error, brand_intelligence, selected_smp, selected_smp_field_name, selection_rationale, selection_source, selection_engine, selected_loc_expression, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, strategy_signoff_confirmed, strategy_signoff_stop, retry_status, locked_at, lock_reason",
       )
 
       .eq("id", sessionId)
@@ -1378,7 +1384,7 @@ function PipelineView() {
       const { data } = await supabase
         .from("sessions")
         .select(
-          "id, run_mode, validate_brief, exploration_brief, brand_name, category, updated_at, brief_text, brief_versions, current_stage, status, stage_status, phase_2_status, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_4b_output, stage_4b_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error, stage_7_output, stage_7_error, stage_8_output, stage_8_error, stage_9_output, stage_9_leftofcentre_output, stage_9_error, loc_status, loc_error, loc_decision_packages, loc_retry_count, loc_generated_at, stage_10_output, stage_10_error, stage_11_output, stage_11_error, stage_12_output, stage_12_error, stage_13_output, stage_13_error, stage_13b_output, stage_13b_error, stage_14_output, stage_14_error, stage_14b_output, stage_14b_error, stage_14c_output, stage_14c_error, stage_15_output, stage_15_error, stage_16_consulting_output, stage_16_error, brand_intelligence, selected_smp, selected_smp_field_name, selection_rationale, selection_source, selection_engine, selected_loc_expression, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, retry_status",
+          "id, run_mode, validate_brief, exploration_brief, brand_name, category, updated_at, brief_text, brief_versions, current_stage, status, stage_status, phase_2_status, stage_1_output, stage_1_tension_score, stage_1b_required, stage_1b_output, stage_1_error, stage_2_output, stage_2_error, stage_3_output, stage_3_error, stage_4_output, stage_4_error, stage_4b_output, stage_4b_error, stage_5_output, stage_5_error, stage_6_output, stage_6_error, stage_7_output, stage_7_error, stage_8_output, stage_8_error, stage_9_output, stage_9_leftofcentre_output, stage_9_error, loc_status, loc_error, loc_decision_packages, loc_retry_count, loc_generated_at, stage_10_output, stage_10_error, stage_11_output, stage_11_error, stage_12_output, stage_12_error, stage_13_output, stage_13_error, stage_13b_output, stage_13b_error, stage_14_output, stage_14_error, stage_14b_output, stage_14b_error, stage_14c_output, stage_14c_error, stage_15_output, stage_15_error, stage_16_consulting_output, stage_16_error, brand_intelligence, selected_smp, selected_smp_field_name, selection_rationale, selection_source, selection_engine, selected_loc_expression, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, strategy_signoff_confirmed, strategy_signoff_stop, retry_status, locked_at, lock_reason",
         )
         .eq("id", sessionId)
         .single();

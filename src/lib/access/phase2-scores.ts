@@ -112,6 +112,6 @@ export function stage20Scores(output: unknown, approved: unknown) {
 export const PHASE2_FIELD_SCHEMA = {
   value_shape: "{ status: 'produced', value: string (verbatim), source: { stage, field, text }, source_flag } | { status: 'not_produced', reason, source: { stage, field } }",
   stage17: { "selected_territory": "value", "selected_creative_share_of_voice": CSOV_LABELS.join(" | ") + ": value (HIGH/MEDIUM/LOW as written)", territories: "array of { territory, creative_share_of_voice }" },
-  stage18: { dimensions: "8 values with dimension name (score as written)", composite: "value (n/90)", status: "value", selected_detonation: "value (saved field)", detonation_line: "value (saved field)" },
+  stage18: { dimensions: "8 values with dimension name (score as written)", composite: "value (n/80; runs scored before 25 Nov 2026 read n/90)", status: "value", selected_detonation: "value (saved field)", detonation_line: "value (saved field)" },
   stage20: { dimensions: BQS_LABELS.join(" | ") + ": value (n/10)", composite: "value (n/50)", status: "value", approved: "boolean | null" },
 } as const;

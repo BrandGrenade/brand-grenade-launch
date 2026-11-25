@@ -1,3 +1,4 @@
+import { LOC_SCORE_LABEL, pickSingle } from "@/lib/reselection";
 import { useMemo, useState } from "react";
 import { parseStage11Verdicts, parseStage10Scores, type Stage11Verdict } from "@/lib/stage12-filter";
 import type { LocEnginePackage } from "@/lib/loc/decision-package";
@@ -62,7 +63,7 @@ export interface SMPCard {
 
 /** Payload returned to the caller when the human confirms a selection.
  *  - Option A (single): { core } or { loc }
- *  - Option B (combined): { core, loc } — both travel downstream. */
+ *  Combining was removed (25 Nov 2026): it never travelled downstream. Legacy COMBINED records remain readable. */
 export interface SMPSelectionPayload {
   core?: SMPCard;
   loc?: SMPCard;
@@ -749,10 +750,13 @@ export function SMPSelection({
     const card = cards[idx];
     if (!card) return;
     const isLoc = card.source && card.source !== "CORE";
+    // One proposition only: picking a card replaces any earlier pick.
     if (isLoc) {
-      setSelectedLocIdx((prev) => (prev === idx ? null : idx));
+      setSelectedLocIdx((prev) => pickSingle(prev, idx));
+      setSelectedCoreIdx(null);
     } else {
-      setSelectedCoreIdx((prev) => (prev === idx ? null : idx));
+      setSelectedCoreIdx((prev) => pickSingle(prev, idx));
+      setSelectedLocIdx(null);
     }
   };
 
@@ -760,22 +764,13 @@ export function SMPSelection({
   const selectedLoc = selectedLocIdx !== null ? cards[selectedLocIdx] : undefined;
   const hasCore = !!selectedCore;
   const hasLoc = !!selectedLoc;
-  const combined = hasCore && hasLoc;
 
   const handleConfirm = () => {
     if (!hasCore && !hasLoc) return;
-    if (combined && !window.confirm(
-      "You have selected a CORE proposition and a LOC proposition.\n\n" +
-      "The CORE proposition will be the strategic platform. The LOC proposition " +
-      "will be the creative expression. Both will travel downstream together.\n\n" +
-      "Confirm combined selection?",
-    )) {
-      return;
-    }
     onSelect({
-      core: selectedCore,
+      core: hasLoc ? undefined : selectedCore,
       loc: selectedLoc,
-      source: combined ? "COMBINED" : hasLoc ? "LOC" : "CORE",
+      source: hasLoc ? "LOC" : "CORE",
       engineKey: selectedLoc?.engineKey,
     });
   };
@@ -1167,7 +1162,7 @@ export function SMPSelection({
               )}
               {isLoc && (
                 <p className="text-body-sm mt-2" style={{ color: "var(--color-text-tertiary)", fontStyle: "italic" }}>
-                  Scored on future brand potential — not current brand reality
+                  {LOC_SCORE_LABEL}
                 </p>
               )}
               {!isLoc && card.stage11Verdict && (
@@ -1201,17 +1196,9 @@ export function SMPSelection({
       >
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="text-body-sm" style={{ color: "var(--color-text-tertiary)" }}>
-            {!hasCore && !hasLoc && "Select one proposition — or one CORE and one LOC to combine."}
+            {!hasCore && !hasLoc && "Select one proposition."}
             {hasCore && !hasLoc && `Selected: CORE Proposition ${selectedCore!.cardNumber}`}
             {!hasCore && hasLoc && `Selected: ${selectedLoc!.source} · Proposition ${selectedLoc!.cardNumber}`}
-            {combined && (
-              <div>
-                Combined: CORE Proposition {selectedCore!.cardNumber} + {selectedLoc!.source} · Proposition {selectedLoc!.cardNumber}
-                <div style={{ marginTop: 6, color: "var(--color-warning)" }}>
-                  CORE = strategic platform. LOC = creative expression. Both travel downstream.
-                </div>
-              </div>
-            )}
           </div>
           <button
             type="button"
@@ -1223,7 +1210,7 @@ export function SMPSelection({
               color: "var(--color-primary-foreground)",
             }}
           >
-            {combined ? "Confirm combined selection → Capture rationale" : "Confirm selection → Capture rationale"}
+            Confirm selection → Capture rationale
           </button>
         </div>
       </div>

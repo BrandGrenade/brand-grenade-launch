@@ -1,3 +1,4 @@
+import { applyStage18CodeVerdict } from "./stage18-verdict";
 // Stage 18 — The Detonation
 // Generates three Detonation candidate cards. Card-based, with selective
 // retry, per-card redirects, and a Courage Override path that appends a
@@ -124,10 +125,10 @@ export const runStage18 = createServerFn({ method: "POST" })
 
     const { error: saveErr } = await supabaseAdmin
       .from("sessions")
-      .update({ stage_18_output: output, stage_18_error: null, phase_2_current_stage: '18' })
+      .update({ stage_18_output: applyStage18CodeVerdict(output), stage_18_error: null, phase_2_current_stage: '18' })
       .eq("id", data.sessionId);
     if (saveErr) throw new Error(`Failed to save Stage 18 output: ${saveErr.message}`);
-    return { output };
+    return { output: applyStage18CodeVerdict(output) };
   });
 
 export const saveStage18 = createServerFn({ method: "POST" })
@@ -222,7 +223,7 @@ export const retryStage18 = createServerFn({ method: "POST" })
       });
       const cards = splitCards(text);
       const single = cards[0] ?? { id, name: "Detonation", markdown: text };
-      regenerated[id] = { ...single, id };
+      regenerated[id] = { ...single, id, markdown: applyStage18CodeVerdict(single.markdown) };
     }
 
     const merged = existing.map((c) => (regenerated[c.id] ? regenerated[c.id] : c));
