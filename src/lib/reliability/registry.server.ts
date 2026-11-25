@@ -6,6 +6,7 @@
 // for free instead of being reinvented as another bespoke watchdog.
 
 import { DEFAULT_BACKOFF, type JobDomain, type SupervisedJob } from "./supervisor.server";
+import { explorationDomains } from '../exploration/recovery.server';
 
 type Admin = { from: (t: string) => any };
 
@@ -347,6 +348,7 @@ const documentDomains: JobDomain[] = DOC_FORMATS.map((fmt) => ({
 }));
 
 export const JOB_DOMAINS: JobDomain[] = [
+  ...explorationDomains,
   intelligenceDomain,
   intelligenceReviseDomain,
   bigIdeaDomain,

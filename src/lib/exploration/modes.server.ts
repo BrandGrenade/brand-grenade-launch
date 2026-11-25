@@ -2,9 +2,10 @@ import {supabaseAdmin as sb} from '@/integrations/supabase/client.server';
 import {callClaude} from '../claude.server';
 import {brandId} from '../access/foundations';
 import {ExplorationBriefSchema,HeadroomResult,TurnaroundResult,buildModeOutputs} from './modes';
-import {queueProjection,runProjection,readProjection} from './projection.server';
+import {runProjection,readProjection} from './projection.server';
 import {type Baseline} from './projection';
 import {zodToJsonSchema} from 'zod-to-json-schema';
+import {explorationRetryCooldown,terminalExplorationError} from './retry-policy';
 const check=<T,>(r:{data:T;error:{message:string}|null}):NonNullable<T>=>{if(r.error)throw new Error(r.error.message);if(r.data==null)throw new Error('EXPLORATION_RECORD_MISSING');return r.data;};
 export async function runExplorationJob(id:string,emit:(v:object)=>void){
   const job=check(await sb.from('bg_exploration_jobs').select('*').eq('id',id).single());
@@ -27,32 +28,41 @@ export async function runExplorationJob(id:string,emit:(v:object)=>void){
     const versionRows=check(await sb.from('run_output_versions').select('created_at').eq('run_table','sessions').eq('run_id',s.id));
     const version=new Set(versionRows.map(r=>r.created_at)).size+1;
     const stageEvidence=Object.fromEntries(Object.entries(s).filter(([k,v])=>/^stage_(?:[1-9]|1[0-3])(?:b)?_output$/.test(k)&&v));
+    const allowedEvidence=[...baseline.evidence_refs,...Object.keys(stageEvidence).map(k=>`sessions:${s.id}:${k}`),...(Array.isArray(manifest['evidence'])?manifest['evidence'].map((_,i)=>`baseline:${base.id}:evidence:${i}`):[])];
+    const parseResult=(raw:string)=>{
+      const value=brief.mode==='headroom'?HeadroomResult.parse(JSON.parse(raw)):TurnaroundResult.parse(JSON.parse(raw));
+      buildModeOutputs({brief,runId:s.id,version,brandId:baseline.brand_id,market,baseline:baseline.record,result:value,projections:[],createdAt:new Date().toISOString(),checkpoints:{A:true,B:true,C:true},allowedEvidence});
+      return value;
+    };
     const schema=brief.mode==='headroom'?HeadroomResult:TurnaroundResult;
     const schemaJson=JSON.stringify(zodToJsonSchema(schema));
     const attempts=check(await sb.from('bg_exploration_attempts').select('attempt,raw_output,error').eq('job_id',id).order('attempt'));
     let result:unknown=null;let last=attempts.at(-1)?.error??'';
-    for(const a of attempts){if(!a.raw_output)continue;try{result=schema.parse(JSON.parse(a.raw_output));break;}catch{/* retain failed attempt */}}
+    if(last&&terminalExplorationError(last))throw new Error(`EXPLORATION_PLATFORM_ERROR: ${last}`);
+    for(const a of attempts){if(!a.raw_output)continue;try{result=parseResult(a.raw_output);break;}catch{/* retain failed attempt */}}
     for(let attempt=attempts.length+1;!result&&attempt<=3;attempt++){
       let raw='';let error:string|null=null;
-      try{emit({status:'running',phase:'assessment',attempt});raw=await callClaude({systemPrompt:'Brand Grenade evidence-bound exploratory analysis. Only the supplied saved evidence may support findings. Return JSON only. Partner hypotheses are not evidence. Separate evidence, hypotheses, modelled interpretation, supported causes and unresolved questions. No unsupported causal attribution, revenue, dollar upside, numerical alternative selection score or certainty of success. Each liked/bought axis needs its own measured evidence and period; otherwise established:false, positive:null, confidence:insufficient. No inference between axes. Each brand fix requires a modelled change projection; commercial problems need a named team and no substitute brand fix.',userMessage:`MODE BRIEF: ${JSON.stringify(brief)}\nCURRENT BASELINE: ${JSON.stringify(baseline)}\nSAVED STAGES: ${JSON.stringify(stageEvidence)}\nHeadroom alternatives: evaluate white space, brand permission/associations, distinction, constraints, confidence; choose exactly one credible alternative with qualitative reasons, keep every principal alternative and its disposition. Band meanings: constrained=limited space/barriers; moderate=additional space with meaningful conditions; substantial=considerable supported achievable space; transformational=materially different opportunity needing significant change, investment/commitment, not certainty.\nReturn exactly this JSON schema: ${schemaJson}\n${last?`Previous validation error: ${last}`:''}`,stageNumber:'13',stageLabel:`${brief.mode} final assessment`,maxTokens:20000});raw=raw.trim().replace(/^```(?:json)?\s*/,'').replace(/\s*```$/,'');result=schema.parse(JSON.parse(raw));}catch(e){error=String(e);last=error;}
+      try{emit({status:'running',phase:'assessment',attempt});raw=await callClaude({systemPrompt:'Brand Grenade evidence-bound exploratory analysis. Only the supplied saved evidence may support findings. Return JSON only. Partner hypotheses are not evidence. Separate evidence, hypotheses, modelled interpretation, supported causes and unresolved questions. No unsupported causal attribution, revenue, dollar upside, numerical alternative selection score or certainty of success. Each liked/bought axis needs its own measured evidence and period; otherwise established:false, positive:null, confidence:insufficient. No inference between axes. Each brand fix requires a modelled change projection; commercial problems need a named team and no substitute brand fix.',userMessage:`MODE BRIEF: ${JSON.stringify(brief)}\nCURRENT BASELINE: ${JSON.stringify(baseline)}\nSAVED STAGES: ${JSON.stringify(stageEvidence)}\nHeadroom alternatives: evaluate white space, brand permission/associations, distinction, constraints, confidence; choose exactly one credible alternative with qualitative reasons, keep every principal alternative and its disposition. Band meanings: constrained=limited space/barriers; moderate=additional space with meaningful conditions; substantial=considerable supported achievable space; transformational=materially different opportunity needing significant change, investment/commitment, not certainty.\nAllowed saved evidence refs: ${JSON.stringify(allowedEvidence)}\nReturn exactly this JSON schema: ${schemaJson}\n${last?`Previous validation error: ${last}`:''}`,stageNumber:'13',stageLabel:`${brief.mode} final assessment`,maxTokens:20000});raw=raw.trim().replace(/^```(?:json)?\s*/,'').replace(/\s*```$/,'');result=parseResult(raw);}catch(e){error=String(e);last=error;}
       check(await sb.from('bg_exploration_attempts').insert({job_id:id,attempt,raw_output:raw,error}).select('id'));
-      if(/credit|balance|billing|refusal|invalid.*key/i.test(last)&&!result)break;
+      if(terminalExplorationError(last)&&!result)break;
+      if(!result&&attempt<3)await explorationRetryCooldown();
     }
     if(!result)throw new Error(`EXPLORATION_PLATFORM_ERROR: ${last}`);
     const changes=brief.mode==='headroom'?HeadroomResult.parse(result).alternatives.filter(a=>a.disposition==='selected').map(a=>a.position):TurnaroundResult.parse(result).findings.filter(f=>f.brand_fix).map(f=>String(f.brand_fix));
     const projections:unknown[]=[];
     for(const description of changes){
       emit({phase:'projection',description});
-      const pid=await queueProjection(String(s.bg_client_id),baseline,{type:'reposition',description},false);
+      const pid=check(await sb.rpc('bg_exploration_projection',{_job:id,_lease:lease,_key:description,_client:String(s.bg_client_id),_baseline:baseline as never,_change:{type:'reposition',description}}));
       const p=await runProjection(pid,emit);
+      if(p.status==='running') {
+        check(await sb.from('bg_exploration_jobs').update({lease_until:null}).eq('id',id).eq('lease_token',lease).select('id'));
+        return {status:'running'};
+      }
       if(p.status!=='complete')throw new Error(`EXPLORATION_PROJECTION_FAILED: ${p.error??p.status}`);
       projections.push((await readProjection(pid)).result?.output);
     }
-    const outputs=buildModeOutputs({brief,runId:s.id,version,brandId:brandId(s.brand_name),market,baseline:baseline.record,result,projections,createdAt:new Date().toISOString(),checkpoints:{A:true,B:true,C:true}});
-    const active=check(await sb.from('bg_exploration_jobs').select('lease_token').eq('id',id).single());
-    if(active.lease_token!==lease)throw new Error('EXPLORATION_LEASE_LOST');
-    check(await sb.from('bg_exploration_assessments').insert({session_id:s.id,baseline_job_id:base.id,run_version:version,outputs:outputs as never}).select('id'));
-    check(await sb.from('bg_exploration_jobs').update({status:'complete',lease_until:null}).eq('id',id).eq('lease_token',lease).select('id'));
+    const outputs=buildModeOutputs({brief,runId:s.id,version,brandId:brandId(s.brand_name),market,baseline:baseline.record,result,projections,createdAt:new Date().toISOString(),checkpoints:{A:true,B:true,C:true},allowedEvidence});
+    check(await sb.rpc('bg_publish_exploration',{_job:id,_lease:lease,_baseline:base.id,_version:version,_outputs:outputs as never}));
     emit({status:'complete'});return {status:'complete'};
   }catch(e){const error=String(e);check(await sb.from('bg_exploration_jobs').update({status:'failed',error,lease_until:null}).eq('id',id).eq('lease_token',lease).select('id'));emit({status:'failed',error});return {status:'failed',error};}finally{clearInterval(timer);}
 }

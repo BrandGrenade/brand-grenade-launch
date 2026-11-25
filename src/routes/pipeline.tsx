@@ -1656,7 +1656,7 @@ function PipelineView() {
       }));
       return;
     }
-    if (statuses["01"] !== "running" && retryNonce === 0) return;
+    if (statuses["01"] !== "running" && retryNonce === 0 && !session.exploration_brief) return;
     let cancelled = false;
     setStage1Loading(true);
     setStage1Error(null);

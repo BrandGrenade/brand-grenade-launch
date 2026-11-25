@@ -239,6 +239,7 @@ export type Database = {
           id: string
           lease_token: string | null
           lease_until: string | null
+          projection_jobs: Json
           session_id: string
           status: string
           wake_token: string
@@ -249,6 +250,7 @@ export type Database = {
           id?: string
           lease_token?: string | null
           lease_until?: string | null
+          projection_jobs?: Json
           session_id: string
           status?: string
           wake_token?: string
@@ -259,6 +261,7 @@ export type Database = {
           id?: string
           lease_token?: string | null
           lease_until?: string | null
+          projection_jobs?: Json
           session_id?: string
           status?: string
           wake_token?: string
@@ -3948,6 +3951,17 @@ export type Database = {
           name: string
         }[]
       }
+      bg_exploration_projection: {
+        Args: {
+          _baseline: Json
+          _change: Json
+          _client: string
+          _job: string
+          _key: string
+          _lease: string
+        }
+        Returns: string
+      }
       bg_grant_stage16_regeneration: {
         Args: { _format: string; _reason: string; _run_id: string }
         Returns: string
@@ -3977,6 +3991,26 @@ export type Database = {
       bg_publish_current_position_addon: {
         Args: { _job: string; _lease: string }
         Returns: number
+      }
+      bg_publish_exploration: {
+        Args: {
+          _baseline: string
+          _job: string
+          _lease: string
+          _outputs: Json
+          _version: number
+        }
+        Returns: string
+      }
+      bg_publish_projection: {
+        Args: {
+          _job: string
+          _lease: string
+          _method: string
+          _output: Json
+          _prompt: string
+        }
+        Returns: string
       }
       bg_queue_current_position_addon: {
         Args: {

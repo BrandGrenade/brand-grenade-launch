@@ -1,2 +1,4 @@
 - Projections use the existing Stage 10 rubric/arithmetic but separate append-only records, never position writes; why: modelled potential cannot replace saved evidence.
 - Exploration modes are Diagnostic-only, retain every human checkpoint and keep Stage 12 alternatives exploratory; why: output approval must not promote a position.
+- Recovery requeues leased jobs through the shared supervisor; result publication is atomic and child projection IDs persist per parent job; why: interruption must never erase finished work or repeat paid projections.
+- Exploration test clients inherit authorized baseline links in the database; terminal provider failures stop retries and saved-result publication errors never regenerate; why: preserve access boundaries and prevent duplicate spending.

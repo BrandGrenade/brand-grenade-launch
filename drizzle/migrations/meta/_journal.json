@@ -372,6 +372,27 @@
       "when": 1795566351046,
       "tag": "0052_exploration_test_reporting_isolation",
       "breakpoints": true
+    },
+    {
+      "idx": 53,
+      "version": "7",
+      "when": 1795568486304,
+      "tag": "0053_exploration_worker_recovery",
+      "breakpoints": true
+    },
+    {
+      "idx": 54,
+      "version": "7",
+      "when": 1795568555999,
+      "tag": "0054_exploration_child_projection_claim",
+      "breakpoints": true
+    },
+    {
+      "idx": 55,
+      "version": "7",
+      "when": 1795568885096,
+      "tag": "0055_exploration_baseline_client_inheritance",
+      "breakpoints": true
     }
   ]
 }
