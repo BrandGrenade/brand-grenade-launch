@@ -2,6 +2,7 @@ import { furthestStageLabel, laterStageStatuses, type RunProgressFlags } from "@
 import { landingPipelineStage, modeEndsAt13, modeStageNote } from "@/lib/pipeline-navigation";
 import { ValidateRunStatus } from "@/components/ValidatePanel";
 import {ExplorationStatus} from '@/components/ExplorationStatus';
+import { explorationModeRule } from '@/lib/exploration/modes';
 import { COMPARATOR_NOTE, VALIDATE_COMPARATOR_STAGES } from "@/lib/validate-run";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
@@ -2466,7 +2467,7 @@ function PipelineView() {
         if (session?.loc_status === "running")
           return "Firing thirteen Left-of-Centre engines in parallel — this can take 60–180 seconds…";
         if (session?.loc_status === "failed")
-          return `Left-of-Centre engines failed${session?.loc_error ? `: ${session.loc_error}` : "."} Use Retry above.`;
+          return explorationModeRule(session?.loc_error ?? '') ?? `Left-of-Centre engines failed${session?.loc_error ? `: ${session.loc_error}` : "."} Use Retry above.`;
         return "Awaiting Left-of-Centre engine output.";
       })(),
       "09":
@@ -5077,6 +5078,7 @@ export function ErrorCard({
   message: string;
   onRetry?: () => void;
 }) {
+  const modeRule = explorationModeRule(message);
   return (
     <div
       role="alert"
@@ -5105,10 +5107,10 @@ export function ErrorCard({
             Stage {stageNumber} encountered an error
           </p>
           <p className="text-body-sm" style={{ color: "#8B8680", marginTop: 6 }}>
-            {message}
+            {modeRule ?? message}
           </p>
           <div style={{ display: "flex", gap: 12, marginTop: 16 }}>
-            <button
+            {!modeRule && <Button
               type="button"
               onClick={onRetry}
               style={{
@@ -5124,7 +5126,7 @@ export function ErrorCard({
               }}
             >
               Retry this stage
-            </button>
+            </Button>}
             <a
               href="mailto:support@brandgrenade.com"
               style={{
@@ -5447,6 +5449,7 @@ function ErrorStateCard({
   prevStageNumber?: string;
 }) {
   const [showDetails, setShowDetails] = useState(false);
+  const modeRule = explorationModeRule(errorMessage ?? '');
 
   return (
     <div style={{ margin: "40px 48px", paddingBottom: 80 }}>
@@ -5464,9 +5467,9 @@ function ErrorStateCard({
           Stage {stage.number} didn't complete
         </h3>
         <p className="text-body" style={{ color: "#8B8680", marginTop: 8 }}>
-          The generation was interrupted. This is usually a temporary issue.
+          {modeRule ?? 'The generation was interrupted. This is usually a temporary issue.'}
         </p>
-        {errorMessage ? (
+        {errorMessage && !modeRule ? (
           <div style={{ marginTop: 16 }}>
             <button
               type="button"
@@ -5510,7 +5513,7 @@ function ErrorStateCard({
             justifyContent: "center",
           }}
         >
-          <button
+          {!modeRule && <Button
             type="button"
             onClick={onRetry}
             style={{
@@ -5526,7 +5529,7 @@ function ErrorStateCard({
             }}
           >
             ↺ Retry Stage {stage.number}
-          </button>
+          </Button>}
           {onBack && prevStageNumber ? (
             <button
               type="button"

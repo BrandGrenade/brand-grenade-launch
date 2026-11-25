@@ -584,7 +584,7 @@ export const getLocStatus = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: row, error } = await supabaseAdmin
       .from("sessions")
-      .select("loc_status, loc_error, loc_task_type, loc_task_runner_up, loc_retry_count, loc_generated_at, checkpoint_c_confirmed, loc_engine_outputs")
+      .select("loc_status, loc_error, loc_task_type, loc_task_runner_up, loc_retry_count, loc_generated_at, checkpoint_c_confirmed, loc_engine_outputs, exploration_brief")
       .eq("id", data.sessionId)
       .single();
     if (error) throw new Error(`getLocStatus: ${error.message}`);

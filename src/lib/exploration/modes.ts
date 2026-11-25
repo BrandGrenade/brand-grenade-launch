@@ -8,14 +8,28 @@ export const ExplorationBriefSchema = z.discriminatedUnion('mode', [
 ]);
 export type ExplorationBrief = z.infer<typeof ExplorationBriefSchema>;
 export const EXPLORATION_OUTPUTS = ['headroom.current', 'headroom.potential', 'headroom.conditions', 'headroom.risks', 'turnaround.classification', 'turnaround.root_causes', 'turnaround.fix_first', 'turnaround.non_brand_factors'] as const;
+// Helpers are governed by the stage they feed, not their telemetry label.
+export function explorationTargetStage(step: string): string {
+  if (step === '9-loc' || step === '9-loc-validation') return '9';
+  return step;
+}
+export function explorationModeRule(error: string, mode: string = 'exploration'): string | null {
+  if (!error.includes('EXPLORATION_ENDS_AT_STAGE13')) return null;
+  const label = mode === 'headroom' ? 'Headroom' : mode === 'turnaround' ? 'Turnaround' : 'exploration';
+  return `Not part of a ${label} run. This run ends at Stage 13.`;
+}
 export function requireExplorationDecisions(stage:string,decisions:{A:boolean;B:boolean;C:boolean}) {
+  const locPreparation = stage === '9-loc' || stage === '9-loc-validation';
+  stage = explorationTargetStage(stage);
   if(!/^(?:0?[1-9]|1[0-3])(?:B)?$/i.test(stage)||/^13B$/i.test(stage))throw new Error('EXPLORATION_ENDS_AT_STAGE13');
-  const n=Number.parseInt(stage,10);
+  // LOC prepares the candidates reviewed at B; B gates Stage 9, not its inputs.
+  const n=locPreparation ? 8 : Number.parseInt(stage,10);
   if(n>=2&&!decisions.A)throw new Error('Checkpoint A requires an explicit human decision');
   if(n>=9&&!decisions.B)throw new Error('Checkpoint B requires an explicit human decision');
   if(n>=13&&!decisions.C)throw new Error('Checkpoint C requires an explicit human decision');
 }
 export function modeFraming(brief: unknown, stage: string | undefined): string {
+  if (stage) stage = explorationTargetStage(stage);
   if (!brief || !stage || !/^(?:0?[1-9]|1[0-3])(?:B)?$/i.test(stage)) return '';
   const b = ExplorationBriefSchema.parse(brief);
   return `\n[${b.mode.toUpperCase()} CONTEXT]\n${JSON.stringify(b)}\n${b.mode === 'headroom' ? 'Assess credible potential against the evidence-supported current position. Alternatives are exploratory, never approved/current positions. Consider white space, permission, associations, distinction, operational/commercial constraints, evidence and confidence. No new numerical selection score, revenue or dollar upside.' : 'Diagnose underperformance without assuming brand causation. Separate observed evidence, Partner-supplied hypotheses, modelled interpretations, supported conclusions and unresolved questions. Liked and bought require separate evidence; sales cannot prove liking and preference cannot prove purchases. Flag commercial issues for the right team; brand fixes cannot substitute.'}\nStages 14+ and Creative are excluded. Checkpoints A/B/C remain explicit human decisions. Stage 12 selection is exploratory evidence only, never an approved position.\n`;

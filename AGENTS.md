@@ -20,6 +20,7 @@
 - Intelligence Lab analyses and territory revisions run only inside /api/public/intelligence-tick, woken by the `bg_intelligence_wake` trigger when a row is queued or a revision recorded, and streaming keep-alives until done; the reliability supervisor only re-queues stalled rows; why: work handed to ctx.waitUntil is cancelled ~30s after the request returns, which froze runs at running:0.
 - Archive via `bg_set_run_archived`: owner/admin archive, admin-only restore, direct edits blocked. Admin client removal via `bg_admin_remove_client` requires exact name and refuses deletion with runs; why: preserve audit/Hub snapshots.
 - Pipeline navigation preserves string IDs and mode boundaries; saved-stage navigation never reruns.
+- Mode guards use helper destination stages; why: in-range evidence engines must not be blocked by telemetry labels.
 - Stage 12 confirms only after saving rationale, fills Deliverable 3 deterministically, and shares saved answers with the confirmed view and Stage 13; why: never discard human answers.
 - Test helper call-site budgets including reasoning; retry incomplete answers once, never refusals.
 - LOC process is a client-facing craft note. Selective retries regenerate ticked engines only; locked/unticked records stay verbatim, including anchors; why: protect approved work.

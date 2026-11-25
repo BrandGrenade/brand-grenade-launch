@@ -52,6 +52,8 @@ export interface CallClaudeArgs {
   stageLabel?: string;
   /** Stage number / id (e.g. "2", "1B"). Used for amendment lookup + telemetry. */
   stageNumber?: string;
+  /** Destination/helper identity for mode rules; telemetry/model policy stays unchanged. */
+  modeStage?: string;
   /** Stage name (e.g. "Category Intelligence"). Telemetry / logging only. */
   stageName?: string;
   /** Optional sampling temperature (0..1). Forwarded to Anthropic when set. */
@@ -287,10 +289,10 @@ async function prepareCall(
     const {data:r,error} = await supabaseAdmin.from('sessions').select('exploration_brief,checkpoint_a_confirmed,checkpoint_b_confirmed,checkpoint_c_confirmed').eq('id',args.sessionId).maybeSingle();
     if (error) throw new Error(`Mode framing unavailable: ${error.message}`);
     if (r?.exploration_brief) {
-      if (args.stageNumber && Number.parseInt(args.stageNumber,10)>13) throw new Error('EXPLORATION_ENDS_AT_STAGE13');
       const {modeFraming,requireExplorationDecisions} = await import('./exploration/modes');
-      if(args.stageNumber)requireExplorationDecisions(args.stageNumber,{A:r.checkpoint_a_confirmed===true,B:r.checkpoint_b_confirmed===true,C:r.checkpoint_c_confirmed===true});
-      effectiveUserMessage += modeFraming(r.exploration_brief,args.stageNumber);
+      const modeStage = args.modeStage ?? args.stageNumber;
+      if(modeStage)requireExplorationDecisions(modeStage,{A:r.checkpoint_a_confirmed===true,B:r.checkpoint_b_confirmed===true,C:r.checkpoint_c_confirmed===true});
+      effectiveUserMessage += modeFraming(r.exploration_brief,modeStage);
     }
   }
 

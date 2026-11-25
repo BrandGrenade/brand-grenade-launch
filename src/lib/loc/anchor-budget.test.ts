@@ -5,4 +5,5 @@ import { enforcePropositionAnchor } from "../proposition-anchor.server";
 it("LOC post-generation checks reserve 8000 tokens and retry incomplete output once", async () => {
   await enforcePropositionAnchor({ sessionId: "test", proposition: "A house", label: "LOC inversion", postGenerationOnly: true });
   expect(call).toHaveBeenCalledWith(expect.objectContaining({ maxTokens: 8000, retryIncompleteResponse: true, skipUniversalWrapper: true }));
+  expect(call).toHaveBeenCalledWith(expect.objectContaining({ stageNumber: 'anchor-gate', modeStage: '9-loc' }));
 });

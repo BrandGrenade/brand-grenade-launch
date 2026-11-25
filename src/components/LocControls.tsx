@@ -5,6 +5,7 @@ import { runLeftOfCentre, getLocStatus, resetStuckLoc } from "@/lib/loc.function
 import { LOC_ENGINES, LOC_ENGINE_LABEL, type EngineName } from "@/lib/loc/task-types";
 import { Spinner } from "@/components/ui/busy";
 import { Button } from "@/components/ui/button";
+import { explorationModeRule } from "@/lib/exploration/modes";
 
 type EngineOutputEntry = { ok: boolean; error?: string; output?: unknown; locked?: boolean };
 
@@ -17,6 +18,7 @@ type LocStatusRow = {
   loc_generated_at: string | null;
   checkpoint_c_confirmed: boolean | null;
   loc_engine_outputs: Record<string, EngineOutputEntry> | null;
+  exploration_brief?: { mode?: string } | null;
 };
 
 // Fix 05 — client considers a running LOC stuck when no output activity has
@@ -64,6 +66,13 @@ export function LocControls({ sessionId }: { sessionId: string }) {
 
   const locked = status?.checkpoint_c_confirmed === true;
   const state = status?.loc_status ?? "pending";
+  const mode = status?.exploration_brief?.mode ?? 'exploration';
+  // Old stop-rule failures on these Stage 9 inputs are now recoverable.
+  const blockedRule = !['headroom', 'turnaround'].includes(mode)
+    ? explorationModeRule(status?.loc_error ?? '', mode)
+      ?? (status?.loc_engine_outputs && Object.values(status.loc_engine_outputs).some(e => explorationModeRule(e.error ?? '', mode))
+        ? explorationModeRule('EXPLORATION_ENDS_AT_STAGE13', mode) : null)
+    : null;
 
   // Fix 04 — split engine outputs into successful vs failed.
   const { failedEngines, successfulEngines } = useMemo(() => {
@@ -80,7 +89,7 @@ export function LocControls({ sessionId }: { sessionId: string }) {
   }, [status?.loc_engine_outputs]);
 
   async function trigger(force: boolean, opts?: { retryInstructions?: string; regenerateEngines?: EngineName[] }) {
-    if ((busy && !force) || locked) return;
+    if ((busy && !force) || locked || blockedRule) return;
     setBusy(true);
     try {
       await runLoc({
@@ -101,14 +110,14 @@ export function LocControls({ sessionId }: { sessionId: string }) {
   }
 
   useEffect(() => {
-    if (!status || autoFiredRef.current || locked) return;
+    if (!status || autoFiredRef.current || locked || blockedRule) return;
     const s = status.loc_status;
     if (s == null || s === "pending") {
       autoFiredRef.current = true;
       void trigger(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status, locked]);
+  }, [status, locked, blockedRule]);
 
   // Fix 05 — track output activity while "running". Recovery fires only
   // after STUCK_NO_ACTIVITY_MS with no heartbeat AND no new engine output.
@@ -203,7 +212,7 @@ export function LocControls({ sessionId }: { sessionId: string }) {
           </span>
         </div>
 
-        <div className="ml-auto flex items-center gap-2">
+        {!blockedRule && <div className="ml-auto flex items-center gap-2">
           {(!status || status.loc_status == null || state === "failed" || stuck) && (
             <Button variant="outline" size="sm"
               type="button"
@@ -268,7 +277,7 @@ export function LocControls({ sessionId }: { sessionId: string }) {
           >
             {showRetryPanel ? "Close retry panel" : "Retry with instructions…"}
           </Button>
-        </div>
+        </div>}
       </div>
 
       {/* Fix 04 — per-engine failure surface */}
@@ -284,17 +293,17 @@ export function LocControls({ sessionId }: { sessionId: string }) {
             {failedEngines.map(({ engine, error }) => (
               <li key={engine} className="text-body-sm">
                 <span className="font-mono font-semibold">{LOC_ENGINE_LABEL[engine]}</span>
-                <span style={{ color: "var(--color-text-tertiary)" }}> — {error}</span>
+                <span style={{ color: "var(--color-text-tertiary)" }}> — {explorationModeRule(error, mode) ? blockedRule ?? 'Previous mode-rule error; these engines feed Stage 9 and can now be retried.' : error}</span>
               </li>
             ))}
           </ul>
-          <div className="mt-2 text-body-sm" style={{ color: "var(--color-text-tertiary)" }}>
+          {!blockedRule && <div className="mt-2 text-body-sm" style={{ color: "var(--color-text-tertiary)" }}>
             Use "Retry failed engines" above to re-fire only these; the {successfulEngines.length} successful engine{successfulEngines.length === 1 ? "" : "s"} will be preserved.
-          </div>
+          </div>}
         </div>
       )}
 
-      {showRetryPanel && !locked && (
+      {showRetryPanel && !locked && !blockedRule && (
         <div className="mt-3 space-y-3 rounded border p-3" style={{ borderColor: "var(--color-border-subtle)" }}>
           <div>
             <label className="block text-body-sm font-semibold mb-1">
@@ -341,7 +350,7 @@ export function LocControls({ sessionId }: { sessionId: string }) {
 
       {status?.loc_error && (
         <div className="mt-2" style={{ color: "var(--color-error, #E5484D)" }}>
-          LOC error: {status.loc_error}
+          {blockedRule ?? `LOC error: ${status.loc_error}`}
         </div>
       )}
       {locked && (

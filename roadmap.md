@@ -1,5 +1,9 @@
 # Roadmap — Partner Hub structured evidence (27 Oct 2026)
 
+## LOC mode stop rule — 25 Nov 2026
+- [ ] Apply mode/checkpoint rules to helper destination stages; show non-retryable mode exclusions in plain words.
+- [ ] Run automated regression tests, publish if clean and retry only failed engines on Headroom 06134f96; preserve completed stages.
+
 ## Mode-aware run links — 25 Nov 2026
 - [x] Correct all-mode landings and exclude unavailable stages; add opt-in test-run listing without changing reports. Checked Pipeline, legacy Detonation, canonical/access links, register links, Creative steps and existing worker/database mode guards; no record or permission changes.
 - [x] 708 tests / 86 files passed, compilation clean; published and authenticated live checks confirmed both legacy links open Stage 1 “Awaiting review”. Test switch off by default, both test records visible when on; no approvals or stage executions.

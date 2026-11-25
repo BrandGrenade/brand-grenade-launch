@@ -144,6 +144,7 @@ Decide whether a real capability defends this exact line. Return JSON only.`;
       sessionId: args.sessionId,
       stageLabel: `Anchor gate — ${args.label}`,
       stageNumber: "anchor-gate",
+      modeStage: args.label.startsWith("LOC ") ? "9-loc" : "8",
       stageName: "Proposition Anchor Gate",
     });
     const v = parseVerdict(raw);
