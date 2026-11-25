@@ -72,10 +72,12 @@ export async function* withStreamSafety(
 
   const persist = async (err: string | null): Promise<void> => {
     try {
-      await supabaseAdmin
+      let q = supabaseAdmin
         .from("sessions")
         .update({
-          [opts.outputColumn]: accumulated.length > 0 ? accumulated : null,
+          // Never clear: a failed or duplicate call with no text must not wipe
+          // output another call already saved (it only records its error).
+          ...(accumulated.length > 0 ? { [opts.outputColumn]: accumulated } : {}),
           [opts.errorColumn]: err,
           // Liveness heartbeat: every persisted delta batch stamps this column.
           // The client watchdog reads it as proof that tokens are still flowing
@@ -84,6 +86,9 @@ export async function* withStreamSafety(
           stream_last_delta_at: new Date().toISOString(),
         } as never)
         .eq("id", opts.sessionId);
+      // A stage another call already completed is never reopened or overwritten.
+      if (stageStatusId) q = q.or(`stage_status.is.null,stage_status.neq."complete:${stageStatusId}"`);
+      await q;
       dirty = false;
     } catch (writeErr) {
       // best-effort — do not mask the real error path
@@ -110,13 +115,15 @@ export async function* withStreamSafety(
 
   const markInterrupted = async (): Promise<void> => {
     try {
-      await supabaseAdmin
+      let q = supabaseAdmin
         .from("sessions")
         .update({
           status: "interrupted",
           ...(stageStatusId ? { stage_status: `interrupted:${stageStatusId}` } : {}),
         } as never)
         .eq("id", opts.sessionId);
+      if (stageStatusId) q = q.or(`stage_status.is.null,stage_status.neq."complete:${stageStatusId}"`);
+      await q;
     } catch {
       /* best-effort */
     }
