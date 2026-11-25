@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { LENS_COUNT } from "@/lib/stimulus/lenses";
 import { Spinner } from "@/components/ui/busy";
 import { runPath } from '@/lib/run-links';
+import { modeEndsAt13, modeStageNote } from '@/lib/pipeline-navigation';
 
 const AMBER = "#F2665F";
 const MUTED = "#A8A29A";
@@ -39,6 +40,9 @@ export const Route = createFileRoute("/creative/$sessionId")({
 });
 
 export type CreativeSession = {
+  run_mode?: string | null;
+  exploration_brief?: unknown;
+  validate_brief?: unknown;
   id: string;
   brand_name: string | null;
   selected_smp: string | null;
@@ -59,7 +63,7 @@ export function useCreativeSession(sessionId: string) {
       const { data } = await supabase
         .from("sessions")
         .select(
-          "id, brand_name, selected_smp, stage_21_outputs, locked_big_idea, locked_campaign_line, locked_big_idea_lens",
+          "id, run_mode, exploration_brief, validate_brief, brand_name, selected_smp, stage_21_outputs, locked_big_idea, locked_campaign_line, locked_big_idea_lens",
         )
         .eq("id", sessionId)
         .maybeSingle();
@@ -133,6 +137,9 @@ function CreativeRoom() {
   const onChannels = pathname.endsWith("/channels");
   const onOrchestration = pathname.endsWith("/orchestration");
   const onSweep = !onShortlist && !onChannels && !onOrchestration;
+
+  if (loading) return <><TopNav /><main className="px-6 py-10 text-text-secondary">Loading session…</main></>;
+  if (session && modeEndsAt13(session)) return <><TopNav /><main className="px-6 py-10"><p className="text-text-secondary">{modeStageNote(session)}</p><Link to="/pipeline" search={{ session: sessionId }} className="mt-4 block underline">Return to current stage</Link></main></>;
 
   return (
     <>

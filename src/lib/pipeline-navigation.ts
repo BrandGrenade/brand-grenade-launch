@@ -31,6 +31,24 @@ export const PIPELINE_STAGES: PipelineStage[] = [
 ];
 
 // Stage keys and display numbers are identifiers, never numeric operands.
+export function modeEndsAt13(row: { run_mode?: string | null; exploration_brief?: unknown; validate_brief?: unknown }) {
+  return row.run_mode === "diagnostic" || !!row.exploration_brief || !!row.validate_brief;
+}
+
+export function modeStageNote(row: { exploration_brief?: unknown; validate_brief?: unknown }) {
+  const brief = row.exploration_brief;
+  const mode = brief && typeof brief === "object" && "mode" in brief ? String(brief.mode) : "";
+  return `Not part of a ${mode === "headroom" ? "Headroom" : mode === "turnaround" ? "Turnaround" : row.validate_brief ? "Validate" : "Diagnostic"} run`;
+}
+
+export function landingPipelineStage(statuses: Record<string, string | undefined>, endsAt13: boolean, requested?: string) {
+  const stages = PIPELINE_STAGES.filter(s => !endsAt13 || Number.parseInt(s.id, 10) <= 13 && s.id !== "13B");
+  const target = requested?.toUpperCase().padStart(2, "0");
+  if (target && stages.some(s => s.id === target) && statuses[target] && statuses[target] !== "pending") return target;
+  return [...stages].reverse().find(s => ["running", "checkpoint", "error"].includes(statuses[s.id] ?? ""))?.id
+    ?? [...stages].reverse().find(s => statuses[s.id] === "complete")?.id ?? "01";
+}
+
 export function nextPipelineStage(id: string, briefEnhancement: boolean, runMode = "full"): PipelineStage | null {
   const index = PIPELINE_STAGES.findIndex((stage) => stage.id === id);
   if (index < 0) return null;

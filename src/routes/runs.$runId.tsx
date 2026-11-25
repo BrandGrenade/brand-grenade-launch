@@ -24,7 +24,12 @@ function SavedRun() {
     const timer = setTimeout(() => { if (active) setError('Saved run is taking too long to load. Try again.'); }, 25000);
     void read({ data: { id: runId, stage } }).then(r => {
       if (!active) return;
-      clearTimeout(timer); setError(''); setRun(r);
+      clearTimeout(timer);
+      if (!stage && r.table === 'sessions' && r.open_url.includes('/pipeline?')) {
+        window.location.replace(r.open_url.replace('https://brandgrenade.app', window.location.origin));
+        return;
+      }
+      setError(''); setRun(r);
       window.parent.postMessage({ type: 'bg-run-loaded', run_id: r.id, room: r.room }, window.location.origin);
     }).catch(e => { if (active) { clearTimeout(timer); setError(e instanceof Error ? e.message : 'Saved run could not be loaded.'); } });
     return () => { active = false; clearTimeout(timer); };

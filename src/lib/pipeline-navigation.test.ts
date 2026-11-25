@@ -1,5 +1,26 @@
 import { describe, expect, it } from "vitest";
-import { nextPipelineStage, PIPELINE_STAGES } from "./pipeline-navigation";
+import { nextPipelineStage, PIPELINE_STAGES, landingPipelineStage, modeEndsAt13, modeStageNote } from "./pipeline-navigation";
+
+describe.each([
+  ["Campaign", { run_mode: "full" }],
+  ["Deal", { run_mode: "full" }],
+  ["Diagnostic", { run_mode: "diagnostic" }],
+  ["Validate", { run_mode: "diagnostic", validate_brief: true }],
+  ["Headroom", { run_mode: "diagnostic", exploration_brief: { mode: "headroom" } }],
+  ["Turnaround", { run_mode: "diagnostic", exploration_brief: { mode: "turnaround" } }],
+])("%s landing", (_name, mode) => {
+  it("opens Stage 1 at its awaiting-review checkpoint", () => {
+    expect(landingPipelineStage({ "01": "checkpoint", "18": "running" }, modeEndsAt13(mode))).toBe("01");
+  });
+  it("resumes the current lettered stage", () => {
+    expect(landingPipelineStage({ "01": "complete", "04B": "running" }, modeEndsAt13(mode))).toBe("04B");
+  });
+});
+it.each(["headroom", "turnaround"])("%s never lands beyond Stage 13", mode => {
+  const row = { exploration_brief: { mode } };
+  expect(landingPipelineStage({ "01": "checkpoint", "14": "error", "15": "complete" }, modeEndsAt13(row), "18")).toBe("01");
+  expect(modeStageNote(row)).toBe(`Not part of a ${mode === "headroom" ? "Headroom" : "Turnaround"} run`);
+});
 
 describe.each(["campaign", "deal"])("%s navigation", () => {
   it.each(PIPELINE_STAGES.slice(0, -1).map((s, i) => [s.id, PIPELINE_STAGES[i + 1].id]))("%s advances to %s in full runs", (id, next) => {

@@ -25,6 +25,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { createSession } from "@/lib/stage1.functions";
 import { useRunRegister } from "@/lib/run-register";
 import { ClientRunRegister } from "@/components/ClientRunRegister";
+import { Switch } from "@/components/ui/switch";
 import { useIsAdmin } from "@/lib/demo-mode";
 import {
   DropdownMenu,
@@ -107,7 +108,8 @@ const PAGINATION_THRESHOLD = 50;
 function Dashboard() {
   const navigate = useNavigate();
   const createSessionFn = useServerFn(createSession);
-  const runRegister = useRunRegister();
+  const [showTestRuns, setShowTestRuns] = useState(false);
+  const runRegister = useRunRegister(showTestRuns);
   const isAdmin = useIsAdmin();
   const { rows, loading, error, refresh } = useBrandRegister();
 
@@ -300,6 +302,10 @@ function Dashboard() {
           )}
 
           <div id="brand-register" className="mt-6 scroll-mt-24">
+            <label className="mb-4 flex items-center gap-3 text-body-sm text-text-secondary">
+              <Switch checked={showTestRuns} onCheckedChange={setShowTestRuns} aria-label="Show test runs" />
+              Show test runs
+            </label>
             {(error || runRegister.error) && (
               <p className="text-body" style={{ color: "#E5484D" }}>
                 Failed to load register: {error ?? runRegister.error}

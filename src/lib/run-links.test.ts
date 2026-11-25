@@ -4,6 +4,11 @@ import { requireLinkAdmin } from './run-links.functions';
 
 describe('canonical saved run links', () => {
   const id = '3470f1ad-b322-4230-8e3d-bf0072e95b7a';
+  it.each(['campaign','deal','diagnostic','validate','headroom','turnaround'])('%s active run opens its current checkpoint instead of a saved-output screen', mode => {
+    const links = runLinks({ table: 'sessions', id, row: { status: 'awaiting_review', current_stage: 1, stage_1_output: 'saved', mode } });
+    expect(links.open_url).toBe(`https://brandgrenade.app/pipeline?session=${id}`);
+    expect(links.stage_urls['1']).toBe(`https://brandgrenade.app/runs/${id}?stage=1`);
+  });
   it('opens latest saved stage 22, never stale current_stage', () => {
     const links = runLinks({ table: 'sessions', id, row: { current_stage: 8, stage_18_output: 'saved', stage_22_output: 'saved' } });
     expect(links.open_url).toBe(`https://brandgrenade.app/runs/${id}?stage=22`);

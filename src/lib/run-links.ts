@@ -14,7 +14,8 @@ export function runPath(id: string, stage?: string) {
 export function runLinks(run: RunRec) {
   const stages = run.table === 'sessions' ? completedStages(run.row) : [];
   return {
-    open_url: RUN_ORIGIN + runPath(run.id, stages.at(-1)),
+    open_url: RUN_ORIGIN + (run.table === 'sessions' && (run.row.exploration_brief || run.row.status && run.row.status !== 'complete')
+      ? `/pipeline?session=${encodeURIComponent(run.id)}` : runPath(run.id, stages.at(-1))),
     stage_urls: Object.fromEntries(stages.map(s => [s, RUN_ORIGIN + runPath(run.id, s)])),
   };
 }

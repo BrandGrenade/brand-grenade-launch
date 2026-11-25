@@ -134,8 +134,9 @@ export function toRegisterRuns(
   },
   /** Creative Stimulus run ids that have at least one saved direction. */
   stimulusWithDocs?: Set<string>,
+  showTestRuns = false,
 ): RegisterRun[] {
-  const live = (r: AnyRow) => !r.archived_at && !(r.exploration_brief && r.test_copy_of);
+  const live = (r: AnyRow) => !r.archived_at && (showTestRuns || !r.test_copy_of && !r.is_preflight_test);
   const out: RegisterRun[] = [];
   const sessionBrand = new Map<string, string>();
   for (const s of rows.sessions) sessionBrand.set(s.id, s.brand_name ?? "");
@@ -144,7 +145,7 @@ export function toRegisterRuns(
     out.push({
       table: "sessions", id: s.id, room: roomLabel("pipeline"), brand: s.brand_name ?? "",
       clientId: s.bg_client_id ?? null, engagementId: s.engagement_id ?? null,
-      briefType: label(s.brief_type ?? "campaign"), runType: label(s.run_mode ?? "full"),
+      briefType: label(s.brief_type ?? "campaign"), runType: `${label(s.exploration_brief?.mode ?? (s.validate_brief ? "validate" : s.run_mode ?? "full"))}${s.test_copy_of || s.is_preflight_test ? " · Test" : ""}`,
       date: s.created_at, status: s.status === "complete" || s.has_stage_22 ? label(s.status) : `${label(s.status)} · Stage ${furthestStageLabel(s)} of ${NUMBERED_STAGE_COUNT}`,
       openHref: `/pipeline?session=${encodeURIComponent(s.id)}`,
       documentsHref: docs ? `/complete?session=${encodeURIComponent(s.id)}` : null,
@@ -191,7 +192,7 @@ export function toRegisterRuns(
   return out;
 }
 
-export function useRunRegister() {
+export function useRunRegister(showTestRuns = false) {
   const [runs, setRuns] = useState<RegisterRun[]>([]);
   const [names, setNames] = useState<GroupName[]>([]);
   const [loading, setLoading] = useState(true);
@@ -199,7 +200,7 @@ export function useRunRegister() {
 
   const load = useCallback(async () => {
     const sb = supabase as any;
-    const [s, w, i, y, c, n] = await Promise.all([
+    const [s, w, i, y, c, n, tests] = await Promise.all([
       sb.from("brand_register_sessions")
         .select("id,brand_name,status,created_at,current_stage,has_stage_16_consulting,has_stage_15,has_stage_16,has_stage_17,has_stage_17b,has_stage_18,has_stage_19,has_stage_20,stage_20_approved,has_stage_20b,has_stage_21,has_stage_22,bg_client_id,engagement_id,brief_type,run_mode,archived_at")
         .eq("is_preflight_test", false).is("archived_at", null).order("created_at", { ascending: false }).limit(1000),
@@ -212,8 +213,10 @@ export function useRunRegister() {
       sb.from("stimulus_runs").select("id,session_id,status,run_mode,created_at,bg_client_id,engagement_id,archived_at")
         .is("archived_at", null).order("created_at", { ascending: false }).limit(1000),
       sb.rpc("bg_run_group_names"),
+      sb.from("sessions").select("id,brand_name,status,created_at,current_stage,bg_client_id,engagement_id,brief_type,run_mode,archived_at,test_copy_of,is_preflight_test,exploration_brief,validate_brief")
+        .or("test_copy_of.not.is.null,is_preflight_test.eq.true").is("archived_at", null).order("created_at", { ascending: false }).limit(1000),
     ]);
-    const err = s.error ?? w.error ?? i.error ?? y.error ?? c.error;
+    const err = s.error ?? w.error ?? i.error ?? y.error ?? c.error ?? (showTestRuns ? tests.error : null);
     setError(err ? err.message : null);
     // Which Creative Stimulus runs hold at least one saved direction (i.e.
     // have deliverables to show on the parent session's Deliverables page).
@@ -228,10 +231,12 @@ export function useRunRegister() {
       for (const d of dirs ?? []) stimulusWithDocs.add(d.run_id);
     }
     const intel = (i.data ?? []).map((r: AnyRow) => ({ ...r, report_metadata: { brief_type: r.brief_type } }));
-    setRuns(toRegisterRuns({ sessions: s.data ?? [], workspaces: w.data ?? [], intelligence: intel, synthesiser: y.data ?? [], stimulus: c.data ?? [] }, stimulusWithDocs));
+    const testIds = new Set((tests.data ?? []).map((r: AnyRow) => r.id));
+    const sessions = [...(s.data ?? []).filter((r: AnyRow) => !testIds.has(r.id)), ...(showTestRuns ? tests.data ?? [] : [])];
+    setRuns(toRegisterRuns({ sessions, workspaces: w.data ?? [], intelligence: intel, synthesiser: y.data ?? [], stimulus: c.data ?? [] }, stimulusWithDocs, showTestRuns));
     setNames((n.data ?? []) as GroupName[]);
     setLoading(false);
-  }, []);
+  }, [showTestRuns]);
 
   useEffect(() => {
     void load().catch((e) => { setError(e instanceof Error ? e.message : String(e)); setLoading(false); });

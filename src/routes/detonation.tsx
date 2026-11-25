@@ -12,6 +12,7 @@ import { useAuth } from "@/context/AuthContext";
 import { PHASE_2_STAGES, PHASE_2_AMBER } from "@/lib/phase2-stages";
 import { sanitiseOutput } from "@/lib/sanitise-output";
 import { tokens } from "@/styles/tokens";
+import { modeEndsAt13, modeStageNote } from "@/lib/pipeline-navigation";
 
 // ── Server fn imports ─────────────────────────────────────────────────────
 import {
@@ -52,7 +53,7 @@ const detonationSearchSchema = z.object({
   panel: z.enum(["creative"]).optional(),
   // Open the run directly at a Phase 2 stage, e.g. ?stage=21.
   // Plain numbers arrive parsed as numbers (?stage=21 → 21), so coerce first.
-  stage: z.preprocess((v) => (v == null ? undefined : String(v).toUpperCase()), z.enum(["17", "17B", "18", "19", "20", "20B", "21", "22"]).optional()).catch(undefined),
+  stage: z.preprocess((v) => (v == null ? undefined : String(v).toUpperCase()), z.string().regex(/^\d{1,2}[BC]?$/).optional()).catch(undefined),
 });
 
 export const Route = createFileRoute("/detonation")({
@@ -61,6 +62,10 @@ export const Route = createFileRoute("/detonation")({
   head: () => ({
     meta: [
       { title: "Brand Detonation — Brand Grenade" },
+      { property: "og:title", content: "Brand Detonation — Brand Grenade" },
+      { property: "og:description", content: "Review saved Brand Detonation stages and creative direction." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       {
         name: "description",
         content:
@@ -80,6 +85,9 @@ function DetonationRoute() {
 }
 
 type SessionRow = {
+  run_mode?: string | null;
+  exploration_brief?: unknown;
+  validate_brief?: unknown;
   id: string;
   brand_name: string | null;
   selected_smp: string | null;
@@ -125,7 +133,7 @@ type SessionRow = {
 };
 
 const SESSION_COLS =
-  "id, brand_name, selected_smp, user_id, phase_2_status, phase_2_current_stage, doc_consulting_url, doc_agency_url, doc_workshop_url, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, stage_16_format, stage_16_consulting_output, stage_16_agency_output, stage_16_workshop_output, stage_16_vision_output, stage_16_valuation_output, stage_16_error, status, current_stage, stage_17_output, stage_17_selected_territory, stage_17b_output, stage_18_output, stage_18_selected_detonation, stage_18_detonation_line, stage_19_output, stage_20_output, stage_20_approved, stage_20b_output, stage_20b_audience_input, stage_21_outputs, stage_21_fidelity, stage_21_fidelity_override, stage_22_output, stage_22_brand_architecture, stage_22_distinctive_assets, locked_big_idea, locked_campaign_line, locked_big_idea_lens, locked_big_idea_at";
+  "id, run_mode, exploration_brief, validate_brief, brand_name, selected_smp, user_id, phase_2_status, phase_2_current_stage, doc_consulting_url, doc_agency_url, doc_workshop_url, checkpoint_a_confirmed, checkpoint_b_confirmed, checkpoint_c_confirmed, stage_16_format, stage_16_consulting_output, stage_16_agency_output, stage_16_workshop_output, stage_16_vision_output, stage_16_valuation_output, stage_16_error, status, current_stage, stage_17_output, stage_17_selected_territory, stage_17b_output, stage_18_output, stage_18_selected_detonation, stage_18_detonation_line, stage_19_output, stage_20_output, stage_20_approved, stage_20b_output, stage_20b_audience_input, stage_21_outputs, stage_21_fidelity, stage_21_fidelity_override, stage_22_output, stage_22_brand_architecture, stage_22_distinctive_assets, locked_big_idea, locked_campaign_line, locked_big_idea_lens, locked_big_idea_at";
 
 
 
@@ -833,6 +841,7 @@ function DetonationPage() {
 
   useEffect(() => {
     if (!isAuthReady || !user || !session) return;
+    if (modeEndsAt13(session) || stageParam && Number.parseInt(stageParam, 10) < 17) return;
     if (session.user_id !== user.id) return;
     const phase1Complete = Boolean(session.selected_smp && session.selected_smp.length > 0);
     if (!phase1Complete) return;
@@ -843,7 +852,13 @@ function DetonationPage() {
           else setSession((prev) => prev ? { ...prev, phase_2_status: "in_progress" } : prev);
         });
     }
-  }, [isAuthReady, user, session]);
+  }, [isAuthReady, user, session, stageParam]);
+
+  const returnToPipeline = !!session && (modeEndsAt13(session) || !!stageParam && Number.parseInt(stageParam, 10) < 17 || !stageParam && panel !== "creative" && !session.selected_smp);
+  useEffect(() => {
+    if (!returnToPipeline || !sessionId) return;
+    window.location.replace(`/pipeline?session=${encodeURIComponent(sessionId)}${stageParam && Number.parseInt(stageParam, 10) <= 15 ? `&stage=${encodeURIComponent(stageParam)}` : ""}`);
+  }, [returnToPipeline, sessionId, stageParam]);
 
   const brand = session?.brand_name ?? "Untitled Brand";
   const isOwner = Boolean(user && session?.user_id && user.id === session.user_id);
@@ -854,6 +869,8 @@ function DetonationPage() {
   const phase2Index = PHASE_2_STAGES.findIndex((s) => s.number === activeStage);
   // Show the stage's own number ("20B" → 20); index arithmetic overcounted (Stage 21 showed 23).
   const unifiedStage = phase2Index >= 0 ? Number.parseInt(activeStage, 10) : 17;
+
+  if (returnToPipeline) return <><TopNav /><main className="px-6 py-10 text-text-secondary">{modeEndsAt13(session ?? {}) ? modeStageNote(session ?? {}) : "Opening current stage…"}</main></>;
 
   return (
     <div className="flex min-h-screen flex-col bg-background">

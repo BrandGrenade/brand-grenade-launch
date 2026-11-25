@@ -1,4 +1,5 @@
 import { furthestStageLabel, laterStageStatuses, type RunProgressFlags } from "@/lib/run-stage-progress";
+import { landingPipelineStage, modeEndsAt13, modeStageNote } from "@/lib/pipeline-navigation";
 import { ValidateRunStatus } from "@/components/ValidatePanel";
 import {ExplorationStatus} from '@/components/ExplorationStatus';
 import { COMPARATOR_NOTE, VALIDATE_COMPARATOR_STAGES } from "@/lib/validate-run";
@@ -422,6 +423,7 @@ const STAGE_ID_TO_DB: Record<
 
 const pipelineSearchSchema = z.object({
   session: z.string().uuid().optional(),
+  stage: z.preprocess(v => v == null ? undefined : String(v).toUpperCase(), z.string().optional()),
 });
 
 // P7 cross-session guard: re-key PipelineView on sessionId so every session
@@ -696,7 +698,7 @@ const DB_STAGE_ID_TO_UI: Record<string, string> = {
 };
 
 function PipelineView() {
-  const { session: sessionId } = Route.useSearch();
+  const { session: sessionId, stage: requestedStage } = Route.useSearch();
   const navigate = useNavigate();
   const reclaimStalledStageFn = useServerFn(reclaimStalledStage);
   const runStage1Fn = useServerFn(runStage1);
@@ -1625,19 +1627,10 @@ function PipelineView() {
 
     if (hydratedSessionRef.current !== session.id && selectedIdRef.current !== "BRIEF") {
       hydratedSessionRef.current = session.id;
-      const activeStage = (() => {
-        for (let i = STAGES.length - 1; i >= 0; i--) {
-          const state = mergedForSelection[STAGES[i].id];
-          if (state === "running" || state === "checkpoint" || state === "error") return STAGES[i].id;
-        }
-        for (let i = STAGES.length - 1; i >= 0; i--) {
-          if (mergedForSelection[STAGES[i].id] === "complete") return STAGES[i].id;
-        }
-        return "01";
-      })();
+      const activeStage = landingPipelineStage(mergedForSelection, modeEndsAt13(session), requestedStage);
       setSelectedId(activeStage);
     }
-  }, [initialStatuses, session]);
+  }, [initialStatuses, session, requestedStage]);
 
   // Trigger Stage 1 when session loads (or on retry).
   useEffect(() => {
@@ -2585,7 +2578,7 @@ function PipelineView() {
   ]);
 
   // Progress — count main (non-conditional) stages.
-  const mainStages = STAGES.filter((s) => !s.conditional);
+  const mainStages = STAGES.filter((s) => !s.conditional && (!modeEndsAt13(session ?? {}) || Number.parseInt(s.id, 10) <= 13));
   const completedMain = mainStages.filter((s) => statuses[s.id] === "complete").length;
   const runningMain = mainStages.find((s) => statuses[s.id] === "running");
   const currentMainNumber = runningMain
@@ -2649,6 +2642,12 @@ function PipelineView() {
   })();
   const [validateDone, setValidateDone] = useState(false);
   const [explorationDone,setExplorationDone]=useState(false);
+  useEffect(() => {
+    if (!sessionId || !session || requestedStage || modeEndsAt13(session)) return;
+    if (session.phase_2_status === "in_progress" || session.phase_2_status === "complete") {
+      window.location.replace(`/detonation?session=${encodeURIComponent(sessionId)}`);
+    }
+  }, [sessionId, session, requestedStage]);
   const nextStage = nextPipelineStage(selectedId, !!session?.stage_1b_required, session?.run_mode);
   const nextStageStatus: StageStatus | null = nextStage ? statuses[nextStage.id] : null;
   // Stage 15 is the persisted boundary between the Strategy Pipeline and Phase 2.
@@ -3144,7 +3143,8 @@ function PipelineView() {
 
       <div className="flex flex-1 overflow-hidden">
         <LeftPanel
-          stages={STAGES}
+          stages={STAGES.filter(s => !modeEndsAt13(session ?? {}) || Number.parseInt(s.id, 10) <= 13 && s.id !== "13B")}
+          excludedStageNote={modeEndsAt13(session ?? {}) ? modeStageNote(session ?? {}) : undefined}
           statuses={statuses}
           selectedId={selectedId}
           onSelect={(id) => {
@@ -3759,6 +3759,7 @@ function LeftPanel({
   totalMain,
   hasBrief,
   sessionId,
+  excludedStageNote,
 }: {
   stages: Stage[];
   statuses: Record<string, StageStatus>;
@@ -3769,10 +3770,11 @@ function LeftPanel({
   totalMain: number;
   hasBrief: boolean;
   sessionId?: string | null;
+  excludedStageNote?: string;
 }) {
   const briefSelected = selectedId === "BRIEF";
   const laterFlags = useLaterStageFlags(sessionId ?? null);
-  const later = laterFlags ? laterStageStatuses(laterFlags) : [];
+  const later = laterFlags && !excludedStageNote ? laterStageStatuses(laterFlags) : [];
   const headerStage = laterFlags ? furthestStageLabel({ ...laterFlags, current_stage: Math.max(currentMainNumber, laterFlags.current_stage ?? 0) }) : String(currentMainNumber);
   return (
     <aside className="hidden w-[280px] shrink-0 overflow-y-auto border-r border-border bg-background py-6 md:block">
@@ -3945,6 +3947,7 @@ function LeftPanel({
           );
         })}
       </ul>
+      {excludedStageNote && <p className="px-5 py-3 text-body-sm text-text-secondary">Stages 14+: {excludedStageNote}</p>}
       {later.length > 0 && sessionId && (
         <ul aria-label="Later stages">
           {later.map((st) => {

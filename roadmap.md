@@ -1,5 +1,9 @@
 # Roadmap — Partner Hub structured evidence (27 Oct 2026)
 
+## Mode-aware run links — 25 Nov 2026
+- [x] Correct all-mode landings and exclude unavailable stages; add opt-in test-run listing without changing reports. Checked Pipeline, legacy Detonation, canonical/access links, register links, Creative steps and existing worker/database mode guards; no record or permission changes.
+- [ ] Run landing/regression tests, publish if passing, and verify both existing test checkpoints live without approving or running stages.
+
 ## Headroom / Turnaround / modelled change — 25 Nov 2026
 - [x] Durable supervisor recovery, atomic publication and child-job reuse; two real append-only Infiniti projections read back, Jaguar named missing-baseline response; baseline unchanged.
 - [x] General mode worker safeguards, saved-evidence reference validation, permanent-error stop and spaced retries implemented; full mode execution awaits human checkpoints.

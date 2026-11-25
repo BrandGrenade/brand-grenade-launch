@@ -24,6 +24,15 @@ const baseSession = {
 
 const empty = { sessions: [], workspaces: [], intelligence: [], synthesiser: [], stimulus: [] };
 
+it("test records are opt-in, never part of default runs", () => {
+  const rows = { ...empty, sessions: [{ ...baseSession, test_copy_of: "production", exploration_brief: { mode: "headroom" } }] };
+  expect(toRegisterRuns(rows)).toHaveLength(0);
+  const tests = toRegisterRuns(rows, undefined, true);
+  expect(tests).toHaveLength(1);
+  expect(tests[0]?.openHref).toBe("/pipeline?session=sess-1");
+  expect(tests[0]?.runType).toBe("Headroom · Test");
+});
+
 describe("sessionHasDeliverables", () => {
   it("is false when no document-bearing stage exists", () => {
     expect(sessionHasDeliverables({ ...baseSession })).toBe(false);
