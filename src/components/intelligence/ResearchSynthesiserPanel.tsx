@@ -7,6 +7,7 @@
 // Nothing is written until the user clicks Apply — the six textareas below
 // remain the human checkpoint and stay fully editable.
 
+import { resultOf } from "@/lib/keep-alive";
 import type { SynthesisedClaim } from "@/lib/synthesiser/types";
 import { useRef, useState } from "react";
 import { FileText, Loader2, Sparkles, Upload, X } from "lucide-react";
@@ -152,9 +153,9 @@ export function ResearchSynthesiserPanel({
     setResult(null);
     setApplied(false);
     try {
-      const res = await runSynthesise({
+      const res = await resultOf(runSynthesise({
         data: { brandName: brand.trim(), category: category.trim(), documents },
-      });
+      }));
       setResult(res);
       onSynthesised?.(res.stats.totalClaims);
       if (res.stats.totalClaims === 0) {

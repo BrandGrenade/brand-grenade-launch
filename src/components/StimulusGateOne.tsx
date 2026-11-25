@@ -1,6 +1,7 @@
 // CREATIVE STIMULUS ENGINE — PHASE 2 UI. Gate One: the full rating system.
 // Eight dimensions shown independently. Never collapsed into one number.
 
+import { resultOf } from "@/lib/keep-alive";
 import { useCallback, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -275,7 +276,7 @@ export function StimulusGateOne({
     try {
       let done = false;
       while (!done) {
-        const r = await rate({ data: { runId, batchSize: 2 } });
+        const r = await resultOf(rate({ data: { runId, batchSize: 2 } }));
         done = r.done;
         await onRefresh();
       }
@@ -315,7 +316,7 @@ export function StimulusGateOne({
             setBusy("tb");
             setErr(null);
             try {
-              const r = await tiebreak({ data: { runId, force: false } });
+              const r = await resultOf(tiebreak({ data: { runId, force: false } }));
               setTbMsg(r.fired ? null : r.reason);
               await onRefresh();
             } catch (e) {

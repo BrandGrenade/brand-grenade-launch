@@ -4,6 +4,7 @@
 // - saveCulturalTruth / saveBrandIntelligence: persistence.
 // - extractBrandGuidelinesFromPdf: Claude PDF reading for Option A auto-fill.
 
+import { keepAliveStream } from "@/lib/keep-alive";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
@@ -202,7 +203,8 @@ export const extractBrandGuidelinesFromPdf = createServerFn({ method: "POST" })
       })
       .parse(input),
   )
-  .handler(async ({ data, context }) => {
+  .handler(async function* ({ data, context }) {
+    yield* keepAliveStream((async () => {
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not configured");
 
@@ -274,6 +276,7 @@ Assess each asset's strength honestly: "strong" = ownable and distinctive,
       .filter((a: { name: string }) => a.name.length > 0)
       .slice(0, 30);
     return { values, tone, assets };
+    })());
   });
 
 // --- helpers -------------------------------------------------------------

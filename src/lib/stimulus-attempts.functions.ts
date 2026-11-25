@@ -3,6 +3,7 @@
 // one of them is active. Only the active attempt feeds Tissue Check decisions,
 // Gate One scoring and everything downstream.
 
+import { keepAliveStream } from "@/lib/keep-alive";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
@@ -63,10 +64,12 @@ export const listDirectionAttempts = createServerFn({ method: "POST" })
 export const tryAgainStimulusDirection = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) => DirectionOnly.parse(i))
-  .handler(async ({ data, context }) => {
+  .handler(async function* ({ data, context }) {
+    yield* keepAliveStream((async () => {
     const { dir, run } = await loadDirectionAndRun(data.directionId, context.userId);
     const { regenerateDirection } = await import("@/lib/stimulus/regenerate.server");
     return regenerateDirection({ direction: dir, run, mode: "try_again" });
+    })());
   });
 
 /** Explicitly promote a stored attempt to active. Never automatic. */

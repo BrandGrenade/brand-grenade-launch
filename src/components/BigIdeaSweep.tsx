@@ -4,6 +4,7 @@
 // Check, Gate One, then ONE winning idea and ONE winning line locked before
 // any channel-specific brief exists.
 
+import { resultOf } from "@/lib/keep-alive";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { sweepMayAdvance } from "@/lib/stimulus/sweep-job-policy";
@@ -728,7 +729,7 @@ export function BigIdeaSweep({
     async (args: { data: { directionId: string; notes: string; expectedSlot: number | null; expectedLensId: string | null } }) => {
       let last: { message: string } | null = null;
       for (let attempt = 1; attempt <= 3; attempt++) {
-        const r = await reviseOnce({ data: { ...args.data, attempt } });
+        const r = await resultOf(reviseOnce({ data: { ...args.data, attempt } }));
         if (r.ok) return;
         last = r;
       }

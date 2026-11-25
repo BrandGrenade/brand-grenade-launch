@@ -6,6 +6,7 @@
 // Adding a future stage to the dispatcher requires no change here: add the
 // entry to FACT_VERIFIED_STAGES and it becomes callable through this fn.
 
+import { keepAliveStream } from "@/lib/keep-alive";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -18,7 +19,8 @@ export const reverifyStageFacts = createServerFn({ method: "POST" })
   .inputValidator((d) =>
     z.object({ sessionId: z.string().uuid(), stageKey: StageKey }).parse(d),
   )
-  .handler(async ({ data, context }) => {
+  .handler(async function* ({ data, context }) {
+    yield* keepAliveStream((async () => {
     await assertSessionAccess(data.sessionId, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { FACT_VERIFIED_STAGES, runStageFactVerification } = await import(
@@ -56,4 +58,5 @@ export const reverifyStageFacts = createServerFn({ method: "POST" })
       ranSearch: outcome.ranSearch,
       results: outcome.results,
     };
+    })());
   });

@@ -3,6 +3,7 @@
 // Confirms Product, Consumer, and Cultural truths and gathers Brand Intelligence
 // before any Phase 2 stage is run.
 
+import { resultOf } from "@/lib/keep-alive";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
@@ -235,9 +236,9 @@ function ThreeTruthCanvas() {
     setError(null);
     try {
       const base64 = await fileToBase64(file);
-      const result = await extractPdfFn({
+      const result = await resultOf(extractPdfFn({
         data: { sessionId, pdfBase64: base64 },
-      });
+      }));
       if (result.values) setValuesField(result.values);
       if (result.tone) setToneField(result.tone);
       if (result.assets && result.assets.length > 0)

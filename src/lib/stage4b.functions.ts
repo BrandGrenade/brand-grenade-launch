@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { awaitWithDeltaKeepAlive } from "@/lib/keep-alive";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { streamClaude } from "./claude.server";
@@ -80,12 +81,14 @@ export const runStage4b = createServerFn({ method: "POST" })
     let finalOutput = output;
     {
       const { runStageFactVerification } = await import("./fact-verify.server");
-      const v = await runStageFactVerification({
+      const vBox: { value?: Awaited<ReturnType<typeof runStageFactVerification>> } = {};
+      yield* awaitWithDeltaKeepAlive(runStageFactVerification({
         stageKey: "stage4b",
         output,
         brandName: session.brand_name,
         category: session.category,
-      });
+      }), vBox);
+      const v = vBox.value!;
       finalOutput = v.output;
       yield {
         delta: v.ranSearch

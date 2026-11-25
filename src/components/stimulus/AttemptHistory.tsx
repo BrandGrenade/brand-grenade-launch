@@ -3,6 +3,7 @@
 // Try Again adds another. Exactly one attempt is active, and only the active
 // attempt travels downstream to Gate One and orchestration.
 
+import { resultOf } from "@/lib/keep-alive";
 import { useCallback, useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -102,7 +103,7 @@ export function AttemptHistory({
             setWorking("again");
             setErr(null);
             try {
-              await tryAgain({ data: { directionId } });
+              await resultOf(tryAgain({ data: { directionId } }));
               await refresh();
               setViewingId(null);
               await onChanged();

@@ -1,6 +1,7 @@
 // CREATIVE STIMULUS ENGINE — PHASE 2 server functions.
 // Gate One: full eight-dimension rating, seasoned-CD tie-breaker, approval record.
 
+import { keepAliveStream } from "@/lib/keep-alive";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
@@ -54,7 +55,8 @@ export const rateStimulusBatch = createServerFn({ method: "POST" })
       })
       .parse(i),
   )
-  .handler(async ({ data, context }) => {
+  .handler(async function* ({ data, context }) {
+    yield* keepAliveStream((async () => {
     const run = await loadRunForUser(data.runId, context.userId);
 
     let query = supabaseAdmin
@@ -118,6 +120,7 @@ export const rateStimulusBatch = createServerFn({ method: "POST" })
     if (remaining === 0)
       await supabaseAdmin.from("stimulus_runs").update({ status: "rated" }).eq("id", run.id);
     return { done: remaining === 0, rated: pending.length, remaining };
+    })());
   });
 
 /**
@@ -129,7 +132,8 @@ export const runStimulusTiebreaker = createServerFn({ method: "POST" })
   .inputValidator((i) =>
     z.object({ runId: z.string().uuid(), force: z.boolean().default(false) }).parse(i),
   )
-  .handler(async ({ data, context }) => {
+  .handler(async function* ({ data, context }) {
+    yield* keepAliveStream((async () => {
     const run = await loadRunForUser(data.runId, context.userId);
     const { data: rows, error } = await supabaseAdmin
       .from("stimulus_directions")
@@ -182,6 +186,7 @@ export const runStimulusTiebreaker = createServerFn({ method: "POST" })
       .eq("id", run.id);
 
     return { fired: true as const, reason: decision.reason, output };
+    })());
   });
 
 /** Gate One approval record: the decision, the full rating snapshot at that moment, and notes. */

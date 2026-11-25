@@ -1,6 +1,7 @@
 // Research Synthesiser — server function boundary.
 // Client-safe module: the handler body is stripped from the client bundle.
 
+import { keepAliveStream } from "@/lib/keep-alive";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -25,7 +26,8 @@ const SynthesiseInput = z.object({
 export const synthesiseResearch = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => SynthesiseInput.parse(input))
-  .handler(async ({ data }): Promise<SynthesiserResult> => {
+  .handler(async function* ({ data }) {
+    yield* keepAliveStream((async (): Promise<SynthesiserResult> => {
     let budget = MAX_TOTAL_CHARS;
     const documents = data.documents.map((d) => {
       const slice = d.text.slice(0, Math.max(0, budget));
@@ -41,4 +43,5 @@ export const synthesiseResearch = createServerFn({ method: "POST" })
       category: data.category,
       documents: documents.filter((d) => d.text.trim().length > 0),
     });
+    })());
   });

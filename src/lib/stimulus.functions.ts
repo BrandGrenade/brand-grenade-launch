@@ -16,6 +16,7 @@
 // The functions below are the shared read/triage/revise layer used by the
 // pre-channel sweep and by channel-adaptation runs.
 
+import { keepAliveStream } from "@/lib/keep-alive";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
@@ -181,7 +182,8 @@ export const reviseStimulusDirection = createServerFn({ method: "POST" })
       })
       .parse(i),
   )
-  .handler(async ({ data, context }) => {
+  .handler(async function* ({ data, context }) {
+    yield* keepAliveStream((async () => {
     const { data: row, error } = await supabaseAdmin
       .from("stimulus_directions")
       .select("id, run_id, lens_id, lens_name, sort_order, direction, revise_count, convergence")
@@ -220,6 +222,7 @@ export const reviseStimulusDirection = createServerFn({ method: "POST" })
       }
       return { ok: false as const, attempt: data.attempt, reason, message: rewriteFailureMessage(reason) };
     }
+    })());
   });
 
 
