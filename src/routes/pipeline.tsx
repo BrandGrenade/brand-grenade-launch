@@ -18,7 +18,8 @@ import { RequireAuth } from "@/components/RequireAuth";
 import { LocControls } from "@/components/LocControls";
 import { Checkpoint, buildRevisionInstruction } from "@/components/Checkpoint";
 import { SelectionRationale } from "@/components/SelectionRationale";
-import { Stage12Result } from "@/components/Stage12Result";
+import { Stage12Result, type SelectionVersion } from "@/components/Stage12Result";
+import { reselectAvailability, lockedNote, stage13ReturnsToStage12 } from "@/lib/reselection";
 import { BrandIntelligence } from "@/components/BrandIntelligence";
 import { SMPSelection, type SMPCard } from "@/components/SMPSelection";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,7 +38,7 @@ import { runStage7 } from "@/lib/stage7.functions";
 import { runStage9 } from "@/lib/stage9.functions";
 import { runStage10 } from "@/lib/stage10.functions";
 import { runStage11 } from "@/lib/stage11.functions";
-import { runStage12, saveSelectedSMP, saveSelectionRationale } from "@/lib/stage12.functions";
+import { runStage12, saveSelectedSMP, saveSelectionRationale, reselectProposition } from "@/lib/stage12.functions";
 import { runStage13, saveBrandIntelligence } from "@/lib/stage13.functions";
 import { runStage13b } from "@/lib/stage13b.functions";
 import { runStage14 } from "@/lib/stage14.functions";
@@ -648,7 +649,6 @@ interface SessionData {
   retry_status: string | null;
   locked_at?: string | null;
   lock_reason?: string | null;
-  validate_brief?: unknown;
 }
 
 function isPersistedStageComplete(
@@ -3062,6 +3062,20 @@ function PipelineView() {
     return { selectedProp, verdict, commitments, guardrails };
   }, [session?.selected_smp, stage13Output]);
 
+  const reselect = reselectAvailability({ ...(session ?? {}), stage_12_output: stage12Output } as never);
+  const loadSelectionHistory = async () => {
+    if (!sessionId) return;
+    const { data } = await supabase.from("selection_versions").select("version_no, selected_smp, selection_source, stage_13_verdict, superseded_at").eq("session_id", sessionId).order("version_no", { ascending: false });
+    setSelectionHistory((data ?? []) as SelectionVersion[]);
+  };
+  useEffect(() => { void loadSelectionHistory(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [sessionId]);
+  // Keep the address in step with the stage on screen so a refresh reopens it.
+  useEffect(() => {
+    if (!sessionId || !selectedId || selectedId === "BRIEF") return;
+    if ((requestedStage ?? "").toUpperCase().padStart(2, "0") === selectedId) return;
+    void navigate({ to: "/pipeline", search: { session: sessionId, stage: selectedId } as never, replace: true });
+  }, [selectedId, sessionId]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const confirmStrategySignoff = async (stop: boolean) => {
     if (!sessionId) return;
     setStrategySignoffSaving(true);
@@ -3209,7 +3223,22 @@ function PipelineView() {
         ) : (
 
           <RightPanel
-            outputExtra={sessionId && positionTableStages(session?.exploration_brief ? String(session.exploration_brief['mode']) : null).includes(selectedId) ? <CurrentPositionTable sessionId={sessionId} refreshKey={`${statuses["10"]}-${statuses["13"]}`} /> : null}
+            outputExtra={<>{(selectedId === "11" || selectedId === "13") && session?.checkpoint_c_confirmed && !session?.validate_brief ? (
+              <div className="mt-6 rounded-md border border-border p-4">
+                {selectedId === "13" && stage13ReturnsToStage12(stage13Output) && <p className="mb-2 text-body-sm font-semibold text-text-primary">Stage 13 verdict: return to Stage 12.</p>}
+                {reselect.allowed
+                  ? <Button variant="outline" onClick={() => { setReselecting(true); setSelectedId("12"); }}>Return to Stage 12 and choose again</Button>
+                  : reselect.reason ? <p className="text-body-sm text-text-secondary">{reselect.reason}</p> : null}
+              </div>
+            ) : null}
+            {selectedId === "13" && session?.run_mode === "diagnostic" && !session?.validate_brief && !session?.exploration_brief && session?.stage_13_output && !session?.strategy_signoff_confirmed && !session?.locked_at ? (
+              <div className="mt-4 rounded-md border border-border p-4">
+                <p className="mb-2 text-body-sm text-text-secondary">Final checkpoint: signing off locks this run. Until then you can still choose again at Stage 12.</p>
+                <Button onClick={() => void confirmStrategySignoff(true)}>Sign off and lock this run</Button>
+              </div>
+            ) : null}
+            {sessionId && positionTableStages(session?.exploration_brief ? String(session.exploration_brief['mode']) : null).includes(selectedId) ? <CurrentPositionTable sessionId={sessionId} refreshKey={`${statuses["10"]}-${statuses["13"]}`} /> : null}</>}
+            retryLockedNote={session?.locked_at ? lockedNote(session.lock_reason) : null}
             validateNotice={session?.validate_brief && sessionId ? (
               <div className="border-b px-6 py-3 sm:px-12" style={{ borderColor: "var(--color-border)", backgroundColor: "var(--color-surface-2)" }}>
                 <p className="text-body-sm font-semibold">Validate run — verdict on the current strategy only</p>
@@ -3494,7 +3523,51 @@ function PipelineView() {
               console.log(`[Checkpoint Escalate] stage=${stageId} reason=${reason}`);
             }}
             customCheckpoint={
-              selectedId === "12" && selectedStatus === "checkpoint" && rationaleForId !== "12" ? (
+              selectedId === "12" && reselecting && rationaleForId !== "12" ? (
+                <div>
+                  <div className="mb-4 flex items-center justify-between gap-3 rounded-md border border-border p-4">
+                    <p className="text-body-sm text-text-secondary">Choosing again. The current selection and its Stage 13 verdict will be kept as an earlier version. Earlier stages are not rerun.</p>
+                    <Button variant="outline" onClick={() => setReselecting(false)}>Cancel</Button>
+                  </div>
+                  <SMPSelection
+                    stage12Output={stage12Output ?? ""}
+                    stage11Output={stage11Output ?? undefined}
+                    stage10Output={stage10Output ?? undefined}
+                    stage9Output={stage9Output ?? undefined}
+                    locPackages={((session as unknown as { loc_decision_packages?: unknown } | null)?.loc_decision_packages as never) ?? null}
+                    locStatus={session?.loc_status ?? null}
+                    locError={session?.loc_error ?? null}
+                    onSelect={async (payload) => {
+                      if (!sessionId) return;
+                      const primary = payload.loc ?? payload.core;
+                      if (!primary) return;
+                      try {
+                        await reselectPropositionFn({ data: {
+                          sessionId,
+                          smpLine: primary.smpLine || `Proposition ${primary.cardNumber}`,
+                          fieldName: primary.fieldName || `Field ${primary.cardNumber}`,
+                          selectionSource: payload.loc ? "LOC" : "CORE",
+                          selectionEngine: payload.engineKey ?? null,
+                        } });
+                      } catch (err) {
+                        toast.error(err instanceof Error ? err.message : "Could not change the selection");
+                        return;
+                      }
+                      setSelectedSMP(primary);
+                      setSelectedSource(payload.loc ? "LOC" : "CORE");
+                      setStage13Output(null);
+                      setStage13Error(null);
+                      setStage13bOutput(null);
+                      setIntelSubmitted(false);
+                      setSession((prev) => prev ? ({ ...prev, selected_smp: primary.smpLine, selected_smp_field_name: primary.fieldName, selection_rationale: null, checkpoint_c_confirmed: false, stage_13_output: null, stage_13b_output: null } as SessionData) : prev);
+                      setStatuses((p) => ({ ...p, "12": "checkpoint", "13": "pending", "13B": "pending" }));
+                      setReselecting(false);
+                      setRationaleForId("12");
+                      void loadSelectionHistory();
+                    }}
+                  />
+                </div>
+              ) : selectedId === "12" && selectedStatus === "checkpoint" && rationaleForId !== "12" ? (
                 <SMPSelection
                   stage12Output={stage12Output ?? ""}
                   stage11Output={stage11Output ?? undefined}
@@ -3579,6 +3652,9 @@ function PipelineView() {
                   rationale={session?.selection_rationale ?? null}
                   onEdit={() => setRationaleForId("12")}
                   onContinue={session?.selection_rationale ? () => void handleContinueStage() : undefined}
+                  onChooseAgain={reselect.allowed ? () => setReselecting(true) : undefined}
+                  chooseAgainNote={reselect.reason}
+                  history={selectionHistory}
                 />
               ) : null
             }
@@ -4238,6 +4314,7 @@ function RightPanel({
   onCheckpointNotesChange,
   contentScrollRef,
   sessionId,
+  retryLockedNote,
 }: {
   stage: Stage;
   status: StageStatus;
@@ -4278,6 +4355,8 @@ function RightPanel({
   sessionId?: string;
   validateNotice?: ReactNode;
   outputExtra?: ReactNode;
+  /** Set on locked runs: shown in place of every Retry control. */
+  retryLockedNote?: string | null;
 }) {
   const isRunning = status === "running";
   const isCheckpoint = status === "checkpoint";
@@ -4339,7 +4418,8 @@ function RightPanel({
           <ErrorStateCard
             stage={stage}
             errorMessage={stage1Error}
-            onRetry={onRetry}
+            onRetry={retryLockedNote ? undefined : onRetry}
+            lockedNote={retryLockedNote ?? undefined}
             onBack={prevStage ? onBack : undefined}
             prevStageNumber={prevStage?.number}
           />
@@ -4445,7 +4525,7 @@ function RightPanel({
                   ) : (
                     <StreamedOutput text={text} streaming={isRunning} />
                   )}
-                  {isRunning ? <StallWatcher stageKey={stage.id} onRetry={onRetry} /> : null}
+                  {isRunning && !retryLockedNote ? <StallWatcher stageKey={stage.id} onRetry={onRetry} /> : null}
                   {outputExtra}
                 </>
               )}
@@ -4460,6 +4540,7 @@ function RightPanel({
         amendmentNote={amendmentNote}
         onAmendmentChange={onAmendmentChange}
         onRetry={onRetry}
+        lockedNote={retryLockedNote ?? undefined}
       />
 
       <BottomBar
@@ -4473,7 +4554,7 @@ function RightPanel({
         diagnostic={diagnostic}
         onContinue={onContinue}
         onBack={onBack}
-        onRetry={onRetry}
+        onRetry={retryLockedNote ? undefined : onRetry}
         onReturnToCurrent={onBackToCurrent ?? (() => {})}
         onViewFinal={onViewFinal}
       />
@@ -5221,7 +5302,7 @@ function BottomBar({
   diagnostic: boolean;
   onContinue: () => void;
   onBack: () => void;
-  onRetry: () => void;
+  onRetry?: () => void;
   onReturnToCurrent: () => void;
   onViewFinal: () => void;
 }) {
@@ -5251,7 +5332,7 @@ function BottomBar({
         {isViewingHistorical ? "Return to current stage" : prevStage ? `← Go Back to Stage ${prevStage.number}` : "← Go Back"}
       </button>
       <div className="flex items-center gap-3">
-        <button
+        {onRetry && <button
           type="button"
           onClick={onRetry}
           className="inline-flex h-10 items-center rounded-md px-4 text-sm font-semibold transition-colors"
@@ -5262,7 +5343,7 @@ function BottomBar({
           }}
         >
           ↺ Retry This Stage
-        </button>
+        </button>}
         <button
           type="button"
           onClick={pipelineComplete ? onViewFinal : onContinue}
@@ -5291,13 +5372,16 @@ function StageControlBar({
   amendmentNote,
   onAmendmentChange,
   onRetry,
+  lockedNote,
 }: {
   stage: Stage;
   status: StageStatus;
   amendmentNote: string;
   onAmendmentChange: (value: string) => void;
   onRetry: () => void;
+  lockedNote?: string;
 }) {
+  void onRetry;
   let leftEl: ReactNode;
   if (status === "running") {
     leftEl = (
@@ -5335,14 +5419,14 @@ function StageControlBar({
       }}
     >
       <div className="text-body-sm">{leftEl}</div>
-      <input
+      {lockedNote ? <p className="text-body-sm" style={{ color: "#8B8680" }}>{lockedNote}</p> : <input
         type="text"
         value={amendmentNote}
         onChange={(e) => onAmendmentChange(e.target.value.slice(0, 2000))}
         placeholder="Optional amendment notes for Retry This Stage"
         className="input-base h-9 w-full"
         aria-label="Amendment notes for retry"
-      />
+      />}
     </div>
   );
 }
@@ -5450,12 +5534,14 @@ function ErrorStateCard({
   stage,
   errorMessage,
   onRetry,
+  lockedNote,
   onBack,
   prevStageNumber,
 }: {
   stage: Stage;
   errorMessage: string | null;
-  onRetry: () => void;
+  onRetry?: () => void;
+  lockedNote?: string;
   onBack?: () => void;
   prevStageNumber?: string;
 }) {
@@ -5478,7 +5564,7 @@ function ErrorStateCard({
           Stage {stage.number} didn't complete
         </h3>
         <p className="text-body" style={{ color: "#8B8680", marginTop: 8 }}>
-          {modeRule ?? 'The generation was interrupted. This is usually a temporary issue.'}
+          {lockedNote ?? modeRule ?? 'The generation was interrupted. This is usually a temporary issue.'}
         </p>
         {errorMessage && !modeRule ? (
           <div style={{ marginTop: 16 }}>
@@ -5524,7 +5610,7 @@ function ErrorStateCard({
             justifyContent: "center",
           }}
         >
-          {!modeRule && <Button
+          {!modeRule && onRetry && <Button
             type="button"
             onClick={onRetry}
             style={{

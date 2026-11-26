@@ -73,6 +73,8 @@ export interface Db {
   validateOutputs?(runId: string, version: number): Promise<Row | null>;
   /** Latest append-only Checkpoint C record (person + time), if any. */
   checkpointC?(sessionId: string): Promise<{ confirmed_by: string; confirmed_at: string } | null>;
+  /** Earlier confirmed selections replaced by reselection (append-only). */
+  selectionHistory?(sessionId: string): Promise<Record<string, unknown>[]>;
   /** Hub foundations: brand sources for one client (linked production records only). */
   brandSources?(bgClientId: string): Promise<BrandSources>;
   batchCreate?(b: { bg_client_id: string; key_id: string; brands: string[]; analyses: string[]; market: string | null }): Promise<string>;
@@ -854,7 +856,7 @@ async function foundations(name: string, params: Record<string, unknown>, db: Db
     const ratRow = c.vc.rows.filter((r) => /^Checkpoint C: saved human selection rationale/.test(r.reason ?? "") && c.vc.batches.indexOf(r.created_at) + 1 < c.v).map((r) => r.created_at).sort().pop() ?? null;
     const conf = confirmationEvent({ selected_smp: c.get("selected_smp"), selection_rationale: c.get("selection_rationale"), checkpoint_c_confirmed: run.row.checkpoint_c_confirmed, checkpoint_c_confirmed_at: run.row.checkpoint_c_confirmed_at, rationale_version_at: ratRow, record: c.v === c.vc.current && db.checkpointC ? await db.checkpointC(run.id) : null });
     const sel = stage10Selected(run.id, c.v, await recordOf("stage10", c), conf, c.get("selected_smp"));
-    const content = { stage10_selected: sel.value, reason: sel.reason, confirmation: { authority: "stored Stage 12 confirmation (selected_smp + saved selection_rationale)", confirmed: conf.confirmed, discrepancy: conf.discrepancy, ...(conf.confirmed_by ? { confirmed_by: (await db.actorName(conf.confirmed_by)) ?? "recorded", confirmed_at: conf.at } : {}) }, stage18: STAGE18_MAX };
+    const content = { stage10_selected: sel.value, reason: sel.reason, confirmation: { authority: "stored Stage 12 confirmation (selected_smp + saved selection_rationale)", confirmed: conf.confirmed, discrepancy: conf.discrepancy, ...(conf.confirmed_by ? { confirmed_by: (await db.actorName(conf.confirmed_by)) ?? "recorded", confirmed_at: conf.at } : {}) }, stage18: STAGE18_MAX, ...(c.v === c.vc.current && db.selectionHistory ? { selection_history: await db.selectionHistory(run.id) } : {}) };
     return base(c, { schema_version: "stage10_selected.v1", content_status: sel.value ? "structured" : "not_produced", content,
       metadata: metadata({ brand_id: typeof run.row.brand_name === "string" ? brandId(run.row.brand_name) : null, market: "global", analysis_type: "stage10_selected", strategy_version: c.v, method_version: "stage10_selected.v1", run_id: run.id, run_version: c.v, produced_at: isoUtc(conf.at), evidence_refs: ["sessions.stage_10_output", "sessions.selected_smp", "sessions.selection_rationale"], missing_inputs: sel.reason ? [sel.reason] : [], status: sel.value ? "complete" : "not_produced" }) });
   }

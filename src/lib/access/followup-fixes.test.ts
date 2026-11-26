@@ -28,7 +28,7 @@ describe("Checkpoint C record", () => {
     expect(r.confirmed_by).toBeUndefined();
   });
   it("both confirmation paths append a record", () => {
-    expect(readFileSync("src/lib/stage12.functions.ts", "utf8")).toMatch(/from\("checkpoint_confirmations"\)\s*\.insert/);
+    expect(readFileSync("src/lib/stage12.functions.ts", "utf8")).toContain('rpc("bg_confirm_checkpoint_c"');
     expect(readFileSync("src/routes/pipeline.tsx", "utf8")).toMatch(/from\("checkpoint_confirmations"\)\.insert/);
   });
 });

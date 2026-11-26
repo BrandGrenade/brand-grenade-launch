@@ -207,6 +207,10 @@ export function supabaseDb(sb: any): Db {
       const { data } = await retryRead(() => sb.from("checkpoint_confirmations").select("confirmed_by, confirmed_at").eq("session_id", sessionId).eq("checkpoint", "c").order("confirmed_at", { ascending: false }).limit(1).maybeSingle(), "CHECKPOINT_C_RECORD_READ_FAILED");
       return data ? { confirmed_by: String(data.confirmed_by), confirmed_at: String(data.confirmed_at) } : null;
     },
+    async selectionHistory(sessionId) {
+      const { data } = await retryRead(() => sb.from("selection_versions").select("version_no, selected_smp, selection_source, stage_13_verdict, checkpoint_c_confirmed_at, superseded_at").eq("session_id", sessionId).order("version_no", { ascending: true }), "SELECTION_HISTORY_READ_FAILED");
+      return (data ?? []) as Record<string, unknown>[];
+    },
     async validateOutputs(id, version) {
       const {data}=await retryRead(()=>sb.from('validate_assessments').select('outputs,subject_brand,brief').eq('session_id',id).eq('run_version',version).order('assessment_revision',{ascending:false}).limit(1).maybeSingle(),'VALIDATE_OUTPUT_READ_FAILED');
       return data?.outputs ? {...data.outputs, __subject_brand: data.subject_brand, __strategy_owner: data.brief?.strategyOwner ?? null} : null;

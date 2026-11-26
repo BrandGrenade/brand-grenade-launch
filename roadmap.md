@@ -1,5 +1,10 @@
 # Roadmap — Partner Hub structured evidence (27 Oct 2026)
 
+## Fix pack: selection, navigation, held items — 25 Nov 2026
+- [x] Reselection before final checkpoint with kept history; lock moved to sign-off for non-Validate diagnostic runs; Headroom 06134f96 auto-lock lifted.
+- [x] Retry hidden with plain note on locked runs; single selection only; LOC score label; landing/URL sync; Stage 18 code verdict; Hub /80 text; atomic Checkpoint C.
+- [x] 748 tests passed, typecheck clean. Publish + live check of 06134f96 Stage 12.
+
 ## LOC mode stop rule — 25 Nov 2026
 - [x] Audited generation, abstraction, anchoring, validation, Pipeline/LOC retry surfaces, numeric upstream guard, navigation and database Stage 13 guard. LOC feeds Stage 9 in both modes and precedes Checkpoint B; excluded steps show plain rules without Retry.
 - [x] 714 tests / 87 files passed; compilation clean; published. Live selective retry on Headroom 06134f96 saved 13/13 successful engines, zero failures; refreshed screen showed Complete and all 13 outputs. Protected fingerprints unchanged for Headroom and untouched Turnaround; no checkpoint approvals or later stages ran.
