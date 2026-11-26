@@ -307,6 +307,7 @@ export function parseSMPCards(
   primary: string,
   stage11Fallback?: string,
   stage10ForScores?: string,
+  fullSet = false,
 ): SMPCard[] {
   const raw = parsePropositions(primary);
   console.log("Propositions found (stage 12): " + raw.length);
@@ -331,7 +332,7 @@ export function parseSMPCards(
       }
     }
 
-    return raw.map((p, idx) => {
+    const cards = raw.map((p, idx) => {
       const line = p.line.replace(/^["""]|["""]$/g, "").trim();
       const match = byLine.get(norm(line)) ?? byField.get(norm(p.fieldName ?? ""));
       const hasAny =
@@ -382,6 +383,10 @@ export function parseSMPCards(
         exposureFlags: p.exposureFlags ?? s11?.flags,
       };
     });
+    if (!fullSet) return cards;
+    const present = new Set(cards.map(c => c.smpLine.trim().toLowerCase()));
+    const earlier = parseSMPCards("", stage11Fallback, stage10ForScores, true);
+    return [...cards, ...earlier.filter(c => !present.has(c.smpLine.trim().toLowerCase())).map((c, index) => ({ ...c, cardNumber: cards.length + index + 1 }))];
   }
 
 
@@ -390,7 +395,7 @@ export function parseSMPCards(
   // Stage 12 output has not yet been produced. Stage 11 V2 removes only
   // fatal-tier failures, so EXPOSED survivors appear here too.
   const stage11Verdicts = stage11Fallback
-    ? parseStage11Verdicts(stage11Fallback).filter((v) => v.verdict !== "ELIMINATED")
+    ? parseStage11Verdicts(stage11Fallback).filter((v) => fullSet || v.verdict !== "ELIMINATED")
     : [];
   const verdicts = stage11Verdicts.length
     ? stage11Verdicts
@@ -630,6 +635,7 @@ export function SMPSelection({
   onResubmit,
   resubmitting = false,
   enhancing = false,
+  fullSet = false,
 }: {
   stage12Output: string;
   stage11Output?: string;
@@ -654,6 +660,8 @@ export function SMPSelection({
   resubmitting?: boolean;
   /** True while Stage 12 Claude card formatting is still streaming in the background. */
   enhancing?: boolean;
+  /** Reselection shows saved eliminated candidates too, with their unchanged verdicts. */
+  fullSet?: boolean;
 
 }) {
   const stage11ByLine = useMemo(() => {
@@ -666,7 +674,7 @@ export function SMPSelection({
   }, [stage11Output]);
 
   const coreCards = useMemo(() => {
-    const parsed = parseSMPCards(stage12Output ?? "", stage11Output, stage10Output);
+    const parsed = parseSMPCards(stage12Output ?? "", stage11Output, stage10Output, fullSet);
     return parsed.map((c) => {
       const v = stage11ByLine.get(c.smpLine.trim().toLowerCase());
       let stage11Verdict: string | undefined;
@@ -685,7 +693,7 @@ export function SMPSelection({
         stage11Conditions,
       };
     });
-  }, [stage12Output, stage11Output, stage10Output, stage11ByLine]);
+  }, [stage12Output, stage11Output, stage10Output, stage11ByLine, fullSet]);
   // Apply the Stage 9 CANDIDATE DISPOSITION ledger before building cards:
   // REJECTED engines leave the pool, REBUILT engines carry their rebuilt line.
   const locDisposed = useMemo(

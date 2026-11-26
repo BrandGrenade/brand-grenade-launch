@@ -331,7 +331,11 @@ export const saveSelectedSMP = createServerFn({ method: "POST" })
             selection_source: data.selectionSource ?? "CORE",
             selection_engine: data.selectionEngine ?? null,
           })
-          .eq("id", data.sessionId),
+          .eq("id", data.sessionId)
+          .eq("checkpoint_c_confirmed", false)
+          .is("locked_at", null)
+          .select("id")
+          .single(),
       "SMP selection save",
     );
     if (!res.ok) throw new Error(res.error);
@@ -367,7 +371,7 @@ export const saveSelectionRationale = createServerFn({ method: "POST" })
     const rationale = Object.fromEntries(Object.entries(data.rationale).filter((entry): entry is [string, string] => typeof entry[1] === "string"));
     const output = fillSelectionDeliverable(session.stage_12_output ?? "", session.selected_smp, rationale);
     // Checkpoint C confirmation and its append-only record are saved in one database transaction.
-    const { error } = await context.supabase.rpc("bg_confirm_checkpoint_c" as never, { p_session_id: data.sessionId, p_rationale: rationale, p_output: output } as never);
+    const { error } = await context.supabase.rpc("bg_confirm_checkpoint_c" as never, { p_session_id: data.sessionId, p_rationale: { ...rationale, _expected_smp: session.selected_smp, _expected_source: session.selection_source, _expected_output: session.stage_12_output }, p_output: output } as never);
     if (error) throw new Error(`Failed to save selection rationale: ${error.message}`);
     return { ok: true, rationale, output };
   });

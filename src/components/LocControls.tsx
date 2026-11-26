@@ -212,7 +212,7 @@ export function LocControls({ sessionId }: { sessionId: string }) {
           </span>
         </div>
 
-        {!blockedRule && <div className="ml-auto flex items-center gap-2">
+        {!blockedRule && !locked && <div className="ml-auto flex items-center gap-2">
           {(!status || status.loc_status == null || state === "failed" || stuck) && (
             <Button variant="outline" size="sm"
               type="button"
@@ -261,6 +261,7 @@ export function LocControls({ sessionId }: { sessionId: string }) {
               onClick={() =>
                 trigger(true, {
                   regenerateEngines: failedEngines.map(({ engine }) => engine),
+                  ...(retryInstructions.trim() ? { retryInstructions: retryInstructions.trim() } : {}),
                 })
               }
               title={`Re-fire only the ${failedEngines.length} failed engine${failedEngines.length === 1 ? "" : "s"}; keep successful outputs`}

@@ -63,12 +63,13 @@ export const runStage13 = createServerFn({ method: "POST" })
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
       .select(
-        "exploration_brief, brand_name, category, selected_smp, selected_smp_field_name, selection_rationale, stage_2_output, stage_10_output, stage_11_output, stage_12_output, stage_13_output, brand_intelligence, is_preflight_test, brief_type, current_proposition, current_proposition_source, current_proposition_date, brand_positioning, run_mode, validate_brief, stage_9_structured, stage_10_structured, stage_11_structured"
+        "checkpoint_c_confirmed_at, exploration_brief, brand_name, category, selected_smp, selected_smp_field_name, selection_rationale, stage_2_output, stage_10_output, stage_11_output, stage_12_output, stage_13_output, brand_intelligence, is_preflight_test, brief_type, current_proposition, current_proposition_source, current_proposition_date, brand_positioning, run_mode, validate_brief, stage_9_structured, stage_10_structured, stage_11_structured"
       )
       .eq("id", data.sessionId)
       .single();
     if (error || !session) throw new Error(`Session not found: ${error?.message ?? "no row"}`);
     if (!session.selected_smp) throw new Error("Selected SMP missing — Stage 12 must be confirmed");
+    const selectedSmp = session.selected_smp;
     if (!session.brand_intelligence) throw new Error("Brand Intelligence not supplied");
     if (session.stage_13_output) {
       yield { delta: session.stage_13_output };
@@ -76,10 +77,15 @@ export const runStage13 = createServerFn({ method: "POST" })
       return;
     }
 
-    await supabaseAdmin
+    const { error: claimError } = await supabaseAdmin
       .from("sessions")
-      .update({ current_stage: 13, status: "running", stage_13_error: null })
-      .eq("id", data.sessionId);
+      .update({ current_stage: 13, status: "running", stage_status: "running:13", stage_13_error: null })
+      .eq("id", data.sessionId)
+      .filter("checkpoint_c_confirmed_at", session.checkpoint_c_confirmed_at ? "eq" : "is", session.checkpoint_c_confirmed_at ?? "null")
+      .not("stage_status", "like", "running%")
+      .is("stage_13_output", null)
+      .select("id").single();
+    if (claimError) throw new Error("Stage 13 is already running, or the selection changed. Reload before continuing.");
 
     // T1: Deal briefs also score the current proposition's credibility (baseline only) in this same call.
     const current = session.brief_type === 'deal' || session.exploration_brief ? resolveCurrentProposition(session) : undefined;
@@ -128,7 +134,7 @@ export const runStage13 = createServerFn({ method: "POST" })
       yield { delta: output };
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Stage 13 failed";
-      await supabaseAdmin.from("sessions").update({ stage_13_error: msg }).eq("id", data.sessionId);
+      await supabaseAdmin.from("sessions").update({ stage_13_error: msg, stage_status: "error:13" }).eq("id", data.sessionId).filter("checkpoint_c_confirmed_at", session.checkpoint_c_confirmed_at ? "eq" : "is", session.checkpoint_c_confirmed_at ?? "null");
       throw new Error(msg);
     }
 
@@ -149,7 +155,11 @@ export const runStage13 = createServerFn({ method: "POST" })
         stage_13_structured_error: v.error,
         ...diagnosticDocument,
       } as never)
-      .eq("id", data.sessionId),
+      .eq("id", data.sessionId)
+      .filter("checkpoint_c_confirmed_at", session.checkpoint_c_confirmed_at ? "eq" : "is", session.checkpoint_c_confirmed_at ?? "null")
+      .eq("selected_smp", selectedSmp)
+      .is("stage_13_output", null)
+      .select("id").single(),
       (message) => supabaseAdmin.from("sessions").update({ stage_13_error: message }).eq("id", data.sessionId),
       "Stage 13 structured output save",
     );

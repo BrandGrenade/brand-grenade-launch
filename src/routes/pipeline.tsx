@@ -1015,6 +1015,7 @@ function PipelineView() {
   const [statuses, setStatuses] = useState(initialStatuses);
   const [selectedId, setSelectedId] = useState("01");
   const hydratedSessionRef = useRef<string | null>(null);
+  const [navigationReady, setNavigationReady] = useState(false);
   const selectedIdRef = useRef("01");
   const contentScrollRef = useRef<HTMLDivElement | null>(null);
 
@@ -1637,6 +1638,7 @@ function PipelineView() {
       hydratedSessionRef.current = session.id;
       const activeStage = landingPipelineStage(mergedForSelection, modeEndsAt13(session), requestedStage);
       setSelectedId(activeStage);
+      setNavigationReady(true);
     }
   }, [initialStatuses, session, requestedStage]);
 
@@ -2844,6 +2846,10 @@ function PipelineView() {
 
   const handleRetryStage = async (stageId: string) => {
     if (!sessionId) return;
+    if (session?.locked_at) { toast.error(lockedNote(session.lock_reason)); return; }
+    const amendment = amendmentNotes[stageId]?.trim() ?? "";
+    const fieldNotes = checkpointFieldNotes[stageId] ?? [];
+    const note = buildRevisionInstruction(fieldNotes, amendment).trim();
     if (stageId === "08B") {
       try {
         setStatuses((p) => ({ ...p, "08B": "running" }));
@@ -2858,7 +2864,7 @@ function PipelineView() {
               } as SessionData)
             : prev,
         );
-        await runLocFn({ data: { sessionId, force: true } });
+        await runLocFn({ data: { sessionId, force: true, ...(note ? { retryInstructions: note } : {}) } });
       } catch (e) {
         console.error("LOC retry failed", e);
         setStatuses((p) => ({ ...p, "08B": "error" }));
@@ -2867,9 +2873,6 @@ function PipelineView() {
     }
     const dbId = STAGE_ID_TO_DB[stageId];
     if (!dbId) return;
-    const amendment = amendmentNotes[stageId]?.trim() ?? "";
-    const fieldNotes = checkpointFieldNotes[stageId] ?? [];
-    const note = buildRevisionInstruction(fieldNotes, amendment).trim();
     const previousOutput = getRawStageOutput(stageId)?.trim();
     try {
       if (note) setPendingFeedback((p) => ({ ...p, [stageId]: note }));
@@ -3069,12 +3072,7 @@ function PipelineView() {
     setSelectionHistory((data ?? []) as SelectionVersion[]);
   };
   useEffect(() => { void loadSelectionHistory(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [sessionId]);
-  // Keep the address in step with the stage on screen so a refresh reopens it.
-  useEffect(() => {
-    if (!sessionId || !selectedId || selectedId === "BRIEF") return;
-    if ((requestedStage ?? "").toUpperCase().padStart(2, "0") === selectedId) return;
-    void navigate({ to: "/pipeline", search: { session: sessionId, stage: selectedId } as never, replace: true });
-  }, [selectedId, sessionId]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Saved-stage links remain explicit; stage-less run links resume the current stage.
 
   const confirmStrategySignoff = async (stop: boolean) => {
     if (!sessionId) return;
@@ -3484,9 +3482,8 @@ function PipelineView() {
                   update.checkpoint_b_confirmed_at = nowIso;
                   if (notesText) update.checkpoint_b_notes = notesText;
                 } else if (letter === "C") {
-                  update.checkpoint_c_confirmed = true;
-                  update.checkpoint_c_confirmed_at = nowIso;
-                  if (notesText) update.checkpoint_c_notes = notesText;
+                  setRationaleForId("12");
+                  return;
                 }
                 const { error } = await supabase
                   .from("sessions")
@@ -3495,14 +3492,6 @@ function PipelineView() {
                 if (error) {
                   console.error("[Checkpoint] failed to persist", error);
                   return;
-                }
-                if (letter === "C") {
-                  // Append-only record of who confirmed Checkpoint C and when.
-                  const { data: u } = await supabase.auth.getUser();
-                  if (u.user) {
-                    const { error: logError } = await supabase.from("checkpoint_confirmations").insert({ session_id: sessionId, checkpoint: "c", confirmed_by: u.user.id, confirmed_at: nowIso, selected_smp: session?.selected_smp ?? null });
-                    if (logError) console.error("[Checkpoint] confirmation record failed", logError);
-                  }
                 }
                 setSession((prev) => (prev ? ({ ...prev, ...update } as SessionData) : prev));
               }
@@ -3530,6 +3519,7 @@ function PipelineView() {
                     <Button variant="outline" onClick={() => setReselecting(false)}>Cancel</Button>
                   </div>
                   <SMPSelection
+                    fullSet
                     stage12Output={stage12Output ?? ""}
                     stage11Output={stage11Output ?? undefined}
                     stage10Output={stage10Output ?? undefined}

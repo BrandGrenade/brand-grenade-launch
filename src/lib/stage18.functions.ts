@@ -1,4 +1,4 @@
-import { applyStage18CodeVerdict } from "./stage18-verdict";
+import { applyStage18CodeVerdict, usesStage18CodeVerdict } from "./stage18-verdict";
 // Stage 18 — The Detonation
 // Generates three Detonation candidate cards. Card-based, with selective
 // retry, per-card redirects, and a Courage Override path that appends a
@@ -91,7 +91,7 @@ export const runStage18 = createServerFn({ method: "POST" })
     await assertUpstreamStageOutput(data.sessionId, 18);
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
-      .select("brand_name, category, selected_smp, stage_17_selected_territory, stage_17b_output, truth_product, truth_consumer, truth_cultural, stage_18_output")
+      .select("created_at, brand_name, category, selected_smp, stage_17_selected_territory, stage_17b_output, truth_product, truth_consumer, truth_cultural, stage_18_output")
       .eq("id", data.sessionId)
       .single();
     if (error || !session) throw new Error(`Session not found: ${error?.message ?? "no row"}`);
@@ -123,12 +123,13 @@ export const runStage18 = createServerFn({ method: "POST" })
       throw e instanceof Error ? e : new Error(msg);
     }
 
+    const savedOutput = usesStage18CodeVerdict(session.created_at) ? applyStage18CodeVerdict(output) : output;
     const { error: saveErr } = await supabaseAdmin
       .from("sessions")
-      .update({ stage_18_output: applyStage18CodeVerdict(output), stage_18_error: null, phase_2_current_stage: '18' })
+      .update({ stage_18_output: savedOutput, stage_18_error: null, phase_2_current_stage: '18' })
       .eq("id", data.sessionId);
     if (saveErr) throw new Error(`Failed to save Stage 18 output: ${saveErr.message}`);
-    return { output: applyStage18CodeVerdict(output) };
+    return { output: savedOutput };
   });
 
 export const saveStage18 = createServerFn({ method: "POST" })
@@ -176,7 +177,7 @@ export const retryStage18 = createServerFn({ method: "POST" })
     await requireConfirmedSelection(data.sessionId, "D");
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
-      .select("brand_name, category, selected_smp, stage_17_selected_territory, stage_17b_output, truth_product, truth_consumer, truth_cultural, stage_18_output")
+      .select("created_at, brand_name, category, selected_smp, stage_17_selected_territory, stage_17b_output, truth_product, truth_consumer, truth_cultural, stage_18_output")
       .eq("id", data.sessionId)
       .single();
     if (error || !session) throw new Error(`Session not found: ${error?.message ?? "no row"}`);
@@ -223,7 +224,7 @@ export const retryStage18 = createServerFn({ method: "POST" })
       });
       const cards = splitCards(text);
       const single = cards[0] ?? { id, name: "Detonation", markdown: text };
-      regenerated[id] = { ...single, id, markdown: applyStage18CodeVerdict(single.markdown) };
+      regenerated[id] = { ...single, id, markdown: usesStage18CodeVerdict(session.created_at) ? applyStage18CodeVerdict(single.markdown) : single.markdown };
     }
 
     const merged = existing.map((c) => (regenerated[c.id] ? regenerated[c.id] : c));

@@ -1,9 +1,13 @@
 # Roadmap — Partner Hub structured evidence (27 Oct 2026)
 
 ## Fix pack: selection, navigation, held items — 25 Nov 2026
-- [x] Reselection before final checkpoint with kept history; lock moved to sign-off for non-Validate diagnostic runs; Headroom 06134f96 auto-lock lifted.
-- [x] Retry hidden with plain note on locked runs; single selection only; LOC score label; landing/URL sync; Stage 18 code verdict; Hub /80 text; atomic Checkpoint C.
-- [x] 748 tests passed, typecheck clean. Publish + live check of 06134f96 Stage 12.
+- [x] Reselection UI and append-only reset history added; non-Validate diagnostic sign-off lock implemented; Headroom 06134f96 auto-lock lifted. Its saved scores, outputs and confirmed choice are retained.
+- [x] Single selection wording, LOC label, new-run-only Stage 18 code verdict, Hub /80 description, atomic/idempotent Checkpoint C and stale-selection guards implemented. Transaction-only database checks passed and rolled back.
+- [x] 756 tests passed; compilation clean. Preview opened saved Stage 12 without making a new choice. Document-generation function has no app callers; documents use Stage 16 and Deliverables assembly.
+- [x] Final preview Stage 12 check showed 5 CORE cards with saved Stage 11 verdicts and 7 LOC cards with the required label; no new selection, approval, earlier-stage retry or model call was made.
+- [ ] Refresh/current-stage versus saved-view intent still fails acceptance: refreshing the explicit Stage 12 link stays at Stage 12 rather than resuming Stage 13.
+- [ ] System-wide acceptance: close audit gaps in stale-tab confirmation, selection/version fencing, LOC/Phase 2 retry notes and locked controls; verify full proposition set without changing the current choice.
+- [ ] Publish only after all acceptance checks pass, then verify 06134f96 live. No publication has occurred for this fix pack.
 
 ## LOC mode stop rule — 25 Nov 2026
 - [x] Audited generation, abstraction, anchoring, validation, Pipeline/LOC retry surfaces, numeric upstream guard, navigation and database Stage 13 guard. LOC feeds Stage 9 in both modes and precedes Checkpoint B; excluded steps show plain rules without Retry.

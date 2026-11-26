@@ -40,4 +40,4 @@
 - Executive Summary (stage16.executive_summary) is assembled on read from version-matched outputs by executive-summary.ts, never saved/model-generated; Deliverables and access share executiveSummaryForRun; why: cannot alter locked runs; same inputs, same document.
 - Access classifies test copies from sessions.test_copy_of, lists them separately in test_runs and permits only explicit-ID reads; why: downstream latest/default selection must never pick a test over a production client run.
 - Hub Phase 2 score outputs (stage17/18/20) copy values verbatim from saved stage text or fields with source text and flag; anything not found exactly once is not_produced; why: no converted scores.
-- Non-Validate runs lock at sign-off; reselection/Checkpoint C use single DB functions with append-only history; why: revisable, never half-saved.
+- Non-Validate sign-off locks; resets archive selections, C checks snapshots, Stage 13 fences by confirmation; why: no mixed decisions.

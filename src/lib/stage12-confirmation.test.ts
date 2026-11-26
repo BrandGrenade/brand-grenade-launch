@@ -21,9 +21,11 @@ beforeEach(() => { state.rpcs = []; state.error = null; });
 it("saves all six answers, filled output, confirmation and its record in one database call", async () => {
   await invoke();
   expect(state.rpcs).toHaveLength(1);
-  expect(state.rpcs[0]!.name).toBe("bg_confirm_checkpoint_c");
-  expect(state.rpcs[0]!.args).toMatchObject({ p_session_id: "jlr", p_rationale: jlrRationale });
-  for (const answer of Object.values(jlrRationale)) expect(String(state.rpcs[0]!.args["p_output"])).toContain(answer);
+  const saved = state.rpcs[0];
+  if (!saved) throw new Error("No confirmation was saved");
+  expect(saved.name).toBe("bg_confirm_checkpoint_c");
+  expect(saved.args).toMatchObject({ p_session_id: "jlr", p_rationale: { ...jlrRationale, _expected_smp: jlrSelection, _expected_source: "CORE" } });
+  for (const answer of Object.values(jlrRationale)) expect(String(saved.args["p_output"])).toContain(answer);
 });
 it("does not report confirmation success when the write fails", async () => {
   state.error = { message: "write rejected" };

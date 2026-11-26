@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { diagnosticFixture } from "./diagnostic-valuation.fixture";
 
-const state = vi.hoisted(() => ({ session: {} as Record<string, unknown>, updates: [] as Record<string, unknown>[], calls: [] as Record<string, unknown>[], response: "" }));
+const state = vi.hoisted(() => ({ session: {} as Record<string, unknown>, updates: [] as Record<string, unknown>[], calls: [] as Record<string, unknown>[], filters: [] as unknown[][], busy: false, response: "" }));
 vi.mock("@tanstack/react-start", () => ({
   createServerFn: () => {
     const chain = { middleware: () => chain, inputValidator: () => chain, handler: (fn: unknown) => fn };
@@ -11,7 +11,18 @@ vi.mock("@tanstack/react-start", () => ({
 vi.mock("@/integrations/supabase/client.server", () => ({ supabaseAdmin: {
   from: () => ({
     select: () => ({ eq: () => ({ single: async () => ({ data: state.session, error: null }) }) }),
-    update: (payload: Record<string, unknown>) => { state.updates.push(payload); return { eq: async () => ({ error: null }) }; },
+    update: (payload: Record<string, unknown>) => {
+      state.updates.push(payload);
+      const query = {
+        eq: (...args: unknown[]) => { state.filters.push(["eq", ...args]); return query; },
+        filter: (...args: unknown[]) => { state.filters.push(["filter", ...args]); return query; },
+        not: (...args: unknown[]) => { state.filters.push(["not", ...args]); return query; },
+        is: (...args: unknown[]) => { state.filters.push(["is", ...args]); return query; },
+        select: () => query,
+        single: async () => ({ data: { id: "run" }, error: state.busy ? { message: "no claim" } : null }),
+      };
+      return query;
+    },
   }),
 } }));
 vi.mock("@/integrations/supabase/auth-middleware", () => ({ requireSupabaseAuth: {} }));
@@ -32,9 +43,23 @@ beforeEach(() => {
   const fixture = diagnosticFixture();
   state.session = { ...fixture, brief_type: "deal", run_mode: "diagnostic", stage_13_output: null, brand_intelligence: { truth: "Evidence" }, current_proposition: "Existing position", current_proposition_source: "Client brief", current_proposition_date: "2026-10-17" };
   state.response = `Existing Stage 13 written answer\n<<<STRUCTURED_JSON\n${JSON.stringify(fixture.stage_13_structured)}\n>>>`;
-  state.updates = []; state.calls = [];
+  state.updates = []; state.calls = []; state.filters = []; state.busy = false;
 });
 describe("B1 Stage 13 completion", () => {
+  it("refuses a concurrent Stage 13 call before making any model call", async () => {
+    state.busy = true;
+    await expect(invoke()).rejects.toThrow("already running");
+    expect(state.calls).toHaveLength(0);
+  });
+  it("fences claim and completion against the confirmed selection timestamp", async () => {
+    state.session['checkpoint_c_confirmed_at'] = "2026-11-26T01:00:00Z";
+    await invoke();
+    expect(state.filters.filter(f => f[0] === 'filter' && f[1] === 'checkpoint_c_confirmed_at')).toEqual([
+      ['filter', 'checkpoint_c_confirmed_at', 'eq', '2026-11-26T01:00:00Z'],
+      ['filter', 'checkpoint_c_confirmed_at', 'eq', '2026-11-26T01:00:00Z'],
+    ]);
+    expect(state.updates[0]).toMatchObject({ stage_status: "running:13" });
+  });
   it("receives the chosen JLR proposition, every rationale answer and the human guard-rail", async () => {
     state.session.selected_smp = jlrSelection;
     state.session.selection_rationale = jlrRationale;

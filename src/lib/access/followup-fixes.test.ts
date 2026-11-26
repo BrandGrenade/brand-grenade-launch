@@ -27,9 +27,9 @@ describe("Checkpoint C record", () => {
     expect(r.at).toBe("2026-10-01T00:00:00Z");
     expect(r.confirmed_by).toBeUndefined();
   });
-  it("both confirmation paths append a record", () => {
+  it("the confirmation form uses the atomic call and the generic button cannot bypass it", () => {
     expect(readFileSync("src/lib/stage12.functions.ts", "utf8")).toContain('rpc("bg_confirm_checkpoint_c"');
-    expect(readFileSync("src/routes/pipeline.tsx", "utf8")).toMatch(/from\("checkpoint_confirmations"\)\.insert/);
+    expect(readFileSync("src/routes/pipeline.tsx", "utf8")).not.toMatch(/from\("checkpoint_confirmations"\)\.insert/);
   });
 });
 

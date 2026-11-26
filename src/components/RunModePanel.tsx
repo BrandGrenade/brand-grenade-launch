@@ -8,6 +8,8 @@ import { POSITION_DIMS, positionTableRows } from "@/lib/current-position-table";
 
 type Row = {
   run_mode: string;
+  locked_at: string | null;
+  exploration_brief: { mode?: string } | null;
   diagnostic_status: string | null;
   brand_name: string;
   category: string;
@@ -25,7 +27,7 @@ export function RunModePanel({ sessionId, refreshKey }: { sessionId: string; ref
   useEffect(() => {
     supabase
       .from("sessions")
-      .select("run_mode, diagnostic_status, brand_name, category, brief_text, stage_10_structured")
+      .select("run_mode, locked_at, exploration_brief, diagnostic_status, brand_name, category, brief_text, stage_10_structured")
       .eq("id", sessionId)
       .single()
       .then(({ data }) => setRow(data as unknown as Row));
@@ -40,11 +42,11 @@ export function RunModePanel({ sessionId, refreshKey }: { sessionId: string; ref
       {isDiag && (
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <strong>Diagnostic run</strong> —{" "}
+            <strong>{row.exploration_brief?.mode === "headroom" ? "Headroom run" : row.exploration_brief?.mode === "turnaround" ? "Turnaround run" : "Diagnostic run"}</strong> —{" "}
             {row.diagnostic_status === "complete"
-              ? "complete and locked."
+              ? row.locked_at ? "complete and locked." : "complete; awaiting final sign-off."
               : row.diagnostic_status === "partial"
-                ? "partial: a required output (Stages 2, 9, 10, 11, 13 or the current position) is missing. Locked."
+                ? `partial: a required output (Stages 2, 9, 10, 11, 13 or the current position) is missing.${row.locked_at ? " Locked." : ""}`
                 : "in progress. Stops after Stage 13."}
           </div>
           {row.diagnostic_status !== "in_progress" && (

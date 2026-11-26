@@ -27,7 +27,7 @@ export const runStage13b = createServerFn({ method: "POST" })
     const { data: session, error } = await supabaseAdmin
       .from("sessions")
       .select(
-        "brand_name, category, selected_smp, stage_2_output, stage_12_output, stage_13_output, stage_13b_output"
+        "checkpoint_c_confirmed_at, brand_name, category, selected_smp, stage_2_output, stage_12_output, stage_13_output, stage_13b_output"
       )
       .eq("id", data.sessionId)
       .single();
@@ -39,10 +39,15 @@ export const runStage13b = createServerFn({ method: "POST" })
       return;
     }
 
-    await supabaseAdmin
+    const { error: claimError } = await supabaseAdmin
       .from("sessions")
-      .update({ current_stage: 13, status: "running", stage_13b_error: null })
-      .eq("id", data.sessionId);
+      .update({ current_stage: 13, status: "running", stage_status: "running:13b", stage_13b_error: null })
+      .eq("id", data.sessionId)
+      .filter("checkpoint_c_confirmed_at", session.checkpoint_c_confirmed_at ? "eq" : "is", session.checkpoint_c_confirmed_at ?? "null")
+      .not("stage_status", "like", "running%")
+      .is("stage_13b_output", null)
+      .select("id").single();
+    if (claimError) throw new Error("Stage 13B is already running, or the selection changed. Reload before continuing.");
 
     let output = "";
     for await (const delta of withStreamSafety(
@@ -72,7 +77,11 @@ export const runStage13b = createServerFn({ method: "POST" })
     const { error: ue } = await supabaseAdmin
       .from("sessions")
       .update({ stage_13b_output: output, stage_13b_error: null, stage_status: "complete:13b" })
-      .eq("id", data.sessionId);
+      .eq("id", data.sessionId)
+      .filter("checkpoint_c_confirmed_at", session.checkpoint_c_confirmed_at ? "eq" : "is", session.checkpoint_c_confirmed_at ?? "null")
+      .eq("stage_13_output", session.stage_13_output)
+      .is("stage_13b_output", null)
+      .select("id").single();
     if (ue) throw new Error(`Failed to save Stage 13B output: ${ue.message}`);
 
     yield { done: true as const, output };

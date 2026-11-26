@@ -42,8 +42,9 @@ describe("3/4. selection screen", () => {
 });
 
 describe("5. landing", () => {
-  it("a stale completed-stage link yields to the stage waiting for the user", () => {
-    expect(landingPipelineStage({ "01": "complete", "12": "checkpoint" }, true, "1")).toBe("12");
+  it("explicit saved-stage viewing stays at that stage; a run link without a stage opens the current checkpoint", () => {
+    expect(landingPipelineStage({ "01": "complete", "12": "checkpoint" }, true, "1")).toBe("01");
+    expect(landingPipelineStage({ "01": "complete", "12": "checkpoint" }, true)).toBe("12");
   });
   it("without a link it opens the current stage", () => {
     expect(landingPipelineStage({ "01": "complete", "12": "complete", "13": "complete" }, true)).toBe("13");
