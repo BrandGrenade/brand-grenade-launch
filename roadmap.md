@@ -4,8 +4,8 @@
 - [x] Version the Headroom/Turnaround summary after a changed Stage 12 selection and Stage 13 completion; mark the prior summary out of date meanwhile.
 - [x] Refresh opens the run's current stage; Retry appears only when it can succeed.
 - [x] Keep stage10_selected and run version aligned with the latest confirmed selection while retaining history.
-- [ ] Regenerate only the derived Headroom summary for 06134f96-23c8-43cb-9b5d-5fcfc609964f at v12; no stage rerun or decision/approval change.
-- [ ] Publish and live-check summary v12 names "Everything fitted is yours"; compilation clean and all 764 tests passed. Final publish requested; an early queue hit the old deployment and its incorrect derived v12 row remains preserved, not accepted.
+- [ ] Regenerate only the derived Headroom summary for 06134f96-23c8-43cb-9b5d-5fcfc609964f at v12; no stage rerun or decision/approval change. Blocked: repeated publishes still serve the previous release on the live domain; an early queue hit that old release and its incorrect derived v12 row remains preserved, not accepted. Preview correctly marks it out of date.
+- [ ] Live-check corrected summary v12 names "Everything fitted is yours" after deployment. Compilation and all 764 tests passed; preview reload landing and stale-summary checks passed. Session fingerprint c53bdbd69529e85deab53418027b4279 stayed unchanged after the early derived write.
 
 ## Fix pack: selection, navigation, held items — 25 Nov 2026
 - [x] Reselection UI and append-only reset history added; non-Validate diagnostic sign-off lock implemented; Headroom 06134f96 auto-lock lifted. Its saved scores, outputs and confirmed choice are retained.
