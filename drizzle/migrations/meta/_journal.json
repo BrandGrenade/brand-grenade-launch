@@ -428,6 +428,13 @@
       "when": 1795655192765,
       "tag": "0060_confirmed_selection_stale_save_guard",
       "breakpoints": true
+    },
+    {
+      "idx": 61,
+      "version": "7",
+      "when": 1795745720928,
+      "tag": "0061_selection_summary_versions",
+      "breakpoints": true
     }
   ]
 }

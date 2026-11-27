@@ -16,6 +16,12 @@ describe.each([
     expect(landingPipelineStage({ "01": "complete", "04B": "running" }, modeEndsAt13(mode))).toBe("04B");
   });
 });
+it("refresh resumes the current stage while direct saved-stage links remain explicit", () => {
+  const statuses = { "01": "complete", "12": "checkpoint" };
+  expect(landingPipelineStage(statuses, true, "1", "reload")).toBe("12");
+  expect(landingPipelineStage(statuses, true, "1", "navigate")).toBe("01");
+});
+
 it.each(["headroom", "turnaround"])("%s never lands beyond Stage 13", mode => {
   const row = { exploration_brief: { mode } };
   expect(landingPipelineStage({ "01": "checkpoint", "14": "error", "15": "complete" }, modeEndsAt13(row), "18")).toBe("01");

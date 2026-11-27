@@ -155,6 +155,8 @@ export type Database = {
           id: string
           outputs: Json
           run_version: number
+          selected_smp: string | null
+          selection_confirmed_at: string | null
           session_id: string
         }
         Insert: {
@@ -163,6 +165,8 @@ export type Database = {
           id?: string
           outputs: Json
           run_version: number
+          selected_smp?: string | null
+          selection_confirmed_at?: string | null
           session_id: string
         }
         Update: {
@@ -171,6 +175,8 @@ export type Database = {
           id?: string
           outputs?: Json
           run_version?: number
+          selected_smp?: string | null
+          selection_confirmed_at?: string | null
           session_id?: string
         }
         Relationships: [
@@ -202,6 +208,7 @@ export type Database = {
           attempt: number
           created_at: string
           error: string | null
+          generation: number
           id: string
           job_id: string
           raw_output: string | null
@@ -210,6 +217,7 @@ export type Database = {
           attempt: number
           created_at?: string
           error?: string | null
+          generation?: number
           id?: string
           job_id: string
           raw_output?: string | null
@@ -218,6 +226,7 @@ export type Database = {
           attempt?: number
           created_at?: string
           error?: string | null
+          generation?: number
           id?: string
           job_id?: string
           raw_output?: string | null
@@ -236,6 +245,7 @@ export type Database = {
         Row: {
           created_at: string
           error: string | null
+          generation: number
           id: string
           lease_token: string | null
           lease_until: string | null
@@ -247,6 +257,7 @@ export type Database = {
         Insert: {
           created_at?: string
           error?: string | null
+          generation?: number
           id?: string
           lease_token?: string | null
           lease_until?: string | null
@@ -258,6 +269,7 @@ export type Database = {
         Update: {
           created_at?: string
           error?: string | null
+          generation?: number
           id?: string
           lease_token?: string | null
           lease_until?: string | null

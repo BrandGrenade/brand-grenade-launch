@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
-import { reselectAvailability, retryAllowed, lockedNote, stage13ReturnsToStage12, LOC_SCORE_LABEL, pickSingle } from "./reselection";
+import { reselectAvailability, retryAllowed, retryUnavailableNote, lockedNote, stage13ReturnsToStage12, LOC_SCORE_LABEL, pickSingle } from "./reselection";
 import { landingPipelineStage } from "./pipeline-navigation";
 import { stage18Verdict, applyStage18CodeVerdict } from "./stage18-verdict";
 import { PHASE2_FIELD_SCHEMA } from "./access/phase2-scores";
@@ -28,6 +28,9 @@ describe("2. retry with notes", () => {
   it("offered on unlocked runs, hidden on locked runs with a plain note", () => {
     expect(retryAllowed({ locked_at: null })).toBe(true);
     expect(retryAllowed({ locked_at: "x" })).toBe(false);
+    expect(retryAllowed({ locked_at: null }, "Not part of a Headroom run. This run ends at Stage 13.")).toBe(false);
+    expect(retryUnavailableNote({ locked_at: null }, "Not part of a Headroom run. This run ends at Stage 13.")).toBe("Not part of a Headroom run. This run ends at Stage 13.");
+    expect(retryUnavailableNote({ locked_at: "x", lock_reason: "Final checkpoint signed off" })).toContain("Final checkpoint signed off");
     expect(lockedNote("Run completed")).toBe("This run is locked (Run completed). Its stages can't be retried or changed.");
   });
 });

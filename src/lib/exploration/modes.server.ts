@@ -1,7 +1,7 @@
 import {supabaseAdmin as sb} from '@/integrations/supabase/client.server';
 import {callClaude} from '../claude.server';
 import {brandId} from '../access/foundations';
-import {ExplorationBriefSchema,HeadroomResult,TurnaroundResult,buildModeOutputs} from './modes';
+import {ExplorationBriefSchema,HeadroomResult,TurnaroundResult,buildModeOutputs,requireHeadroomSelection} from './modes';
 import {runProjection,readProjection} from './projection.server';
 import {type Baseline} from './projection';
 import {zodToJsonSchema} from 'zod-to-json-schema';
@@ -20,6 +20,8 @@ export async function runExplorationJob(id:string,emit:(v:object)=>void){
     const s=check(await sb.from('sessions').select('*').eq('id',job.session_id).single());
     const brief=ExplorationBriefSchema.parse(s.exploration_brief);
     if(!s.checkpoint_a_confirmed||!s.checkpoint_b_confirmed||!s.checkpoint_c_confirmed||!s.stage_13_output)throw new Error('EXPLORATION_CHECKPOINT_NOT_CONFIRMED');
+    const selectedSmp=s.selected_smp;
+    if(!selectedSmp)throw new Error('EXPLORATION_SELECTION_MISSING');
     const base=check(await sb.from('current_position_addon_jobs').select('*').eq('id',brief.baselineJobId).single());
     if(!base.published_version||base.status!=='complete')throw new Error('No current position for brand × market');
     const manifest=base.source_manifest as Record<string,unknown>;
@@ -31,19 +33,22 @@ export async function runExplorationJob(id:string,emit:(v:object)=>void){
     const allowedEvidence=[...baseline.evidence_refs,...Object.keys(stageEvidence).map(k=>`sessions:${s.id}:${k}`),...(Array.isArray(manifest['evidence'])?manifest['evidence'].map((_,i)=>`baseline:${base.id}:evidence:${i}`):[])];
     const parseResult=(raw:string)=>{
       const value=brief.mode==='headroom'?HeadroomResult.parse(JSON.parse(raw)):TurnaroundResult.parse(JSON.parse(raw));
+      if(brief.mode==='headroom')requireHeadroomSelection(HeadroomResult.parse(value),selectedSmp);
       buildModeOutputs({brief,runId:s.id,version,brandId:baseline.brand_id,market,baseline:baseline.record,result:value,projections:[],createdAt:new Date().toISOString(),checkpoints:{A:true,B:true,C:true},allowedEvidence});
       return value;
     };
     const schema=brief.mode==='headroom'?HeadroomResult:TurnaroundResult;
     const schemaJson=JSON.stringify(zodToJsonSchema(schema));
-    const attempts=check(await sb.from('bg_exploration_attempts').select('attempt,raw_output,error').eq('job_id',id).order('attempt'));
+    // A reselected Stage 13 starts a new generation. Earlier raw attempts stay
+    // immutable and readable, but can never be reused as the new summary.
+    const attempts=check(await sb.from('bg_exploration_attempts').select('attempt,raw_output,error').eq('job_id',id).eq('generation',job.generation).order('attempt'));
     let result:unknown=null;let last=attempts.at(-1)?.error??'';
     if(last&&terminalExplorationError(last))throw new Error(`EXPLORATION_PLATFORM_ERROR: ${last}`);
     for(const a of attempts){if(!a.raw_output)continue;try{result=parseResult(a.raw_output);break;}catch{/* retain failed attempt */}}
     for(let attempt=attempts.length+1;!result&&attempt<=3;attempt++){
       let raw='';let error:string|null=null;
-      try{emit({status:'running',phase:'assessment',attempt});raw=await callClaude({systemPrompt:'Brand Grenade evidence-bound exploratory analysis. Only the supplied saved evidence may support findings. Return JSON only. Partner hypotheses are not evidence. Separate evidence, hypotheses, modelled interpretation, supported causes and unresolved questions. No unsupported causal attribution, revenue, dollar upside, numerical alternative selection score or certainty of success. Each liked/bought axis needs its own measured evidence and period; otherwise established:false, positive:null, confidence:insufficient. No inference between axes. Each brand fix requires a modelled change projection; commercial problems need a named team and no substitute brand fix.',userMessage:`MODE BRIEF: ${JSON.stringify(brief)}\nCURRENT BASELINE: ${JSON.stringify(baseline)}\nSAVED STAGES: ${JSON.stringify(stageEvidence)}\nHeadroom alternatives: evaluate white space, brand permission/associations, distinction, constraints, confidence; choose exactly one credible alternative with qualitative reasons, keep every principal alternative and its disposition. Band meanings: constrained=limited space/barriers; moderate=additional space with meaningful conditions; substantial=considerable supported achievable space; transformational=materially different opportunity needing significant change, investment/commitment, not certainty.\nAllowed saved evidence refs: ${JSON.stringify(allowedEvidence)}\nReturn exactly this JSON schema: ${schemaJson}\n${last?`Previous validation error: ${last}`:''}`,stageNumber:'13',stageLabel:`${brief.mode} final assessment`,maxTokens:20000});raw=raw.trim().replace(/^```(?:json)?\s*/,'').replace(/\s*```$/,'');result=parseResult(raw);}catch(e){error=String(e);last=error;}
-      check(await sb.from('bg_exploration_attempts').insert({job_id:id,attempt,raw_output:raw,error}).select('id'));
+      try{emit({status:'running',phase:'assessment',attempt});raw=await callClaude({systemPrompt:'Brand Grenade evidence-bound exploratory analysis. Only the supplied saved evidence may support findings. Return JSON only. Partner hypotheses are not evidence. Separate evidence, hypotheses, modelled interpretation, supported causes and unresolved questions. No unsupported causal attribution, revenue, dollar upside, numerical alternative selection score or certainty of success. Each liked/bought axis needs its own measured evidence and period; otherwise established:false, positive:null, confidence:insufficient. No inference between axes. Each brand fix requires a modelled change projection; commercial problems need a named team and no substitute brand fix.',userMessage:`MODE BRIEF: ${JSON.stringify(brief)}\nCURRENT BASELINE: ${JSON.stringify(baseline)}\nSAVED STAGES: ${JSON.stringify(stageEvidence)}\nCONFIRMED EXPLORATORY SELECTION: ${JSON.stringify(selectedSmp)}. For Headroom, the single alternative marked selected must have position exactly equal to this saved selection; never substitute another alternative. Headroom alternatives: evaluate white space, brand permission/associations, distinction, constraints, confidence; choose exactly one credible alternative with qualitative reasons, keep every principal alternative and its disposition. Band meanings: constrained=limited space/barriers; moderate=additional space with meaningful conditions; substantial=considerable supported achievable space; transformational=materially different opportunity needing significant change, investment/commitment, not certainty.\nAllowed saved evidence refs: ${JSON.stringify(allowedEvidence)}\nReturn exactly this JSON schema: ${schemaJson}\n${last?`Previous validation error: ${last}`:''}`,stageNumber:'13',stageLabel:`${brief.mode} final assessment`,maxTokens:20000});raw=raw.trim().replace(/^```(?:json)?\s*/,'').replace(/\s*```$/,'');result=parseResult(raw);}catch(e){error=String(e);last=error;}
+      check(await sb.from('bg_exploration_attempts').insert({job_id:id,generation:job.generation,attempt,raw_output:raw,error}).select('id'));
       if(terminalExplorationError(last)&&!result)break;
       if(!result&&attempt<3)await explorationRetryCooldown();
     }

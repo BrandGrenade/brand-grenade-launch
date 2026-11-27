@@ -41,9 +41,11 @@ export function modeStageNote(row: { exploration_brief?: unknown; validate_brief
   return `Not part of a ${mode === "headroom" ? "Headroom" : mode === "turnaround" ? "Turnaround" : row.validate_brief ? "Validate" : "Diagnostic"} run`;
 }
 
-export function landingPipelineStage(statuses: Record<string, string | undefined>, endsAt13: boolean, requested?: string) {
+export function landingPipelineStage(statuses: Record<string, string | undefined>, endsAt13: boolean, requested?: string, navigationType?: string) {
   const stages = PIPELINE_STAGES.filter(s => !endsAt13 || Number.parseInt(s.id, 10) <= 13 && s.id !== "13B");
-  const target = requested?.toUpperCase().padStart(2, "0");
+  // A direct saved-stage link remains explicit. A browser refresh instead resumes
+  // the run's current stage, even when the refreshed URL contains an older stage.
+  const target = navigationType === "reload" ? undefined : requested?.toUpperCase().padStart(2, "0");
   const active = [...stages].reverse().find(s => ["running", "checkpoint", "error"].includes(statuses[s.id] ?? ""))?.id;
   const furthest = active ?? [...stages].reverse().find(s => statuses[s.id] === "complete")?.id ?? "01";
   if (target && stages.some(s => s.id === target) && statuses[target] && statuses[target] !== "pending") {

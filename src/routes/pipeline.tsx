@@ -19,7 +19,7 @@ import { LocControls } from "@/components/LocControls";
 import { Checkpoint, buildRevisionInstruction } from "@/components/Checkpoint";
 import { SelectionRationale } from "@/components/SelectionRationale";
 import { Stage12Result, type SelectionVersion } from "@/components/Stage12Result";
-import { reselectAvailability, lockedNote, stage13ReturnsToStage12 } from "@/lib/reselection";
+import { reselectAvailability, lockedNote, retryUnavailableNote, stage13ReturnsToStage12 } from "@/lib/reselection";
 import { BrandIntelligence } from "@/components/BrandIntelligence";
 import { SMPSelection, type SMPCard } from "@/components/SMPSelection";
 import { supabase } from "@/integrations/supabase/client";
@@ -1636,7 +1636,8 @@ function PipelineView() {
 
     if (hydratedSessionRef.current !== session.id && selectedIdRef.current !== "BRIEF") {
       hydratedSessionRef.current = session.id;
-      const activeStage = landingPipelineStage(mergedForSelection, modeEndsAt13(session), requestedStage);
+      const navigation = window.performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
+      const activeStage = landingPipelineStage(mergedForSelection, modeEndsAt13(session), requestedStage, navigation?.type);
       setSelectedId(activeStage);
       setNavigationReady(true);
     }
@@ -2399,6 +2400,9 @@ function PipelineView() {
                                         : selected.id === "16"
                                           ? stage16Error
                                           : null;
+  const selectedMode = String(session?.exploration_brief?.['mode'] ?? 'exploration');
+  const selectedModeRule = explorationModeRule(selectedError ?? (selected.id === "08B" ? session?.loc_error ?? "" : ""), selectedMode);
+  const retryBlockNote = retryUnavailableNote(session ?? {}, selectedModeRule);
 
   // Per-stage output: use live Stage 1 / 1B / 2 / 3 output, demo stubs for others.
   const stageOutputs = useMemo<Record<string, string>>(() => {
@@ -3236,7 +3240,7 @@ function PipelineView() {
               </div>
             ) : null}
             {sessionId && positionTableStages(session?.exploration_brief ? String(session.exploration_brief['mode']) : null).includes(selectedId) ? <CurrentPositionTable sessionId={sessionId} refreshKey={`${statuses["10"]}-${statuses["13"]}`} /> : null}</>}
-            retryLockedNote={session?.locked_at ? lockedNote(session.lock_reason) : null}
+            retryLockedNote={retryBlockNote}
             validateNotice={session?.validate_brief && sessionId ? (
               <div className="border-b px-6 py-3 sm:px-12" style={{ borderColor: "var(--color-border)", backgroundColor: "var(--color-surface-2)" }}>
                 <p className="text-body-sm font-semibold">Validate run — verdict on the current strategy only</p>

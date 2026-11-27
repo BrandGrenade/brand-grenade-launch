@@ -26,9 +26,15 @@ export function lockedNote(reason?: string | null): string {
   return `This run is locked${reason ? ` (${reason})` : ""}. Its stages can't be retried or changed.`;
 }
 
-/** Retry (with or without notes) is offered only on unlocked runs. */
-export function retryAllowed(run: { locked_at?: string | null }): boolean {
-  return !run.locked_at;
+/** Retry is offered only when neither the run lock nor a mode rule makes it impossible. */
+export function retryAllowed(run: { locked_at?: string | null }, modeRule?: string | null): boolean {
+  return !run.locked_at && !modeRule;
+}
+
+/** One plain-words reason shared by every Retry surface on the run page. */
+export function retryUnavailableNote(run: { locked_at?: string | null; lock_reason?: string | null }, modeRule?: string | null): string | null {
+  if (run.locked_at) return lockedNote(run.lock_reason);
+  return modeRule ?? null;
 }
 
 /** Stage 13 verdict that sends the user back to choose again. */

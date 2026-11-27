@@ -8,6 +8,25 @@ export const ExplorationBriefSchema = z.discriminatedUnion('mode', [
 ]);
 export type ExplorationBrief = z.infer<typeof ExplorationBriefSchema>;
 export const EXPLORATION_OUTPUTS = ['headroom.current', 'headroom.potential', 'headroom.conditions', 'headroom.risks', 'turnaround.classification', 'turnaround.root_causes', 'turnaround.fix_first', 'turnaround.non_brand_factors'] as const;
+export const EXPLORATION_OUT_OF_DATE = 'Out of date: produced before the latest selection';
+
+/** Derived summaries belong to one confirmed Stage 12 selection, not merely to the run. */
+export function headroomSelectedAlternative(outputs: unknown): string | null {
+  if (!outputs || typeof outputs !== 'object') return null;
+  const data = (outputs as Record<string, any>)['headroom.potential']?.data;
+  const selected = Array.isArray(data?.alternatives) ? data.alternatives.filter((a: any) => a?.disposition === 'selected') : [];
+  return selected.length === 1 && typeof selected[0]?.position === 'string' ? selected[0].position : null;
+}
+export function explorationSummaryOutOfDate(
+  assessment: { selectionConfirmedAt: string | null; selectedSmp: string | null; runVersion: number } | null,
+  current: { selectionConfirmedAt: string | null; selectedSmp: string | null; runVersion: number },
+): boolean {
+  if (!assessment) return false;
+  if (assessment.selectionConfirmedAt || current.selectionConfirmedAt) {
+    return assessment.selectionConfirmedAt !== current.selectionConfirmedAt || assessment.selectedSmp !== current.selectedSmp;
+  }
+  return assessment.runVersion !== current.runVersion || assessment.selectedSmp !== current.selectedSmp;
+}
 // Helpers are governed by the stage they feed, not their telemetry label.
 export function explorationTargetStage(step: string): string {
   if (step === '9-loc' || step === '9-loc-validation') return '9';
@@ -44,6 +63,10 @@ const refs = z.array(text);
 const finding = z.object({ type: z.enum(['brand problem','commercial problem','evidence problem','mixed']), observed_evidence: refs, partner_hypothesis: text.nullable(), modelled_interpretation: text.nullable(), supported_conclusion: text.nullable(), unresolved_question: text.nullable(), supported_causes: refs, contributing_factors: refs, evidence_refs: refs, team: text.nullable(), brand_fix: text.nullable(), priority: text });
 export const HeadroomResult = z.object({ alternatives: z.array(z.object({ position: text, disposition: z.enum(['selected','rejected','consideration']), reasons: refs, evidence_refs: refs })).min(1), band: z.enum(['constrained','moderate','substantial','transformational']), band_reasons: refs.min(1), white_space_and_permission: refs, conditions: refs.min(1), risks: refs, evidence_refs: refs, confidence: text, limitations: refs });
 export const TurnaroundResult = z.object({ classifications: z.array(z.object({ market: text, liked: DemandAxis, bought: DemandAxis })), findings: z.array(finding).min(1), evidence_refs: refs, confidence: text, limitations: refs });
+export function requireHeadroomSelection(result: z.infer<typeof HeadroomResult>, selectedSmp: string): void {
+  const selected = result.alternatives.filter(a => a.disposition === 'selected');
+  if (selected.length !== 1 || selected[0]?.position !== selectedSmp) throw new Error('HEADROOM_SUMMARY_SELECTION_MISMATCH');
+}
 export function buildModeOutputs(a: { brief: ExplorationBrief; runId: string; version: number; brandId: string; market: string; baseline: unknown; result: unknown; projections: unknown[]; createdAt: string; checkpoints: { A: boolean; B: boolean; C: boolean };allowedEvidence?:string[] }) {
   if (!a.checkpoints.A || !a.checkpoints.B || !a.checkpoints.C) throw new Error('EXPLORATION_CHECKPOINT_NOT_CONFIRMED');
   let values: Record<string, unknown>;

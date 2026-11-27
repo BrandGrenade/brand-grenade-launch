@@ -339,6 +339,33 @@ describe("single-run reads skip version content", () => {
   });
 });
 
+describe("selection and run-version consistency", () => {
+  it("stage10_selected follows the confirmed selection at each run version and keeps the earlier one", async () => {
+    const score = (smp: string) => ({ smp, field_name: "Ownership", composite: 60, code_verdict: "PASS", code_verdict_reason: "Saved",
+      ...Object.fromEntries(["fame", "truth_strength", "competitive_impossibility", "brand_permission", "clean_air", "commercial_precedent"].map(k => [k, { score: 6, justification: "saved" }])) });
+    const oldAt = "2026-11-25T10:16:47Z", newAt = "2026-11-26T01:36:55Z";
+    const versions: VersionRow[] = [
+      { field: "selected_smp", version_no: 1, content: "Earlier confirmed", reason: "Reselection", created_at: oldAt },
+      { field: "selection_rationale", version_no: 1, content: { f1: "Earlier rationale" }, reason: "Reselection", created_at: oldAt },
+      { field: "checkpoint_c_confirmed", version_no: 1, content: true, reason: "Reselection", created_at: oldAt },
+      { field: "checkpoint_c_confirmed_at", version_no: 1, content: oldAt, reason: "Reselection", created_at: oldAt },
+      { field: "stage_10_structured", version_no: 1, content: { scores: [score("Earlier confirmed")] }, reason: "Reselection", created_at: oldAt },
+    ];
+    const db = makeDb({ [RUN]: versions });
+    const run = await db.findRun(RUN);
+    if (!run) throw new Error("Missing run fixture");
+    Object.assign(run.row, { selected_smp: "Latest confirmed", selection_rationale: { f1: "Latest rationale" }, checkpoint_c_confirmed: true, checkpoint_c_confirmed_at: newAt,
+      stage_10_output: "Saved scores", stage_10_structured: { scores: [score("Latest confirmed")] } });
+    const earlier: any = await call(db, HUB, "stage10_selected", { client_ref: "hub-c1", run_id: RUN, version: 1 });
+    const latest: any = await call(db, HUB, "stage10_selected", { client_ref: "hub-c1", run_id: RUN, version: 2 });
+    expect(earlier.version).toBe(1);
+    expect(earlier.content.stage10_selected).toMatchObject({ proposition_text: "Earlier confirmed", selection_timestamp: oldAt });
+    expect(latest.version).toBe(2);
+    expect(latest.content.stage10_selected).toMatchObject({ proposition_text: "Latest confirmed", selection_timestamp: newAt });
+    expect(latest.content.confirmation).toMatchObject({ confirmed: true, discrepancy: null });
+  });
+});
+
 describe("Phase 2 score outputs", () => {
   const db = makeDb();
   const g = (output_id: string, key: Key = HUB) => call(db, key, "get_output", { client_ref: "hub-c1", run_id: id(1), version: 1, output_id });
